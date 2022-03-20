@@ -1,0 +1,6 @@
+id INT AUTO_INCREMENT PRIMARY KEY,
+level ENUM('administrator', 'owner', 'manager', 'member'),
+status ENUM('active', 'inactive'),
+first_name VARCHAR(255) NOT NULL,
+last_name VARCHAR(255) NOT NULL,
+outstanding_balance FLOAT
