@@ -1,3 +1,0 @@
-id INT AUTO_INCREMENT PRIMARY KEY,
-name VARCHAR(30) NOT NULL,
-type ENUM('duck','goose','crane','other')
