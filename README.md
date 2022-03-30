@@ -1,4 +1,4 @@
-# duck-hunt-one
+# duck-hunt-app
 Full-stack web application for duck hunting clubs
 
 Features:
