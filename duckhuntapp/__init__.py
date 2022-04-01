@@ -16,11 +16,12 @@ def create_app():
         app.config["SQL_UNAME"],
         app.config["SQL_PASSWORD"]
     )
-    db.connect_to_existing("duck_hunt_one")
+    db.connect_to_existing(app.config["SQL_DB_NAME"])
 
     from .views import main
     from . import apis
     app.register_blueprint(main)
     app.register_blueprint(apis.birds_bp)
+    app.register_blueprint(apis.users_bp)
 
     return app

@@ -57,7 +57,12 @@ class DbManager:
         self.my_cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
     def select_db(self, db_name):
-        self.my_cursor.execute(f"USE {db_name}")
+        try:
+            self.my_cursor.execute(f"USE {db_name}")
+            return True
+        except mysql.connector.Error:
+            print(f"Unable to select database {db_name}")
+            return False
 
     def compare_db(self):
         # check to see if the currently selected database matches the schema loaded from local file
@@ -106,22 +111,27 @@ class DbManager:
         return [col[0] for col in columns]
 
     def create_table(self, table_name):
+        print(f"Creating table: {table_name}")
         self.my_cursor.execute(f"CREATE TABLE {table_name}({self.tables[table_name].get_schema_string()})")
 
-    def create_from_scratch(self, db_name):
+    def nuke_and_rebuild(self, db_name):
+        print("Starting nuke & rebuild")
         self.delete_db(db_name)
+        print("Delete Complete")
         self.create_db(db_name)
+        print("Create Complete")
         self.select_db(db_name)
+        print("Select Complete")
         for key in self.tables:
             self.create_table(key)
         print(f"Created database {db_name}")
         self.list_tables(print_on=True)
 
     def connect_to_existing(self, db_name):
-        self.select_db(db_name)
-        print(f"Selected database {db_name}")
-        if self.compare_db():
-            print(f"{db_name} matches the local schema file")
+        if self.select_db(db_name):
+            print(f"Selected database {db_name}")
+            if self.compare_db():
+                print(f"{db_name} matches the local schema file")
 
     def add_row(self, table_name, row_data_dict):
         col_names, insert_tuple = self.tables[table_name].get_add_row(row_data_dict)
@@ -160,30 +170,41 @@ class DbManager:
             return None
         return results
 
-    def update_row(self, table_name, update_dict):
+    def update_row(self, table_name, id_value, update_dict, id_field="id"):
         set_str = ""
         data_list = []
         for key in update_dict:
             if not key == "id":
                 set_str = set_str + key + "=%s,"
-                data_list.append(update_dict[key])
+                data_list.append(str(update_dict[key]))
         # id goes at the end b/c it's associated with the WHERE
-        data_list.append(update_dict["id"])
+        data_list.append(id_value)
 
-        my_sql_insert_query = f"UPDATE {table_name} SET {set_str} WHERE id=%s"
+        my_sql_insert_query = f"UPDATE {table_name} SET {set_str[:-1]} WHERE {id_field}=%s"
 
         try:
             self.my_cursor.execute(my_sql_insert_query, tuple(data_list))
             self.db.commit()
+            return True
         except mysql.connector.Error as error:
             print("Failed to update record: {}".format(error))
+            return False
 
-    def del_row(self, table_name, row_id):
-        sql_delete_query = f"DELETE from {table_name} where id = {row_id}"
+    def del_row(self, table_name, row_id, id_field="id"):
+        sql_delete_query = f"DELETE from {table_name} where {id_field} = '{row_id}'"
         try:
+            print(f"Alpha:{sql_delete_query}")
             self.my_cursor.execute(sql_delete_query)
             self.db.commit()
             print('number of rows deleted', self.my_cursor.rowcount)
-
+            return True
         except mysql.connector.Error as error:
             print("Failed to delete record from table: {}".format(error))
+            return False
+
+    def sql_to_dict(self, result, table_name=None, names=None):
+        # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema (or override via input)
+        if names is None:
+            names = [a_dict["name"] for a_dict in self.tables[table_name].table_cols]  # all names
+        results_dict = {name: result[0][col] for col, name in enumerate(names)}
+        return results_dict

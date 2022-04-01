@@ -259,16 +259,10 @@ schema = {
             'extra': 'AUTO_INCREMENT PRIMARY KEY'
         },
         {
-            'name': 'level',
-            'type': 'ENUM',
-            'enum': ('administrator', 'owner', 'manager', 'member'),
-            'extra': "DEFAULT 'member'"
-        },
-        {
-            'name': 'status',
-            'type': 'ENUM',
-            'enum': ('active', 'inactive'),
-            'extra': "DEFAULT 'active'"
+            'name': 'public_id',
+            'type': 'CHAR(36)',
+            'enum': None,
+            'extra': 'NOT NULL'
         },
         {
             'name': 'first_name',
@@ -283,10 +277,34 @@ schema = {
             'extra': 'NOT NULL'
         },
         {
-            'name': 'outstanding_balance',
-            'type': 'FLOAT',
+            'name': 'email',
+            'type': 'VARCHAR(30)',
             'enum': None,
-            'extra': ''
+            'extra': 'NOT NULL'
+        },
+        {
+            'name': 'password_hash',
+            'type': 'CHAR(88)',
+            'enum': None,
+            'extra': "NOT NULL"
+        },
+        {
+            'name': 'level',
+            'type': 'ENUM',
+            'enum': ('administrator', 'owner', 'manager', 'member'),
+            'extra': "DEFAULT 'member'"
+        },
+        {
+            'name': 'status',
+            'type': 'ENUM',
+            'enum': ('active', 'inactive'),
+            'extra': "DEFAULT 'active'"
+        },
+        {
+            'name': 'outstanding_balance',
+            'type': 'DECIMAL(10,2)',
+            'enum': None,
+            'extra': 'DEFAULT 0.00'
         }
     ]
 }
