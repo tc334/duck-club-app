@@ -215,6 +215,12 @@ schema = {
             'type': 'VARCHAR(30)',
             'enum': None,
             'extra': 'NOT NULL'
+        },
+        {
+            'name': 'region',
+            'type': 'ENUM',
+            'enum': ('Northern', 'Southern'),
+            'extra': ''
         }
     ],
 

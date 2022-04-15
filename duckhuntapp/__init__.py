@@ -23,5 +23,10 @@ def create_app():
     app.register_blueprint(main)
     app.register_blueprint(apis.birds_bp)
     app.register_blueprint(apis.users_bp)
+    app.register_blueprint(apis.properties_bp)
+    app.register_blueprint(apis.ponds_bp)
+    app.register_blueprint(apis.hunts_bp)
+    app.register_blueprint(apis.groupings_bp)
+    app.register_blueprint(apis.harvests_bp)
 
     return app

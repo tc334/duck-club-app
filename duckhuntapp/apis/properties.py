@@ -2,11 +2,11 @@ from flask import Blueprint, request, jsonify
 from .. import db
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members
 
-birds_bp = Blueprint('birds', __name__)
-table_name = 'birds'
+properties_bp = Blueprint('properties', __name__)
+table_name = 'properties'
 
 
-@birds_bp.route('/birds', methods=['POST'])
+@properties_bp.route('/properties', methods=['POST'])
 @token_required(owner_and_above)
 def add_row(user):
     data_in = request.get_json()
@@ -18,8 +18,6 @@ def add_row(user):
     # mandatory keys
     if "name" not in data_in:
         return jsonify({"error": "Input json missing key 'name' in " + base_identifier}), 400
-    if "type" not in data_in:
-        return jsonify({"error": "Input json missing key 'type' in " + base_identifier}), 400
     # check for duplicates
     existing = db.read_custom(f"SELECT * FROM {table_name} WHERE name = '{data_in['name']}'")
     if existing is None:
@@ -33,41 +31,41 @@ def add_row(user):
     return jsonify({"message": data_in["name"] + " successfully added to " + table_name}), 201
 
 
-@birds_bp.route('/birds', methods=['GET'])
+@properties_bp.route('/properties', methods=['GET'])
 @token_required(all_members)
 def get_all_rows(user):
     results = db.read_all(table_name)
-    return jsonify({"birds": results}), 200
+    return jsonify({"properties": results}), 200
 
 
-@birds_bp.route('/birds/<bird_id>', methods=['GET'])
+@properties_bp.route('/properties/<property_id>', methods=['GET'])
 @token_required(all_members)
-def get_one_row(user, bird_id):
-    result = db.read_custom(f"SELECT * FROM {table_name} WHERE id={bird_id}")
+def get_one_row(users, property_id):
+    result = db.read_custom(f"SELECT * FROM {table_name} WHERE id={property_id}")
 
     if result and len(result) == 1:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
         names_all = [a_dict["name"] for a_dict in db.tables[table_name].table_cols]
         results_dict = {name: result[0][col] for col, name in enumerate(names_all)}
-        return jsonify({"bird": results_dict}), 200
+        return jsonify({"property": results_dict}), 200
     else:
-        return jsonify({"error": f"Could not find id {bird_id} in table {table_name}"}), 400
+        return jsonify({"error": f"Could not find id {property_id} in table {table_name}"}), 400
 
 
-@birds_bp.route('/birds/<bird_id>', methods=['PUT'])
+@properties_bp.route('/properties/<property_id>', methods=['PUT'])
 @token_required(owner_and_above)
-def update_row(user, bird_id):
+def update_row(user, property_id):
     data_in = request.get_json()
-    if db.update_row(table_name, bird_id, data_in):
-        return jsonify({'message': f'Successful update of id {bird_id} in {table_name}'}), 200
+    if db.update_row(table_name, property_id, data_in):
+        return jsonify({'message': f'Successful update of id {property_id} in {table_name}'}), 200
     else:
-        return jsonify({"error": f"Unable to update id {bird_id} of table {table_name}"}), 400
+        return jsonify({"error": f"Unable to update id {property_id} of table {table_name}"}), 400
 
 
-@birds_bp.route('/birds/<bird_id>', methods=['DELETE'])
+@properties_bp.route('/properties/<property_id>', methods=['DELETE'])
 @token_required(owner_and_above)
-def del_row(user, bird_id):
-    if db.del_row(table_name, bird_id):
+def del_row(user, property_id):
+    if db.del_row(table_name, property_id):
         return jsonify({'message': 'Successful removal'}), 200
     else:
-        return jsonify({"error": f"Unable to remove id {bird_id} from table {table_name}"}), 400
+        return jsonify({"error": f"Unable to remove id {property_id} from table {table_name}"}), 400

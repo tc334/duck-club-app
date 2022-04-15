@@ -176,7 +176,10 @@ class DbManager:
         for key in update_dict:
             if not key == "id":
                 set_str = set_str + key + "=%s,"
-                data_list.append(str(update_dict[key]))
+                if update_dict[key] is None:
+                    data_list.append(None)
+                else:
+                    data_list.append(str(update_dict[key]))
         # id goes at the end b/c it's associated with the WHERE
         data_list.append(id_value)
 
@@ -193,7 +196,6 @@ class DbManager:
     def del_row(self, table_name, row_id, id_field="id"):
         sql_delete_query = f"DELETE from {table_name} where {id_field} = '{row_id}'"
         try:
-            print(f"Alpha:{sql_delete_query}")
             self.my_cursor.execute(sql_delete_query)
             self.db.commit()
             print('number of rows deleted', self.my_cursor.rowcount)

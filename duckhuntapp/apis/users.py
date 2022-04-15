@@ -4,7 +4,7 @@ from .. import db
 import uuid
 import jwt
 import datetime
-from functools import wraps
+from .auth_wraps import token_required, admin_only, owner_and_above, all_members
 
 users_bp = Blueprint('users', __name__)
 table_name = 'users'
@@ -14,15 +14,16 @@ table_name = 'users'
 def login():
     auth = request.authorization
     if auth and auth.username and auth.password:
-        results = db.read_custom(f"SELECT public_id, password_hash FROM {table_name} WHERE email = '{auth.username}' LIMIT 1")
+        results = db.read_custom(f"SELECT public_id, password_hash, level FROM {table_name} WHERE email = '{auth.username}' LIMIT 1")
         if results and len(results) == 1:
-            user = db.sql_to_dict(results, names=["public_id", "password_hash"])
+            user = db.sql_to_dict(results, names=["public_id", "password_hash", "level"])
             if check_password_hash(user["password_hash"], auth.password):
 
                 # login successful, send back a JWT
                 token = jwt.encode({
                     "user": user["public_id"],
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
+                    "level": user["level"],
+                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=3),
                     "token_id": str(uuid.uuid4())
                 }, current_app.config["SECRET_KEY"])
 
@@ -65,13 +66,16 @@ def signup():
 
 
 @users_bp.route('/users', methods=['GET'])
-def get_all_rows():
+@token_required(owner_and_above)
+def get_all_rows(user):
+    print(f"user={user}")
     results = db.read_all(table_name)
     return jsonify({"users": results}), 200
 
 
 @users_bp.route('/users/<public_id>', methods=['GET'])
-def get_one_row(public_id):
+@token_required(owner_and_above)
+def get_one_row(user, public_id):
     result = db.read_custom(f"SELECT * FROM {table_name} WHERE public_id='{public_id}'")
 
     if result and len(result) == 1:
@@ -81,8 +85,17 @@ def get_one_row(public_id):
 
 
 @users_bp.route('/users/<public_id>', methods=['PUT'])
-def update_row(public_id):
+@token_required(owner_and_above)
+def update_row(user, public_id):
     data_in = request.get_json()
+
+    # check for duplicates
+    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}' AND id != {public_id}")
+    if existing is None:
+        return jsonify({"error": "Internal error"}), 400
+    if existing:
+        return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
+
     if db.update_row(table_name, public_id, data_in, "public_id"):
         return jsonify({'message': f'Successful update of {table_name}'}), 200
     else:
@@ -90,7 +103,8 @@ def update_row(public_id):
 
 
 @users_bp.route('/users/<public_id>', methods=['DELETE'])
-def del_row(public_id):
+@token_required(owner_and_above)
+def del_row(user, public_id):
     if db.del_row(table_name, public_id, "public_id"):
         return jsonify({'message': 'Successful removal'}), 200
     else:

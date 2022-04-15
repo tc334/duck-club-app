@@ -12,11 +12,11 @@ def token_required(member_level_test):
                 token = request.headers['x-access-token']
                 if token:
                     try:
-                        data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
-                        results = db.read_custom(f"SELECT level FROM users WHERE public_id='{data['user']}' LIMIT 1")
+                        jwt_data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
+                        results = db.read_custom(f"SELECT id, level FROM users WHERE public_id='{jwt_data['user']}' LIMIT 1")
                         if results and len(results) == 1:
-                            current_user = db.sql_to_dict(results, names=["level"])
-                            print(f"Alpha:{current_user}")
+                            current_user = db.sql_to_dict(results, names=["id", "level"])
+                            current_user["public_id"] = jwt_data["user"]
                             if member_level_test(current_user["level"]):
                                 return f(current_user, *args, **kwargs)
                             else:
