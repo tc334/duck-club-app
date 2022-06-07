@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from .. import db
-from .auth_wraps import token_required, admin_only, owner_and_above, all_members
+from .auth_wraps import token_required, manager_and_above, owner_and_above, all_members
 
 ponds_bp = Blueprint('ponds', __name__)
 table_name = 'ponds'
@@ -54,6 +54,20 @@ def get_one_row(users, pond_id):
         return jsonify({"error": f"Could not find id {pond_id} in table {table_name}"}), 400
 
 
+@ponds_bp.route('/pond_status', methods=['GET'])
+@token_required(all_members)
+def get_pond_status(users):
+    results = db.read_custom(f"SELECT id, name, status FROM {table_name} ORDER BY property_id")
+
+    if results:
+        # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
+        names_all = ["id", "name", "status"]
+        results_dict = db.format_dict(names_all, results)
+        return jsonify({"ponds": results_dict}), 200
+    else:
+        return jsonify({"error": f"unknown error trying to read pond status"}), 400
+
+
 @ponds_bp.route('/ponds/<pond_id>', methods=['PUT'])
 @token_required(owner_and_above)
 def update_row(user, pond_id):
@@ -62,6 +76,21 @@ def update_row(user, pond_id):
         return jsonify({'message': f'Successful update of id {pond_id} in {table_name}'}), 200
     else:
         return jsonify({"error": f"Unable to update id {pond_id} of table {table_name}"}), 400
+
+
+@ponds_bp.route('/ponds', methods=['PUT'])
+@token_required(manager_and_above)
+def update_many_rows(user):
+    data_in = request.get_json()
+    for d in data_in:
+        # this API only allows the status field to change
+        if len(d) == 2 and "id" in d and "status" in d:
+            pond_id = d["id"]
+            if not db.update_row(table_name, pond_id, d):
+                return jsonify({"error": f"Unable to update id {pond_id} of table {table_name}"}), 400
+
+    # if you made it here, the operation was a success
+    return jsonify({'message': f'Successful update of {table_name}'}), 200
 
 
 @ponds_bp.route('/ponds/<pond_id>', methods=['DELETE'])

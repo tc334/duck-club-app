@@ -4,7 +4,7 @@ from .. import db
 import uuid
 import jwt
 import datetime
-from .auth_wraps import token_required, admin_only, owner_and_above, all_members
+from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 
 users_bp = Blueprint('users', __name__)
 table_name = 'users'
@@ -34,7 +34,9 @@ def login():
 
 @users_bp.route('/signup', methods=['POST'])
 def signup():
+    print(f"Alpha")
     data_in = request.get_json()  # expecting keys: email, password, first_name, last_name, combo
+    print(f"Bravo:{data_in}")
 
     # Error checking
     if data_in is None:
@@ -52,9 +54,9 @@ def signup():
     # check for duplicates
     existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
     if existing is None:
-        return jsonify({"error": "Internal error"}), 400
+        return jsonify({"error": "Internal error"}), 500
     if existing:
-        return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
+        return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name}), 400
 
     # append this information to what the user put in
     data_in['public_id'] = str(uuid.uuid4())
@@ -65,17 +67,74 @@ def signup():
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
 
 
+@users_bp.route('/users', methods=['POST'])
+@token_required(owner_and_above)
+def manual_add(user):
+    data_in = request.get_json()  # expecting keys: email, first_name, last_name
+
+    # Error checking
+    if data_in is None:
+        return jsonify({'error': 'No data received'}), 400
+    if 'first_name' not in data_in or len(data_in['first_name']) < 2:
+        return jsonify({'error': 'First name missing'}), 400
+    if 'last_name' not in data_in or len(data_in['last_name']) < 2:
+        return jsonify({'error': 'Last name missing'}), 400
+    if 'email' not in data_in or len(data_in['email']) < 2:
+        return jsonify({'error': 'Email missing'}), 400
+    # check for duplicates
+    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
+    if existing is None:
+        return jsonify({"error": "Internal error"}), 400
+    if existing:
+        return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
+
+    # append this information to what the user put in
+    data_in['public_id'] = str(uuid.uuid4())
+    # here a user has been created manually, so no password is provided. Just make one up
+    data_in['password_hash'] = generate_password_hash('password', method='sha256')
+
+    db.add_row(table_name, data_in)
+
+    return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
+
+
 @users_bp.route('/users', methods=['GET'])
 @token_required(owner_and_above)
 def get_all_rows(user):
-    print(f"user={user}")
-    results = db.read_all(table_name)
+    # this SQL postfix will sort the results by member level
+    pf = "ORDER BY CASE " \
+         "WHEN level = 'administrator' then 1 " \
+         "WHEN level = 'owner' then 2 " \
+         "WHEN level = 'manager' then 3 " \
+         "WHEN level = 'member' then 4 " \
+         "END ASC"
+    results = db.read_all(table_name, post_fix=pf)
     return jsonify({"users": results}), 200
 
 
+@users_bp.route('/users/active', methods=['GET'])
+@token_required(manager_and_above)
+def get_all_active(user):
+    results = db.read_custom(f"SELECT id, first_name, last_name FROM {table_name} WHERE status = 'active' ORDER BY last_name")
+
+    if results:
+        # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
+        names_all = ["id", "first_name", "last_name"]
+        results_dict = db.format_dict(names_all, results)
+        return jsonify({"users": results_dict}), 200
+    else:
+        return jsonify({"error": f"unknown error trying to read harvest"}), 400
+
+
 @users_bp.route('/users/<public_id>', methods=['GET'])
-@token_required(owner_and_above)
+@token_required(all_members)
 def get_one_row(user, public_id):
+    # members can only read their own info. owners can read anything
+    if not (user["level"] == "owner" or
+            user["level"] == "administrator" or
+            user["public_id"] == public_id):
+        return jsonify({"error": f"You are not allowed to make this change to {table_name}"}), 400
+
     result = db.read_custom(f"SELECT * FROM {table_name} WHERE public_id='{public_id}'")
 
     if result and len(result) == 1:
@@ -85,16 +144,25 @@ def get_one_row(user, public_id):
 
 
 @users_bp.route('/users/<public_id>', methods=['PUT'])
-@token_required(owner_and_above)
+@token_required(all_members)
 def update_row(user, public_id):
     data_in = request.get_json()
 
-    # check for duplicates
-    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}' AND id != {public_id}")
-    if existing is None:
-        return jsonify({"error": "Internal error"}), 400
-    if existing:
-        return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
+    # members can only change their own first_name, last_name, email. owners can change anything
+    white_keys = ["first_name", "last_name", "email"]
+    b_non_white_keys = True if len(set(data_in.keys()) - set(white_keys)) == 0 else False
+    if not (user["level"] == "owner" or
+            user["level"] == "administrator" or
+            user["public_id"] == public_id and b_non_white_keys):
+        return jsonify({"error": f"You are not allowed to make this change to {table_name}"}), 403
+
+    # check for duplicate email if attempting to change email
+    if 'email' in data_in:
+        existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}' AND public_id != '{public_id}'")
+        if existing is None:
+            return jsonify({"error": f"Internal error in {__name__}:update_row()"}), 500
+        if existing:
+            return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
 
     if db.update_row(table_name, public_id, data_in, "public_id"):
         return jsonify({'message': f'Successful update of {table_name}'}), 200

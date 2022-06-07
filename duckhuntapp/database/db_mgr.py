@@ -1,6 +1,8 @@
 import mysql.connector
 from .tables.schema import schema
 from .tables.table import Table
+import uuid
+from werkzeug.security import generate_password_hash
 
 
 class DbManager:
@@ -12,8 +14,6 @@ class DbManager:
         self.tables = None
 
     def init_app(self, host, port, user_name, password):
-
-        print(f"host:{host}, port:{port}, user_name:{user_name}, p{password}")
 
         self.db = mysql.connector.connect(
             host=host,
@@ -114,7 +114,7 @@ class DbManager:
         print(f"Creating table: {table_name}")
         self.my_cursor.execute(f"CREATE TABLE {table_name}({self.tables[table_name].get_schema_string()})")
 
-    def nuke_and_rebuild(self, db_name):
+    def nuke_and_rebuild(self, db_name, recovery_email):
         print("Starting nuke & rebuild")
         self.delete_db(db_name)
         print("Delete Complete")
@@ -126,6 +126,16 @@ class DbManager:
             self.create_table(key)
         print(f"Created database {db_name}")
         self.list_tables(print_on=True)
+        # populate one administrator in the DB
+        admin = {
+            'first_name': 'TBD',  # admin can go update this through web app
+            'last_name': 'TBD',  # admin can go update this through web app
+            'email': recovery_email,
+            'public_id': str(uuid.uuid4()),
+            'password_hash': generate_password_hash('password', method='sha256'),
+            'level': 'administrator'
+        }
+        self.add_row('users', admin)
 
     def connect_to_existing(self, db_name):
         if self.select_db(db_name):
@@ -146,8 +156,8 @@ class DbManager:
         except mysql.connector.Error as error:
             print("Failed to add record to table: {}".format(error))
 
-    def read_all(self, table_name):
-        s = f"SELECT * FROM {table_name}"
+    def read_all(self, table_name, post_fix=""):
+        s = f"SELECT * FROM {table_name} {post_fix}"
         try:
             self.my_cursor.execute(s)
             results_tuple = self.my_cursor.fetchall()
@@ -210,3 +220,14 @@ class DbManager:
             names = [a_dict["name"] for a_dict in self.tables[table_name].table_cols]  # all names
         results_dict = {name: result[0][col] for col, name in enumerate(names)}
         return results_dict
+
+    # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
+    # if you pass the optional table-name parame in, it will automatically overwrite names_all with all columns of the
+    # table
+    def format_dict(self, names_all, results_tuple, table_name=None):
+        results_lod = []  # list of dictionaries (in other words, json)
+        if table_name is not None:
+            names_all = [a_dict["name"] for a_dict in self.tables[table_name].table_cols]
+        for row in results_tuple:
+            results_lod.append({name: row[col] for col, name in enumerate(names_all)})
+        return results_lod

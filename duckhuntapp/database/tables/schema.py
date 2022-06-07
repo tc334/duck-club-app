@@ -163,13 +163,13 @@ schema = {
             'name': 'signup_closed_auto',
             'type': 'BOOLEAN',
             'enum': None,
-            'extra': ''
+            'extra': 'NOT NULL'
         },
         {
             'name': 'signup_closed_time',
-            'type': 'TIME',
+            'type': 'TIME(0)',
             'enum': None,
-            'extra': ''
+            'extra': 'NOT NULL'
         },
         {
             'name': 'draw_method_auto',
@@ -181,25 +181,25 @@ schema = {
             'name': 'hunt_open_auto',
             'type': 'BOOLEAN',
             'enum': None,
-            'extra': ''
+            'extra': 'NOT NULL'
         },
         {
             'name': 'hunt_open_time',
-            'type': 'TIME',
+            'type': 'TIME(0)',
             'enum': None,
-            'extra': ''
+            'extra': 'NOT NULL'
         },
         {
             'name': 'hunt_close_auto',
             'type': 'BOOLEAN',
             'enum': None,
-            'extra': ''
+            'extra': 'NOT NULL'
         },
         {
             'name': 'hunt_close_time',
-            'type': 'TIME',
+            'type': 'TIME(0)',
             'enum': None,
-            'extra': ''
+            'extra': 'NOT NULL'
         }
     ],
 

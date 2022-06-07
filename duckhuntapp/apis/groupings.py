@@ -14,25 +14,27 @@ def add_row(user):
     # Error checking
     base_identifier = "file: " + __name__ + "func: " + add_row.__name__
     if data_in is None:
-        return jsonify({"error": "Input json is empty in " + base_identifier}), 400
+        return jsonify({"message": "Input json is empty in " + base_identifier}), 400
     # mandatory keys
     mandatory_keys = ('hunt_id', 'slot1_id', 'slot1_type')
     for key in mandatory_keys:
         if key not in data_in:
-            return jsonify({"error": f"Input json missing key '{key}' in " + base_identifier}), 400
+            return jsonify({"message": f"Input json missing key '{key}' in " + base_identifier}), 400
     # groups can only be added to active hunts
-    active = db.read_custom(f"SELECT id FROM hunts WHERE status != 'hunt_closed'")
+    active = db.read_custom(f"SELECT id FROM hunts WHERE status = 'signup_open' OR status = 'signup_closed'")
     if active is None:
-        return jsonify({"error": "Internal error"}), 400
+        return jsonify({"message": "Internal error"}), 400
+    print(f"Alpha:{active}")
+    print(f"Bravo{data_in}")
     if active and data_in["hunt_id"] != active[0][0]:
-        return jsonify({"error": f"Group cannot be added because hunt {data_in['hunt_id']} is not active"})
+        return jsonify({"message": f"Group cannot be added because hunt {data_in['hunt_id']} is not active"})
     # hunters must exist in users table and have active status to join a hunt
     for slot in range(1, 5):
         key = 'slot' + str(slot) + '_id'
         if key in data_in:
             temp = db.read_custom(f"SELECT status FROM users WHERE id = '{data_in[key]}'")
             if len(temp) == 0 or "inactive" in temp[0]:
-                return jsonify({"error": f"Hunter {data_in[key]} does not have active status in the club"})
+                return jsonify({"message": f"Hunter {data_in[key]} does not have active status in the club"})
     # members can only create groupings for themselves
     if user['level'] == "member":
         user_id = db.read_custom(f"SELECT id FROM users WHERE public_id = '{user['public_id']}'")
@@ -47,7 +49,7 @@ def add_row(user):
         if key in data_in:
             duplicate = [idx for idx, item in enumerate(existing_slot_ids) if data_in[key] in item]
             if len(duplicate) > 0:
-                return jsonify({"error": f"Hunter {data_in[key]} you are trying to add to slot {slot} is already in group {[existing_group_id[i] for i in duplicate]}"})
+                return jsonify({"message": f"Hunter {data_in[key]} you are trying to add to slot {slot} is already in group {[existing_group_id[i] for i in duplicate]}"})
 
     # Input passes criteria - write to database
     db.add_row(table_name, data_in)

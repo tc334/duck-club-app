@@ -11,9 +11,8 @@ def main_index():
 
 
 @main.route('/nuke_db')
-@token_required(admin_only)
 def nuke():
-    db.nuke_and_rebuild(current_app.config["SQL_DB_NAME"])
+    db.nuke_and_rebuild(current_app.config["SQL_DB_NAME"], current_app.config["SQL_ADMIN_EMAIL"])
     return "Database nuked!"
 
 

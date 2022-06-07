@@ -56,10 +56,22 @@ def update_harvest(user):
 
 
 @harvests_bp.route('/harvests', methods=['GET'])
-@token_required(admin_only)
+@token_required(manager_and_above)
 def get_all_rows(user):
-    results = db.read_all(table_name)
-    return jsonify({"harvests": results}), 200
+    # results = db.read_all(table_name)  # original
+    results = db.read_custom(f"SELECT harvest.id, harvest.count, birds.name, hunts.hunt_date, ponds.name FROM {table_name} "
+                             f"JOIN birds ON harvest.bird_id=birds.id "
+                             f"JOIN groupings ON harvest.group_id=groupings.id "
+                             f"JOIN hunts ON hunts.id=groupings.hunt_id "
+                             f"JOIN ponds ON groupings.pond_id=ponds.id")
+
+    if results:
+        # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
+        names_all = ["id", "count", "bird", "hunt_date", "pond_name"]
+        results_dict = db.format_dict(names_all, results)
+        return jsonify({"harvests": results_dict}), 200
+    else:
+        return jsonify({"error": f"unknown error trying to read harvest"}), 400
 
 
 @harvests_bp.route('/harvests/<harvest_id>', methods=['GET'])
