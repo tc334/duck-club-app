@@ -1,14 +1,20 @@
 // functions, constants imported from other javascript files
 import { decode_jwt, populate_aside } from "./common_funcs.js";
+import u_pre from "./views/u_pre.js";
 import u_profile from "./views/u_profile.js";
 import m_hunts from "./views/m_hunts.js";
 import m_add from "./views/m_add.js";
+import m_groupings from "./views/m_groupings.js";
 import m_availability from "./views/m_availability.js";
 import m_harvest from "./views/m_harvest.js";
 import o_properties from "./views/o_properties.js";
 import o_members from "./views/o_members.js";
 import o_birds from "./views/o_birds.js";
 import o_ponds from "./views/o_ponds.js";
+import a_hunts from "./views/a_hunts.js";
+import a_groupings from "./views/a_groupings.js";
+import live_hunt from "./views/live_hunt.js";
+import s_hunters from "./views/s_hunters.js";
 
 // only do this once
 const jwt = localStorage.getItem("token");
@@ -16,14 +22,28 @@ if (!jwt) {
   // If there isn't a JWT present, kick user back to login
   location.href = "login.html";
 }
-const user_level = decode_jwt(jwt);
-populate_aside(user_level);
 
 const router = async () => {
   const routes = [
     {
       path: "/",
-      view: () => console.log("Viewing home"),
+      view: u_pre,
+    },
+    {
+      path: "/#nav_setup",
+      view: u_pre,
+    },
+    {
+      path: "#nav_live",
+      view: live_hunt,
+    },
+    {
+      path: "#nav_stats",
+      view: s_hunters,
+    },
+    {
+      path: "#u_pre",
+      view: u_pre,
     },
     {
       path: "#u_profile",
@@ -36,6 +56,10 @@ const router = async () => {
     {
       path: "#m_add",
       view: m_add,
+    },
+    {
+      path: "#m_groupings",
+      view: m_groupings,
     },
     {
       path: "#m_availability",
@@ -60,6 +84,18 @@ const router = async () => {
     {
       path: "#o_birds",
       view: o_birds,
+    },
+    {
+      path: "#a_hunts",
+      view: a_hunts,
+    },
+    {
+      path: "#a_groupings",
+      view: a_groupings,
+    },
+    {
+      path: "#s_hunters",
+      view: s_hunters,
     },
   ];
 

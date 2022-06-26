@@ -203,6 +203,15 @@ class DbManager:
             print("Failed to update record: {}".format(error))
             return False
 
+    def update_custom(self, my_sql_insert_query):
+        try:
+            self.my_cursor.execute(my_sql_insert_query)
+            self.db.commit()
+            return True
+        except mysql.connector.Error as error:
+            print("Failed to execute custom update: {}".format(error))
+            return False
+
     def del_row(self, table_name, row_id, id_field="id"):
         sql_delete_query = f"DELETE from {table_name} where {id_field} = '{row_id}'"
         try:

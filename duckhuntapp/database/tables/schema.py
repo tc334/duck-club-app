@@ -94,10 +94,28 @@ schema = {
             'extra': ''
         },
         {
-            'name': 'harvest_ave',
+            'name': 'harvest_update_time',
+            'type': 'TIME(0)',
+            'enum': None,
+            'extra': 'DEFAULT 0'
+        },
+        {
+            'name': 'num_hunters',
+            'type': 'INT',
+            'enum': None,
+            'extra': 'DEFAULT 0'
+        },
+        {
+            'name': 'harvest_ave_ducks',
             'type': 'FLOAT',
             'enum': None,
-            'extra': ''
+            'extra': 'DEFAULT 0'
+        },
+        {
+            'name': 'harvest_ave_non',
+            'type': 'FLOAT',
+            'enum': None,
+            'extra': 'DEFAULT 0'
         }
     ],
 

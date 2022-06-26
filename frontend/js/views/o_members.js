@@ -4,6 +4,8 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
+  populate_aside,
+  decode_jwt,
 } from "../common_funcs.js";
 
 var jwt_global;
@@ -97,6 +99,9 @@ export default class extends AbstractView {
 
     // check for reload message; if exists, display
     reloadMessage();
+
+    const user_level = decode_jwt(jwt);
+    populate_aside(user_level);
 
     // First step is to pull data from DB
     const route = base_uri + "/" + subroute;

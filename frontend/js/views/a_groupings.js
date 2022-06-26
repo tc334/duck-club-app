@@ -4,17 +4,15 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  decode_jwt,
   populate_aside,
+  decode_jwt,
 } from "../common_funcs.js";
 
 var jwt_global;
 var db_data;
-var db_data_ponds;
-var db_data_birds;
-const subroute = "harvests";
-const singular = "harvest";
-const plural = "harvests";
+const subroute = "groupings";
+const singular = "grouping";
+const plural = "groupings";
 
 export default class extends AbstractView {
   constructor() {
@@ -24,43 +22,23 @@ export default class extends AbstractView {
   async getHtml() {
     return (
       `<div class="reload-message"></div>
-    <div id="harvest-filter-container">
-      <h1 class="heading-primary">filters</h1>
-      <div class="harvest-filter">
-        <div class="filter-date">
-          <h2 class="heading-secondary">Date</h2>
-          <div id="most-recent">
-            <input type="checkbox" id="inp-mostrecent">
-            <label for="inp-mostrecent">most recent hunt</label>
-          </div>
-          <div class="harvest-date">
-            <input type="date" id="inp-date">
-          </div>
-        </div>
-        <div class="filter-pond">
-          <h2 class="heading-secondary">Pond</h2>
-          <select id="select-pond">
-            <option value="">All</option>
-          </select>
-        </div>
-        <button class="btn--form" id="btn-filter">Apply</button>
-      </div>
-    </div>
-    <h1 class="heading-primary">harvests</h1>
-    <table id="` +
-      singular +
-      `-table">
+    <h1 class="heading-primary">groups</h1>
+    <table id="data-table">
       <tr>
         <th>id</th>
-        <th>date</th>
+        <th>hunt</th>
         <th>pond</th>
-        <th>group id</th>
-        <th>bird</th>
-        <th>count</th>
+        <th>slot 1</th>
+        <th>slot 2</th>
+        <th>slot 3</th>
+        <th>slot 4</th>
+        <th>#</th>
+        <th>duck</th>
+        <th>non</th>
         <th>actions</th>
       </tr>
     </table>
-    
+
     <!-- EDIT USER FORM -->
     <h1 class="heading-primary">add/edit ` +
       singular +
@@ -69,31 +47,87 @@ export default class extends AbstractView {
       <div class="form-data">
         <label for="` +
       singular +
-      `-id">Harvest ID</label>
+      `-id">Group ID</label>
         <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
     
-        <label for="inp-groupid">Group ID</label>
+        <label for="inp-hunt-id">hunt ID</label>
         <input
-          id="inp-groupid"
+          id="inp-hunt-id"
           type="number"
-          name="group_id"
-        />
-    
-        <label for="select-bird">Bird</label>
-        <select id="select-bird" name="bird_id" required>
-          <option value="">Select one</option>
-        </select>
-    
-        <label for="inp-count">Count</label>
-        <input
-          id="inp-count"
-          type="number"
-          name="count"
+          name="hunt_id"
           required
         />
-    
+
+        <label for="inp-pon-id">pond ID</label>
+        <input
+          id="inp-pond-id"
+          type="number"
+          name="pond_id"
+        />
+
+        <label for="select-slot1type">slot 1 type</label>
+        <select id="select-slot1type" name="slot1_type" required>
+          <option value="open">open</option>
+          <option value="member">member</option>
+          <option value="guest">guest</option>
+          <option value="invitation">invitation</option>
+        </select>
+
+        <label for="inp-slot1-id">slot 1 ID</label>
+        <input
+          id="inp-slot1-id"
+          type="number"
+          name="slot1_id"
+          required
+        />
+
+        <label for="select-slot2type">slot 2 type</label>
+        <select id="select-slot2type" name="slot2_type">
+          <option value="open">open</option>
+          <option value="member">member</option>
+          <option value="guest">guest</option>
+          <option value="invitation">invitation</option>
+        </select>
+
+        <label for="inp-slot2-id">slot 2 ID</label>
+        <input
+          id="inp-slot2-id"
+          type="number"
+          name="slot2_id"
+        />
+
+        <label for="select-slot3type">slot 3 type</label>
+        <select id="select-slot3type" name="slot3_type">
+          <option value="open">open</option>
+          <option value="member">member</option>
+          <option value="guest">guest</option>
+          <option value="invitation">invitation</option>
+        </select>
+
+        <label for="inp-slot3-id">slot 3 ID</label>
+        <input
+          id="inp-slot3-id"
+          type="number"
+          name="slot3_id"
+        />
+
+        <label for="select-slot4type">slot 4 type</label>
+        <select id="select-slot4type" name="slot4_type">
+          <option value="open">open</option>
+          <option value="member">member</option>
+          <option value="guest">guest</option>
+          <option value="invitation">invitation</option>
+        </select>
+
+        <label for="inp-slot4-id">slot 4 ID</label>
+        <input
+          id="inp-slot4-id"
+          type="number"
+          name="slot4_id"
+        />
+
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>
           <button class="btn--form" id="btn-update" disabled>Update</button>
@@ -123,47 +157,11 @@ export default class extends AbstractView {
       "GET",
       null,
       (response_full_json) => {
-        if (response_full_json[subroute]) {
-          db_data = response_full_json[subroute];
-          // For this page, we also need to have the ponds db
-          const route_2 = base_uri + "/" + "ponds";
-          callAPI(
-            jwt,
-            route_2,
-            "GET",
-            null,
-            (response_full_json) => {
-              if (response_full_json["ponds"]) {
-                db_data_ponds = response_full_json["ponds"];
-                // For this page, we also need to have the birds db
-                const route_3 = base_uri + "/" + "birds";
-                callAPI(
-                  jwt,
-                  route_3,
-                  "GET",
-                  null,
-                  (response_full_json) => {
-                    if (response_full_json["birds"]) {
-                      db_data_birds = response_full_json["birds"];
-                      console.log(db_data);
-                      // now, only once harvests, ponds, & birds are successfully loaded, can we call the action
-                      populateTable(db_data);
-                      populatePondListBox();
-                      populateBirdListBox();
-                    } else {
-                      //console.log(data);
-                    }
-                  },
-                  displayMessageToUser
-                );
-              } else {
-                //console.log(data);
-              }
-            },
-            displayMessageToUser
-          );
+        if (response_full_json[plural]) {
+          db_data = response_full_json[plural];
+          populateTable(db_data);
         } else {
-          //console.log(data);
+          // ?
         }
       },
       displayMessageToUser
@@ -185,13 +183,9 @@ export default class extends AbstractView {
       const formData = new FormData(this);
 
       var object = {};
-      formData.forEach((value, key) => (object[key] = value));
-
-      // for birds, we need to extract the bird["id"] from what we currently have, which is the bird["name"]
-      const searchResult = db_data_birds.filter(function (bird) {
-        return bird["name"] === object["bird_id"];
-      })[0]["id"];
-      object["bird_id"] = searchResult;
+      formData.forEach((value, key) => {
+        if (value != null && value.length > 0) object[key] = value;
+      });
 
       // now we can stringify the json just like we do on the other views
       var json = JSON.stringify(object);
@@ -213,7 +207,12 @@ export default class extends AbstractView {
         );
       } else if (e.submitter.id == "btn-update") {
         // attach the primary key (id) to the json & send at PUT instead of POST
-        const route = base_uri + "/" + subroute;
+        const route =
+          base_uri +
+          "/" +
+          subroute +
+          "/" +
+          document.getElementById(singular + "-id").value;
 
         callAPI(
           jwt,
@@ -233,7 +232,7 @@ export default class extends AbstractView {
 }
 
 function populateTable(db_data) {
-  var table = document.getElementById(singular + "-table");
+  var table = document.getElementById("data-table");
 
   for (var i = 0; i < db_data.length; i++) {
     var tr = table.insertRow(-1);
@@ -241,34 +240,44 @@ function populateTable(db_data) {
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = db_data[i]["id"];
 
-    // date
     var tabCell = tr.insertCell(-1);
-    const thisDate = new Date(db_data[i]["hunt_date"]);
+    tabCell.innerHTML = db_data[i]["hunt_id"];
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["pond_id"];
+
+    // slot 1
+    var tabCell = tr.insertCell(-1);
     tabCell.innerHTML =
-      thisDate.getFullYear() +
-      "-" +
-      thisDate.getMonth() +
-      "-" +
-      thisDate.getDay();
+      db_data[i]["slot1_type"] + " - " + db_data[i]["slot1_id"];
 
-    // pond
+    // slot 2
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["pond_name"];
+    tabCell.innerHTML =
+      db_data[i]["slot2_type"] + " - " + db_data[i]["slot2_id"];
 
-    // group id
+    // slot 3
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["group_id"];
+    tabCell.innerHTML =
+      db_data[i]["slot3_type"] + " - " + db_data[i]["slot3_id"];
 
-    // bird
+    // slot 4
     var tabCell = tr.insertCell(-1);
-    tabCell.className += "tr--bird-name";
-    tabCell.innerHTML = db_data[i]["bird"];
+    tabCell.innerHTML =
+      db_data[i]["slot4_type"] + " - " + db_data[i]["slot4_id"];
 
-    // count
+    // # hunters
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["count"];
+    tabCell.innerHTML = db_data[i]["num_hunters"];
 
-    // action
+    // duck average
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["harvest_ave_ducks"];
+
+    // duck average
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["harvest_ave_non"];
+
     var tabCell = tr.insertCell(-1);
 
     // Edit button
@@ -287,27 +296,6 @@ function populateTable(db_data) {
     btn_del.className += "btn--action";
     btn_del.addEventListener("click", delMember);
     tabCell.appendChild(btn_del);
-  }
-}
-
-function populateBirdListBox() {
-  var select_property = document.getElementById("select-bird");
-  for (var i = 0; i < db_data_birds.length; i++) {
-    var option_new = document.createElement("option");
-    option_new.value = db_data_birds[i]["name"];
-    option_new.innerHTML = db_data_birds[i]["name"];
-    option_new.className += "tr--bird-name";
-    select_property.appendChild(option_new);
-  }
-}
-
-function populatePondListBox() {
-  var select_property = document.getElementById("select-pond");
-  for (var i = 0; i < db_data_ponds.length; i++) {
-    var option_new = document.createElement("option");
-    option_new.value = db_data_ponds[i]["name"];
-    option_new.innerHTML = db_data_ponds[i]["name"];
-    select_property.appendChild(option_new);
   }
 }
 
@@ -340,9 +328,19 @@ function populateEdit(e) {
   document.getElementById("btn-add").disabled = true;
 
   document.getElementById(singular + "-id").value = db_data[i]["id"];
-  document.getElementById("inp-groupid").value = db_data[i]["group_id"];
-  document.getElementById("inp-count").value = db_data[i]["count"];
-  document.getElementById("select-bird").value = db_data[i]["bird"];
+  document.getElementById("inp-hunt-id").value = db_data[i]["hunt_id"];
+  document.getElementById("inp-pond-id").value = db_data[i]["pond_id"];
+  document.getElementById("select-slot1type").value = db_data[i]["slot1_type"];
+  document.getElementById("inp-slot1-id").value = db_data[i]["slot1_id"];
+
+  document.getElementById("select-slot2type").value = db_data[i]["slot2_type"];
+  document.getElementById("inp-slot2-id").value = db_data[i]["slot2_id"];
+
+  document.getElementById("select-slot3type").value = db_data[i]["slot3_type"];
+  document.getElementById("inp-slot3-id").value = db_data[i]["slot3_id"];
+
+  document.getElementById("select-slot4type").value = db_data[i]["slot4_type"];
+  document.getElementById("inp-slot4-id").value = db_data[i]["slot4_id"];
 
   document.getElementById("add-edit-form").scrollIntoView();
 }

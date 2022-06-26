@@ -6,7 +6,8 @@ import {
   displayMessageToUser,
   formatDate,
   dateConverter,
-  monthConverter,
+  populate_aside,
+  decode_jwt,
 } from "../common_funcs.js";
 
 var jwt_global;
@@ -127,6 +128,9 @@ export default class extends AbstractView {
     // check for reload message; if exists, display
     reloadMessage();
 
+    const user_level = decode_jwt(jwt);
+    populate_aside(user_level);
+
     // set the date in the add/edit form to today
     setDefaultDate();
 
@@ -219,8 +223,7 @@ export default class extends AbstractView {
             location.reload();
           },
           (data) => {
-            console.log(data);
-            displayMessageToUser(data["error"]);
+            displayMessageToUser(data);
           }
         );
       }

@@ -62,6 +62,12 @@ body {
   margin: 0 auto;
 }
 
+/*
+#div-main {
+  align-items: center;
+}
+*/
+
 .header {
   display: flex;
   justify-content: space-between;
@@ -206,7 +212,7 @@ table {
 td,
 th {
   border: 1px solid #2f2504;
-  padding: 1rem 1.6rem;
+  padding: 0.5rem 1rem;
 }
 
 th {
@@ -282,6 +288,7 @@ caption {
   font-size: 1.6rem;
   font-weight: 700;
   font-family: "Lora", serif;
+  letter-spacing: 0.05rem;
   background-color: #594e36;
   color: #fff;
   padding: 0.4rem 0.8rem;
@@ -289,6 +296,12 @@ caption {
   border: 2px solid #594e36;
   border-radius: 4px;
   transition: all 0.4s;
+}
+
+.btn--cntr {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 button:disabled {
@@ -437,10 +450,18 @@ manage hunts
   font-size: 1.6rem;
 }
 
+.opt-pond,
+.sel-pond-group {
+  font-family: inherit;
+  color: #2f2504;
+  text-align: center;
+}
+
 /* 
 manual add
 */
-#hunt-identifier {
+#hunt-identifier,
+#hunt-status {
   font-size: 1.6rem;
   text-align: center;
   margin-bottom: 2rem;
@@ -457,4 +478,361 @@ manual add
   display: block;
   margin: 0 auto;
   text-align: center;
+}
+
+.hunters-column {
+  width: 20rem;
+  white-space: pre;
+  line-height: 1.5;
+}
+
+.btn--groupings-table {
+  display: block;
+  width: 7rem;
+  margin: 0 auto;
+}
+
+.btn--groupings-table:nth-child(2) {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+#div-main > button {
+  display: block;
+  margin: 0 auto;
+}
+
+/*
+  Groupings modal
+*/
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0, 0, 0); /* Fallback color */
+  background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% from the top and centered */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 30%; /* Could be more or less, depending on screen size */
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.modal-message {
+  font-size: 1.6rem;
+  text-align: center;
+}
+
+.modal-select {
+  display: block;
+  margin: 0 auto;
+  margin-top: 2rem;
+  font-family: initial;
+  font-size: 2rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+}
+
+.opt-group-merge2[disabled] {
+  display: none;
+}
+
+.tr--pond-for-group {
+  width: 16rem;
+}
+
+.table-emphasize {
+  border-width: 5px;
+}
+
+.table-emphasize tr td {
+  background-color: #d0ddd7;
+  font-weight: 700;
+}
+
+/*
+Pre Hunt
+*/
+.div-actions-label {
+  font-size: 1.8rem;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+.actions-button-holder {
+  text-align: center;
+  padding-bottom: 5rem;
+  border-bottom: 2px solid #2f2504;
+  margin-bottom: 5rem;
+}
+
+.prehunt-summary-cell {
+  background-color: #7e846b !important;
+  color: #fff;
+  font-weight: 500;
+  text-transform: capitalize;
+  text-align: left;
+  font-size: 1.8rem;
+  /*
+  border: 3px solid #2f2504;
+  */
+  border: 2px solid #eee;
+}
+
+.prehunt-summary-cell-left {
+  text-align: right !important;
+  text-transform: uppercase !important;
+  font-size: 1.4rem;
+}
+
+/*
+leaderboard
+*/
+
+#leaderboard-container,
+#harvest-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2rem;
+  margin: 0 auto;
+}
+
+#leaderboard-container {
+  max-width: 40rem;
+  margin-bottom: 8rem;
+}
+
+#harvest-detail {
+  max-width: 25rem;
+  margin-bottom: 2rem;
+}
+
+.leaderboard-entry,
+.section-harvest {
+  display: flex;
+  justify-content: space-between;
+  background-color: #7e846b;
+  color: #fff;
+  padding: 1rem 1rem;
+  border-radius: 3px;
+  border: none;
+  align-items: center;
+  gap: 0rem;
+  flex-grow: 1;
+}
+
+.leaderboard-entry {
+  cursor: pointer;
+}
+
+.leaderboard-span,
+.harvest-detail-name {
+  font-size: 2rem;
+  text-align: left;
+}
+
+.leaderboard-duckcount,
+.harvest-detail-count {
+  font-weight: 700;
+  font-size: 2.4rem;
+}
+
+.fixed-width-span {
+  display: inline-block;
+  width: 3rem;
+  text-align: right;
+}
+
+.pond-name-container {
+  width: 12rem;
+  text-align: left;
+}
+
+.leaderboard-table th,
+.leaderboard-table tr {
+  border-bottom: 2px solid #2f2504;
+  padding: 0.5rem 1rem;
+}
+
+.leaderboard-table td {
+  background-color: #ddd !important;
+}
+
+#leaderboard-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.4rem;
+  align-items: flex-end;
+  gap: 1rem;
+  text-align: center;
+  font-style: italic;
+  padding-right: 0.5rem;
+}
+
+#leaderboard-header span:first-child {
+  display: inline-block;
+  width: 14rem;
+  padding-left: 1rem;
+  text-align: left;
+}
+
+.pond-name {
+  position: relative;
+}
+
+.limit {
+  position: absolute;
+  font-size: 1.4rem;
+  left: 105%;
+  top: -5%;
+  background-color: yellow;
+  color: black;
+  border-radius: 50%;
+  font-family: "Lora", serif;
+  font-weight: 700;
+  padding: 0.4rem 0.5rem;
+}
+
+/*
+leaderboard aside for my harvest
+*/
+.myharvest-row {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.myharvest-name,
+#myharvest-newname {
+  width: 18rem;
+  font-size: 1.8rem;
+}
+
+.myharvest-name {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+#myharvest-newname {
+  margin-right: 1rem;
+  font-family: inherit;
+  text-align: center;
+}
+
+.myharvest-count {
+  text-align: right;
+  width: 4rem;
+  font-family: inherit;
+  font-size: 1.6rem;
+  font-weight: 500;
+  padding-top: 0.1rem;
+  padding-bottom: 0.1rem;
+}
+
+.heading-minor {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+#myharvest-add-heading {
+  border-top: 1px solid #2f2504;
+  padding-top: 2rem;
+  padding-bottom: 1rem;
+}
+
+#myharvest-newrow {
+  margin-bottom: 3rem;
+}
+
+/*
+Stats
+*/
+#form-filter {
+  margin-bottom: 4rem;
+}
+
+.filter-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.filter-date {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.filter-container li:not(:last-child) {
+  margin-bottom: 0.4rem;
+}
+
+.filter-list {
+  list-style: none;
+  font-size: 1.8rem;
+  text-transform: capitalize;
+}
+
+.inp-date-filter {
+  margin-left: 2rem;
+}
+
+.filter-date div label {
+  display: inline-block;
+  font-size: 1.6rem;
+  text-transform: capitalize;
+  vertical-align: middle;
+  height: 100%;
+}
+
+.filter-date div input {
+  font-family: inherit;
+}
+
+.filter-container li {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.filter-container section {
+  padding: 1rem 2rem;
+  width: 24rem;
+}
+
+.filter-container section:first-child {
+  border-right: 1px solid #2f2504;
+}
+
+.cell-fixed-width {
+  font-family: "Courier New", Courier, monospace;
+  font-weight: 800;
 }

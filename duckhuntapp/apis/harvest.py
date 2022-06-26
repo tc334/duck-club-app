@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
+import pytz
 from .. import db
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 
@@ -6,15 +8,24 @@ harvests_bp = Blueprint('harvests', __name__)
 table_name = 'harvest'
 
 
+def central_time_now():
+    IST = pytz.timezone('US/Central')
+    datetime_ist = datetime.now(IST)
+    result = datetime_ist.strftime('%H:%M')
+    print(f"Current time:{result}")
+    return result
+
+
 @harvests_bp.route('/harvests', methods=['POST', 'PUT'])
 @token_required(all_members)
 def update_harvest(user):
+    # data_in["count"] and ["bird_id"] can be arrays. They have to be the same length
     data_in = request.get_json()
 
     # Error checking
     base_identifier = "file: " + __name__ + "func: " + update_harvest.__name__
     if data_in is None:
-        return jsonify({"error": "Input json is empty in " + base_identifier}), 400
+        return jsonify({"message": "Input json is empty in " + base_identifier}), 400
     # mandatory keys
     mandatory_keys = ('group_id', 'count', 'bird_id')
     for key in mandatory_keys:
@@ -35,39 +46,57 @@ def update_harvest(user):
             hunt_status = result[0][0]
             hunt_id = result[0][1]
         else:
-            return jsonify({"error": f"Could not find a hunt associated with group {data_in['group_id']}"})
+            return jsonify({"message": f"Could not find a hunt associated with group {data_in['group_id']}"}), 400
         if hunt_status != 'hunt_open':
-            return jsonify({"error": f"Member cannot modify harvest for hunt {hunt_id} because hunt status is {hunt_status}"})
+            return jsonify({"message": f"Member cannot modify harvest for hunt {hunt_id} because hunt status is {hunt_status}"}), 400
+
+    # make constants into length 1 arrays
+    if type(data_in["count"]) is int or type(data_in["count"]) is str:
+        data_in["count"] = (data_in["count"],)
+        data_in["bird_id"] = (data_in["bird_id"],)
 
     # check to see if a record already exists
-    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE group_id = {data_in['group_id']} AND bird_id = {data_in['bird_id']}")
-    if existing is None:
-        return jsonify({"error": "Internal error"}), 400
-    if existing:
-        harvest_id = existing[0][0]
-        print(f"harvest_id={harvest_id}")
-        if db.update_row(table_name, harvest_id, data_in):
-            return jsonify({'message': f"Successful update of id {harvest_id} in {table_name}"}), 200
+    for idxBird in range(len(data_in['count'])):
+        existing = db.read_custom(f"SELECT id FROM {table_name} WHERE group_id = {data_in['group_id']} AND bird_id = {data_in['bird_id'][idxBird]}")
+        if existing is None:
+            return jsonify({"message": "Internal error"}), 500
+        if existing:
+            harvest_id = existing[0][0]
+            update_dict = {
+                "count": data_in["count"][idxBird],
+                "bird_id": data_in["bird_id"][idxBird]
+            }
+            if not db.update_row(table_name, harvest_id, update_dict):
+                return jsonify({"message": f"Unable to update id {harvest_id} of table {table_name}"}), 500
         else:
-            return jsonify({"error": f"Unable to update id {harvest_id} of table {table_name}"}), 400
+            add_dict = {
+                "group_id": data_in["group_id"],
+                "count": data_in["count"][idxBird],
+                "bird_id": data_in["bird_id"][idxBird]
+            }
+            db.add_row(table_name, add_dict)
+            harvest_id = "new"  # this is to indicate that we just did a POST not a PUT. I don't want to waste a call back to the DB just to get the new row that was just added
+
+    # set the group's last update time to now
+    if db.update_row("groupings", data_in["group_id"], {"harvest_update_time": central_time_now()}):
+        return jsonify({'message': f"Successful update of id {harvest_id} in {table_name}"}), 200
     else:
-        db.add_row(table_name, data_in)
-        return jsonify({"message": "New entry successfully added to " + table_name}), 201
+        return jsonify({"message": f"Unable to update id {harvest_id} of table {table_name}"}), 500
 
 
 @harvests_bp.route('/harvests', methods=['GET'])
 @token_required(manager_and_above)
 def get_all_rows(user):
     # results = db.read_all(table_name)  # original
-    results = db.read_custom(f"SELECT harvest.id, harvest.count, birds.name, hunts.hunt_date, ponds.name FROM {table_name} "
+    results = db.read_custom(f"SELECT harvest.id, harvest.group_id, harvest.count, birds.name, hunts.hunt_date, ponds.name FROM {table_name} "
                              f"JOIN birds ON harvest.bird_id=birds.id "
                              f"JOIN groupings ON harvest.group_id=groupings.id "
                              f"JOIN hunts ON hunts.id=groupings.hunt_id "
                              f"JOIN ponds ON groupings.pond_id=ponds.id")
 
-    if results:
+    if results is not None:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
-        names_all = ["id", "count", "bird", "hunt_date", "pond_name"]
+        names_all = ["id", "group_id", "count", "bird", "hunt_date", "pond_name"]
         results_dict = db.format_dict(names_all, results)
         return jsonify({"harvests": results_dict}), 200
     else:

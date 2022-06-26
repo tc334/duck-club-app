@@ -4,9 +4,9 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  formatDate,
+  populate_aside,
   dateConverter,
-  monthConverter,
+  decode_jwt,
 } from "../common_funcs.js";
 
 var jwt_global;
@@ -41,6 +41,9 @@ export default class extends AbstractView {
     // check for reload message; if exists, display
     reloadMessage();
 
+    const user_level = decode_jwt(jwt);
+    populate_aside(user_level);
+
     // First step is to pull data from DB
     const route = base_uri + "/users/active";
     callAPI(
@@ -51,7 +54,7 @@ export default class extends AbstractView {
       (response_full_json) => {
         if (response_full_json[subroute]) {
           db_data = response_full_json[subroute];
-          const route2 = base_uri + "/hunts/signup_open";
+          const route2 = base_uri + "/hunts/signup_open_or_closed";
           callAPI(
             jwt,
             route2,
@@ -65,10 +68,10 @@ export default class extends AbstractView {
                   document.getElementById("hunt-identifier").innerHTML =
                     "The hunt on " +
                     dateConverter(db_data_hunt[0]["hunt_date"], true) +
-                    " is open for signup";
+                    " can have members added to it";
                 } else {
                   document.getElementById("hunt-identifier").innerHTML =
-                    "There are no hunts currently open for signup";
+                    "There are no hunts currently in a state where you can add members";
                   document.getElementById("btn-add").style.visibility =
                     "hidden";
                 }
@@ -108,8 +111,6 @@ export default class extends AbstractView {
         "POST",
         json,
         (data) => {
-          console.log("Alpha");
-          console.log(data);
           localStorage.setItem("previous_action_message", data["message"]);
           window.scrollTo(0, 0);
           location.reload();

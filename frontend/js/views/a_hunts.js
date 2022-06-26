@@ -4,17 +4,16 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  decode_jwt,
   populate_aside,
+  dateConverter,
+  decode_jwt,
 } from "../common_funcs.js";
 
 var jwt_global;
 var db_data;
-var db_data_ponds;
-var db_data_birds;
-const subroute = "harvests";
-const singular = "harvest";
-const plural = "harvests";
+const subroute = "hunts";
+const singular = "hunt";
+const plural = "hunts";
 
 export default class extends AbstractView {
   constructor() {
@@ -24,43 +23,23 @@ export default class extends AbstractView {
   async getHtml() {
     return (
       `<div class="reload-message"></div>
-    <div id="harvest-filter-container">
-      <h1 class="heading-primary">filters</h1>
-      <div class="harvest-filter">
-        <div class="filter-date">
-          <h2 class="heading-secondary">Date</h2>
-          <div id="most-recent">
-            <input type="checkbox" id="inp-mostrecent">
-            <label for="inp-mostrecent">most recent hunt</label>
-          </div>
-          <div class="harvest-date">
-            <input type="date" id="inp-date">
-          </div>
-        </div>
-        <div class="filter-pond">
-          <h2 class="heading-secondary">Pond</h2>
-          <select id="select-pond">
-            <option value="">All</option>
-          </select>
-        </div>
-        <button class="btn--form" id="btn-filter">Apply</button>
-      </div>
-    </div>
-    <h1 class="heading-primary">harvests</h1>
-    <table id="` +
-      singular +
-      `-table">
+    <h1 class="heading-primary">hunts</h1>
+    <table id="data-table">
       <tr>
         <th>id</th>
         <th>date</th>
-        <th>pond</th>
-        <th>group id</th>
-        <th>bird</th>
-        <th>count</th>
+        <th>status</th>
+        <th>auto CS</th>
+        <th>SC time</th>
+        <th>auto draw</th>
+        <th>auto OH</th>
+        <th>HO time</th>
+        <th>auto CH</th>
+        <th>hunt CT</th>
         <th>actions</th>
       </tr>
     </table>
-    
+
     <!-- EDIT USER FORM -->
     <h1 class="heading-primary">add/edit ` +
       singular +
@@ -69,33 +48,30 @@ export default class extends AbstractView {
       <div class="form-data">
         <label for="` +
       singular +
-      `-id">Harvest ID</label>
+      `-id">Hunt ID</label>
         <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
     
-        <label for="inp-groupid">Group ID</label>
+        <label for="inp-hunt-date">hunt date</label>
         <input
-          id="inp-groupid"
-          type="number"
-          name="group_id"
-        />
-    
-        <label for="select-bird">Bird</label>
-        <select id="select-bird" name="bird_id" required>
-          <option value="">Select one</option>
-        </select>
-    
-        <label for="inp-count">Count</label>
-        <input
-          id="inp-count"
-          type="number"
-          name="count"
+          id="inp-hunt-date"
+          type="date"
+          name="hunt_date"
           required
         />
-    
+
+        <label for="select-status">Status</label>
+        <select id="select-status" name="status" required>
+          <option value="signup_open">signup open</option>
+          <option value="signup_closed">signup closed</option>
+          <option value="draw_complete">draw complete</option>
+          <option value="hunt_open">hunt open</option>
+          <option value="hunt_closed">hunt closed</option>
+        </select>
+
         <span class="button-holder">
-          <button class="btn--form" id="btn-add">Add</button>
+          <button class="btn--form">Add</button>
           <button class="btn--form" id="btn-update" disabled>Update</button>
           <input class="btn--form" type="reset" />
         </span>
@@ -125,43 +101,7 @@ export default class extends AbstractView {
       (response_full_json) => {
         if (response_full_json[subroute]) {
           db_data = response_full_json[subroute];
-          // For this page, we also need to have the ponds db
-          const route_2 = base_uri + "/" + "ponds";
-          callAPI(
-            jwt,
-            route_2,
-            "GET",
-            null,
-            (response_full_json) => {
-              if (response_full_json["ponds"]) {
-                db_data_ponds = response_full_json["ponds"];
-                // For this page, we also need to have the birds db
-                const route_3 = base_uri + "/" + "birds";
-                callAPI(
-                  jwt,
-                  route_3,
-                  "GET",
-                  null,
-                  (response_full_json) => {
-                    if (response_full_json["birds"]) {
-                      db_data_birds = response_full_json["birds"];
-                      console.log(db_data);
-                      // now, only once harvests, ponds, & birds are successfully loaded, can we call the action
-                      populateTable(db_data);
-                      populatePondListBox();
-                      populateBirdListBox();
-                    } else {
-                      //console.log(data);
-                    }
-                  },
-                  displayMessageToUser
-                );
-              } else {
-                //console.log(data);
-              }
-            },
-            displayMessageToUser
-          );
+          populateTable(db_data);
         } else {
           //console.log(data);
         }
@@ -175,6 +115,7 @@ export default class extends AbstractView {
     myForm.addEventListener("reset", function (e) {
       document.getElementById("btn-add").disabled = false;
       document.getElementById("btn-update").disabled = true;
+      setDefaultDate();
     });
 
     // What do do on a submit
@@ -187,13 +128,19 @@ export default class extends AbstractView {
       var object = {};
       formData.forEach((value, key) => (object[key] = value));
 
-      // for birds, we need to extract the bird["id"] from what we currently have, which is the bird["name"]
-      const searchResult = db_data_birds.filter(function (bird) {
-        return bird["name"] === object["bird_id"];
-      })[0]["id"];
-      object["bird_id"] = searchResult;
-
-      // now we can stringify the json just like we do on the other views
+      // checkboxes require special handling
+      const checkbox_names = [
+        "hunt_close_auto",
+        "hunt_open_auto",
+        "signup_closed_auto",
+      ];
+      for (var i = 0; i < checkbox_names.length; i++) {
+        if (object[checkbox_names[i]] && object[checkbox_names[i]] == "on") {
+          object[checkbox_names[i]] = 1;
+        } else {
+          object[checkbox_names[i]] = 0;
+        }
+      }
       var json = JSON.stringify(object);
 
       if (e.submitter.id == "btn-add") {
@@ -213,7 +160,12 @@ export default class extends AbstractView {
         );
       } else if (e.submitter.id == "btn-update") {
         // attach the primary key (id) to the json & send at PUT instead of POST
-        const route = base_uri + "/" + subroute;
+        const route =
+          base_uri +
+          "/" +
+          subroute +
+          "/" +
+          document.getElementById(singular + "-id").value;
 
         callAPI(
           jwt,
@@ -225,7 +177,9 @@ export default class extends AbstractView {
             window.scrollTo(0, 0);
             location.reload();
           },
-          displayMessageToUser
+          (data) => {
+            displayMessageToUser(data);
+          }
         );
       }
     });
@@ -233,7 +187,7 @@ export default class extends AbstractView {
 }
 
 function populateTable(db_data) {
-  var table = document.getElementById(singular + "-table");
+  var table = document.getElementById("data-table");
 
   for (var i = 0; i < db_data.length; i++) {
     var tr = table.insertRow(-1);
@@ -241,34 +195,40 @@ function populateTable(db_data) {
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = db_data[i]["id"];
 
-    // date
     var tabCell = tr.insertCell(-1);
-    const thisDate = new Date(db_data[i]["hunt_date"]);
-    tabCell.innerHTML =
-      thisDate.getFullYear() +
-      "-" +
-      thisDate.getMonth() +
-      "-" +
-      thisDate.getDay();
+    tabCell.innerHTML = dateConverter(db_data[i]["hunt_date"], true);
 
-    // pond
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["pond_name"];
+    tabCell.innerHTML = db_data[i]["status"];
 
-    // group id
+    // auto close signup
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["group_id"];
+    tabCell.innerHTML = db_data[i]["signup_closed_auto"];
 
-    // bird
+    // signup close time
     var tabCell = tr.insertCell(-1);
-    tabCell.className += "tr--bird-name";
-    tabCell.innerHTML = db_data[i]["bird"];
+    tabCell.innerHTML = db_data[i]["signup_closed_time"];
 
-    // count
+    // auto draw
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["count"];
+    tabCell.innerHTML = db_data[i]["draw_method_auto"];
 
-    // action
+    // auto open hunt
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["hunt_open_auto"];
+
+    // hunt open time
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["hunt_open_time"];
+
+    // auto close hunt
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["hunt_close_auto"];
+
+    // hunt close time
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["hunt_close_time"];
+
     var tabCell = tr.insertCell(-1);
 
     // Edit button
@@ -287,27 +247,6 @@ function populateTable(db_data) {
     btn_del.className += "btn--action";
     btn_del.addEventListener("click", delMember);
     tabCell.appendChild(btn_del);
-  }
-}
-
-function populateBirdListBox() {
-  var select_property = document.getElementById("select-bird");
-  for (var i = 0; i < db_data_birds.length; i++) {
-    var option_new = document.createElement("option");
-    option_new.value = db_data_birds[i]["name"];
-    option_new.innerHTML = db_data_birds[i]["name"];
-    option_new.className += "tr--bird-name";
-    select_property.appendChild(option_new);
-  }
-}
-
-function populatePondListBox() {
-  var select_property = document.getElementById("select-pond");
-  for (var i = 0; i < db_data_ponds.length; i++) {
-    var option_new = document.createElement("option");
-    option_new.value = db_data_ponds[i]["name"];
-    option_new.innerHTML = db_data_ponds[i]["name"];
-    select_property.appendChild(option_new);
   }
 }
 
@@ -340,9 +279,11 @@ function populateEdit(e) {
   document.getElementById("btn-add").disabled = true;
 
   document.getElementById(singular + "-id").value = db_data[i]["id"];
-  document.getElementById("inp-groupid").value = db_data[i]["group_id"];
-  document.getElementById("inp-count").value = db_data[i]["count"];
-  document.getElementById("select-bird").value = db_data[i]["bird"];
+  // lots more to add here
+  document.getElementById("inp-hunt-date").value = dateConverter(
+    db_data[i]["hunt_date"]
+  );
+  document.getElementById("select-status").value = db_data[i]["status"];
 
   document.getElementById("add-edit-form").scrollIntoView();
 }

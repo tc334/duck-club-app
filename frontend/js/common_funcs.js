@@ -19,12 +19,6 @@ export function callAPI(jwt, route, method, body, func_success, func_fail) {
       const data = isJson ? await response.json() : null;
 
       if (!response.ok) {
-        // there are many condiditons were server will respond with helpful info
-        var err_msg_from_server = null;
-        if (data && data["error"]) {
-          err_msg_from_server = data["error"];
-        }
-
         // There are some error codes we want to take specific actions against
         if (response.status == 401) {
           //Authentication failed. Sending you back to the login page
@@ -36,13 +30,7 @@ export function callAPI(jwt, route, method, body, func_success, func_fail) {
           return Promise.reject(error);
         } else {
           // Generic error
-          const error =
-            "error " +
-            response.status +
-            ", " +
-            err_msg_from_server +
-            ", " +
-            data.message;
+          const error = "error " + response.status + ", " + data["message"];
           func_fail(error);
           return Promise.reject(error);
         }
@@ -66,11 +54,14 @@ export function decode_jwt(jwt_in, property = "level") {
 
 // Populate the aside depending on user level
 export function populate_aside(user_level) {
+  // start by clearing the aside
+  removeAllChildNodes(document.getElementById("aside-main"));
+
   // data
   const headings = ["member", "manager", "owner", "administrator"];
 
   const icons = {
-    member: ["img/clock.png", "img/shotgun.png", "img/user.png"],
+    member: ["img/clock.png", "img/user.png"],
     manager: [
       "img/cog-wheel.png",
       "img/plus.png",
@@ -84,11 +75,11 @@ export function populate_aside(user_level) {
       "img/drop.png",
       "img/bird.png",
     ],
-    administrator: ["img/cog-wheel.png"],
+    administrator: ["img/cog-wheel.png", "img/cog-wheel.png"],
   };
 
   const text = {
-    member: ["current hunt", "my hunts", "profile"],
+    member: ["pre hunt", "profile"],
     manager: [
       "manage hunt",
       "add hunter",
@@ -97,20 +88,20 @@ export function populate_aside(user_level) {
       "edit harvest",
     ],
     owner: ["members", "properties", "ponds", "birds"],
-    administrator: ["tbd"],
+    administrator: ["hunts", "groupings"],
   };
 
   const links = {
-    member: ["#u_current", "#u_myhunts", "#u_profile"],
+    member: ["#u_pre", "#u_profile"],
     manager: [
       "#m_hunts",
       "#m_add",
-      "#m_adjust",
+      "#m_groupings",
       "#m_availability",
       "#m_harvest",
     ],
     owner: ["#o_members", "#o_properties", "#o_ponds", "#o_birds"],
-    administrator: ["#a_tbd"],
+    administrator: ["#a_hunts", "#a_groupings"],
   };
 
   const idx_in = headings.indexOf(user_level);
@@ -125,6 +116,44 @@ export function populate_aside(user_level) {
       );
     }
   }
+
+  document.getElementById("aside-main").style.display = "block";
+}
+
+// Populate the alternate aside for the stats menu
+export function populate_aside_stats() {
+  // start by clearing the aside
+  removeAllChildNodes(document.getElementById("aside-main"));
+
+  // data
+  const headings = ["stats"];
+
+  const icons = {
+    stats: ["img/user.png", "img/drop.png", "img/bird.png", "img/people.png"],
+  };
+
+  const text = {
+    stats: ["by hunter", "by pond", "by bird", "club"],
+  };
+
+  const links = {
+    stats: ["#s_hunters", "#s_hunters", "#s_hunters", "#s_hunters"],
+  };
+
+  const idx_in = 1;
+
+  for (var i = 0; i < headings.length; i++) {
+    if (i <= idx_in) {
+      populateOneLevel(
+        headings[i],
+        text[headings[i]],
+        icons[headings[i]],
+        links[headings[i]]
+      );
+    }
+  }
+
+  document.getElementById("aside-main").style.display = "block";
 }
 
 function populateOneLevel(heading, text, images, links) {
@@ -228,4 +257,24 @@ export function monthConverter(month_long) {
   else if (month_long == "Nov") return "11";
   else if (month_long == "Dec") return "12";
   else return "00";
+}
+
+export function sortIndexes(test) {
+  var test_with_index = [];
+  test.forEach((element, index) => test_with_index.push([element, index]));
+  test_with_index.sort(function (left, right) {
+    return left[0] > right[0] ? -1 : 1;
+  });
+  var indexes = [];
+  //test = [];
+  for (var j in test_with_index) {
+    //test.push(test_with_index[j][0]);
+    indexes.push(test_with_index[j][1]);
+  }
+  return indexes;
+}
+
+export function round(value, precision) {
+  var multiplier = Math.pow(10, precision || 0);
+  return Math.round(value * multiplier) / multiplier;
 }
