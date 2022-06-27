@@ -8,11 +8,12 @@ import {
   round,
   removeAllChildNodes,
   sortTable,
+  dateConverter,
 } from "../common_funcs.js";
 
-const subroute = "hunters";
-const singular = "hunter";
-const plural = "hunters";
+const subroute = "ponds";
+const singular = "pond";
+const plural = "ponds";
 // table sorting functions
 const column_id_list = [
   {
@@ -88,12 +89,18 @@ export default class extends AbstractView {
             </li>
           </ul>
         </section>
+        <section class="filter-pond">
+          <label for="select-pond">Pick One For Hunt History</label>
+          <select id="select-pond" name="pond_id">
+            <option>--select pond--</option>
+          </select>
+        </section>
       </div>  
       <button class="btn--form btn--cntr" id="btn-filter-refresh">Apply</button>
     </form>
-    <h1 class="heading-primary" id="stats-heading">` +
+    <h1 class="heading-primary" id="stats-heading">stats by ` +
       singular +
-      ` stats</h1>
+      `</h1>
     <p class="sort-helper">Click on any header to sort table</p>
     <table id="data-table">
       <thead>
@@ -103,10 +110,26 @@ export default class extends AbstractView {
           <th id="col-ducks">ducks</th>
           <th id="col-non">non-ducks</th>
           <th id="col-total">total</th>
-          <th id="col-ave">ave. ducks</th>
+          <th id="col-ave">ave. ducks/hunter</th>
         </tr>
       </thead>
       <tbody id="tb-stats">
+      </tbody>
+    </table>
+    <h1 class="heading-primary" id="stats-heading-2">
+      hunt history of TBD
+    </h1>
+    <p class="sort-helper">Click on any header to sort table</p>
+    <table id="data-table-2">
+      <thead>
+        <tr>
+          <th id="col-date">date</th>
+          <th id="col-day">day</th>
+          <th id="col-ducks">ducks</th>
+          <th id="col-ave">ave. ducks/hunter</th>
+        </tr>
+      </thead>
+      <tbody id="tb-stats-2">
       </tbody>
     </table>`
     );
@@ -117,6 +140,8 @@ export default class extends AbstractView {
     reloadMessage();
 
     populate_aside_stats();
+
+    populatePondList(jwt);
 
     // What do do on a submit
     const myForm = document.getElementById("form-filter");
@@ -145,6 +170,10 @@ export default class extends AbstractView {
         (data) => {
           //console.log(data["stats"]);
           populateTable(data["stats"]);
+          prePopTab2();
+          if (data["hunt_history"]) {
+            populateTable2(data["hunt_history"]);
+          }
         },
         displayMessageToUser
       );
@@ -168,38 +197,95 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["first_name"] + " " + db_data[i]["last_name"];
+    tabCell.innerHTML = db_data[i]["pond_name"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = db_data[i]["hunts"];
+    tabCell.innerHTML = db_data[i]["num_hunts"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["ducks"], 1).toFixed(1);
+    tabCell.innerHTML = round(db_data[i]["num_ducks"], 1).toFixed(0);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(1);
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(
-      db_data[i]["ducks"] + db_data[i]["non_ducks"],
-      1
-    ).toFixed(1);
+    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(0);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
     tabCell.innerHTML = round(
-      db_data[i]["ducks"] / db_data[i]["hunts"],
-      2
-    ).toFixed(2);
+      db_data[i]["num_ducks"] + db_data[i]["non_ducks"],
+      0
+    ).toFixed(0);
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.classList.add("cell-fixed-width");
+    tabCell.style.textAlign = "right";
+    tabCell.innerHTML = db_data[i]["ave_ducks"].toFixed(1);
+  }
+}
+
+function prePopTab2() {
+  // this function gets called regardless of presence of "hunt_history"
+  var heading = document.getElementById("stats-heading-2");
+  const select_ponds = document.getElementById("select-pond");
+  heading.innerHTML =
+    "Hunt History of " + select_ponds.options[select_ponds.value].text;
+
+  var table = document.getElementById("tb-stats-2");
+  removeAllChildNodes(table);
+}
+
+function populateTable2(db_data) {
+  var table = document.getElementById("tb-stats-2");
+
+  for (var i = 0; i < db_data.length; i++) {
+    var tr = table.insertRow(-1);
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = dateConverter(db_data[i]["date"]);
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["date"].split(",")[0];
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.classList.add("cell-fixed-width");
+    tabCell.style.textAlign = "right";
+    tabCell.innerHTML = round(db_data[i]["num_ducks"], 1).toFixed(0);
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.classList.add("cell-fixed-width");
+    tabCell.style.textAlign = "right";
+    tabCell.innerHTML = db_data[i]["ave_ducks"].toFixed(1);
+  }
+}
+
+function populatePondList(jwt) {
+  // API route for this stats page
+  const route = base_uri + "/ponds";
+
+  callAPI(
+    jwt,
+    route,
+    "GET",
+    null,
+    (data) => {
+      populatePondList_aux(data["ponds"]);
+    },
+    displayMessageToUser
+  );
+}
+
+function populatePondList_aux(db_data) {
+  const select_ponds = document.getElementById("select-pond");
+  for (var i = 0; i < db_data.length; i++) {
+    var new_opt = document.createElement("option");
+    new_opt.innerHTML = db_data[i]["name"];
+    new_opt.value = db_data[i]["id"];
+    select_ponds.appendChild(new_opt);
   }
 }

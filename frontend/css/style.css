@@ -224,6 +224,10 @@ th {
   border-bottom: 2px solid #2f2504;
 }
 
+#data-table th {
+  cursor: pointer;
+}
+
 td {
   text-align: center;
   font-size: 1.6rem;
@@ -474,11 +478,13 @@ manual add
   margin-bottom: 2rem;
 }
 
+/*
 #btn-add {
   display: block;
   margin: 0 auto;
   text-align: center;
 }
+*/
 
 .hunters-column {
   width: 20rem;
@@ -828,11 +834,35 @@ Stats
   width: 24rem;
 }
 
-.filter-container section:first-child {
+.filter-container section:not(:last-child) {
   border-right: 1px solid #2f2504;
 }
 
 .cell-fixed-width {
   font-family: "Courier New", Courier, monospace;
   font-weight: 800;
+}
+
+.sort-helper {
+  display: block;
+  text-align: center;
+  font-size: 1.4rem;
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+#stats-heading {
+  margin-bottom: 0;
+}
+
+#stats-heading-2 {
+  margin-top: 8rem;
+  margin-bottom: 0;
+}
+
+.filter-pond label {
+  display: block;
+  font-size: 1.4rem;
+  text-align: center;
+  margin-bottom: 1rem;
 }

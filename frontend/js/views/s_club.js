@@ -8,19 +8,24 @@ import {
   round,
   removeAllChildNodes,
   sortTable,
+  dateConverter,
 } from "../common_funcs.js";
 
-const subroute = "hunters";
-const singular = "hunter";
-const plural = "hunters";
+const subroute = "club";
+const singular = "club";
+const plural = "club";
 // table sorting functions
 const column_id_list = [
   {
-    id: "col-name",
+    id: "col-date",
     is_numeric: false,
   },
   {
-    id: "col-hunts",
+    id: "col-groups",
+    is_numeric: true,
+  },
+  {
+    id: "col-hunters",
     is_numeric: true,
   },
   {
@@ -37,6 +42,10 @@ const column_id_list = [
   },
   {
     id: "col-ave",
+    is_numeric: true,
+  },
+  {
+    id: "col-limit",
     is_numeric: true,
   },
 ];
@@ -83,7 +92,7 @@ export default class extends AbstractView {
               <label for="radio-whole-club">whole club</label>
             </li>
             <li>
-              <input type="radio" name="filter-member" id="radio-just-me" value="just-me">
+              <input type="radio" name="filter-member" id="radio-just-me" value="just-me" disabled>
               <label for="radio-just-me">just me</label>
             </li>
           </ul>
@@ -98,12 +107,14 @@ export default class extends AbstractView {
     <table id="data-table">
       <thead>
         <tr>
-          <th id="col-name">name</th>
-          <th id="col-hunts">hunts</th>
-          <th id="col-ducks">ducks</th>
-          <th id="col-non">non-ducks</th>
-          <th id="col-total">total</th>
-          <th id="col-ave">ave. ducks</th>
+          <th class="rotate" id="col-date"><div class="rotate">date</div></th>
+          <th class="rotate" id="col-groups"><div class="rotate">groups</div></th>
+          <th class="rotate" id="col-hunters"><div class="rotate">hunters</div></th>
+          <th class="rotate" id="col-ducks"><div class="rotate">ducks</div></th>
+          <th class="rotate" id="col-non"><div class="rotate">non-ducks</div></th>
+          <th class="rotate" id="col-total"><div class="rotate">total</div></th>
+          <th class="rotate" id="col-ave"><div class="rotate">ave. ducks</div></th>
+          <th class="rotate" id="col-limit"><div class="rotate">limit %</div></th>
         </tr>
       </thead>
       <tbody id="tb-stats">
@@ -143,7 +154,7 @@ export default class extends AbstractView {
         "GET",
         null,
         (data) => {
-          //console.log(data["stats"]);
+          console.log(data["stats"]);
           populateTable(data["stats"]);
         },
         displayMessageToUser
@@ -168,38 +179,49 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["first_name"] + " " + db_data[i]["last_name"];
+    tabCell.innerHTML = dateConverter(db_data[i]["date"]);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = db_data[i]["hunts"];
+    tabCell.innerHTML = db_data[i]["num_groups"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["ducks"], 1).toFixed(1);
+    tabCell.innerHTML = db_data[i]["num_hunters"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(1);
+    tabCell.innerHTML = round(db_data[i]["num_ducks"], 0);
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.classList.add("cell-fixed-width");
+    tabCell.style.textAlign = "right";
+    tabCell.innerHTML = round(db_data[i]["non_ducks"], 0);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
     tabCell.innerHTML = round(
-      db_data[i]["ducks"] + db_data[i]["non_ducks"],
-      1
+      db_data[i]["num_ducks"] + db_data[i]["non_ducks"],
+      0
+    );
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.classList.add("cell-fixed-width");
+    tabCell.style.textAlign = "right";
+    tabCell.innerHTML = (
+      db_data[i]["num_ducks"] / db_data[i]["num_hunters"]
     ).toFixed(1);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(
-      db_data[i]["ducks"] / db_data[i]["hunts"],
-      2
-    ).toFixed(2);
+    tabCell.innerHTML = (
+      (db_data[i]["limits"] / db_data[i]["num_groups"]) *
+      100
+    ).toFixed(0);
   }
 }

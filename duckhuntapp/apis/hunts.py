@@ -150,13 +150,13 @@ def update_row(user, hunt_id):
 
         # only an administrator can change status backwards (exception: draw_complete -> signup_closed)
         if last_status == 'signup_closed' and data_in['status'] == 'signup_open' and not user["level"] == 'administrator':
-            return jsonify({"messag": f"Unable to update hunt {hunt_id} because hunt status went backward"})
+            return jsonify({"message": f"Unable to update hunt {hunt_id} because hunt status went backward"})
         if last_status == 'draw_complete' and data_in['status'] == 'signup_open' and not user["level"] == 'administrator':
-            return jsonify({"messag": f"Unable to update hunt {hunt_id} because hunt status went backward"})
+            return jsonify({"message": f"Unable to update hunt {hunt_id} because hunt status went backward"})
         if last_status == 'hunt_open' and data_in['status'] in ('signup_open', 'signup_closed', 'draw_complete') and not user["level"] == 'administrator':
-            return jsonify({"messag": f"Unable to update hunt {hunt_id} because hunt status went backward"})
+            return jsonify({"message": f"Unable to update hunt {hunt_id} because hunt status went backward"})
         if last_status == 'hunt_closed' and not data_in['status'] == 'hunt_closed' and not user["level"] == 'administrator':
-            return jsonify({"messag": f"Unable to update hunt {hunt_id} because hunt status went backward"})
+            return jsonify({"message": f"Unable to update hunt {hunt_id} because hunt status went backward"})
 
         # if changing status from signup_open to signup_closed, reset pond availability
         if last_status == 'signup_open' and data_in['status'] == 'signup_closed':

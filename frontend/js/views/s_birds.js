@@ -10,9 +10,9 @@ import {
   sortTable,
 } from "../common_funcs.js";
 
-const subroute = "hunters";
-const singular = "hunter";
-const plural = "hunters";
+const subroute = "birds";
+const singular = "bird";
+const plural = "birds";
 // table sorting functions
 const column_id_list = [
   {
@@ -20,23 +20,11 @@ const column_id_list = [
     is_numeric: false,
   },
   {
-    id: "col-hunts",
+    id: "col-count",
     is_numeric: true,
   },
   {
-    id: "col-ducks",
-    is_numeric: true,
-  },
-  {
-    id: "col-non",
-    is_numeric: true,
-  },
-  {
-    id: "col-total",
-    is_numeric: true,
-  },
-  {
-    id: "col-ave",
+    id: "col-pct",
     is_numeric: true,
   },
 ];
@@ -99,11 +87,8 @@ export default class extends AbstractView {
       <thead>
         <tr>
           <th id="col-name">name</th>
-          <th id="col-hunts">hunts</th>
-          <th id="col-ducks">ducks</th>
-          <th id="col-non">non-ducks</th>
-          <th id="col-total">total</th>
-          <th id="col-ave">ave. ducks</th>
+          <th id="col-count">count</th>
+          <th id="col-pct">%</th>
         </tr>
       </thead>
       <tbody id="tb-stats">
@@ -168,38 +153,16 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["first_name"] + " " + db_data[i]["last_name"];
+    tabCell.innerHTML = db_data[i]["name"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = db_data[i]["hunts"];
+    tabCell.innerHTML = db_data[i]["count"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["ducks"], 1).toFixed(1);
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(1);
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(
-      db_data[i]["ducks"] + db_data[i]["non_ducks"],
-      1
-    ).toFixed(1);
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(
-      db_data[i]["ducks"] / db_data[i]["hunts"],
-      2
-    ).toFixed(2);
+    tabCell.innerHTML = (db_data[i]["pct"] * 100).toFixed(0);
   }
 }

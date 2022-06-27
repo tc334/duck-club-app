@@ -15,6 +15,9 @@ import a_hunts from "./views/a_hunts.js";
 import a_groupings from "./views/a_groupings.js";
 import live_hunt from "./views/live_hunt.js";
 import s_hunters from "./views/s_hunters.js";
+import s_ponds from "./views/s_ponds.js";
+import s_birds from "./views/s_birds.js";
+import s_club from "./views/s_club.js";
 
 // only do this once
 const jwt = localStorage.getItem("token");
@@ -97,6 +100,18 @@ const router = async () => {
       path: "#s_hunters",
       view: s_hunters,
     },
+    {
+      path: "#s_ponds",
+      view: s_ponds,
+    },
+    {
+      path: "#s_birds",
+      view: s_birds,
+    },
+    {
+      path: "#s_club",
+      view: s_club,
+    },
   ];
 
   // Test each route for potential match
@@ -118,7 +133,6 @@ const router = async () => {
   }
 
   // This updates the view
-  console.log("Zulu: " + match["route"]["path"]);
   const view = new match.route.view();
   document.querySelector("#div-main").innerHTML = await view.getHtml();
   view.js(jwt);
