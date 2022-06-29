@@ -104,22 +104,24 @@ export default class extends AbstractView {
       singular +
       ` stats</h1>
     <p class="sort-helper">Click on any header to sort table</p>
-    <table id="data-table">
-      <thead>
-        <tr>
-          <th class="rotate" id="col-date"><div class="rotate">date</div></th>
-          <th class="rotate" id="col-groups"><div class="rotate">groups</div></th>
-          <th class="rotate" id="col-hunters"><div class="rotate">hunters</div></th>
-          <th class="rotate" id="col-ducks"><div class="rotate">ducks</div></th>
-          <th class="rotate" id="col-non"><div class="rotate">non-ducks</div></th>
-          <th class="rotate" id="col-total"><div class="rotate">total</div></th>
-          <th class="rotate" id="col-ave"><div class="rotate">ave. ducks</div></th>
-          <th class="rotate" id="col-limit"><div class="rotate">limit %</div></th>
-        </tr>
-      </thead>
-      <tbody id="tb-stats">
-      </tbody>
-    </table>`
+    <div class="table-overflow-wrapper">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th class="rotate" id="col-date"><div class="rotate">date</div></th>
+            <th class="rotate" id="col-groups"><div class="rotate">groups</div></th>
+            <th class="rotate" id="col-hunters"><div class="rotate">hunters</div></th>
+            <th class="rotate" id="col-ducks"><div class="rotate">ducks</div></th>
+            <th class="rotate" id="col-non"><div class="rotate">non-ducks</div></th>
+            <th class="rotate" id="col-total"><div class="rotate">total</div></th>
+            <th class="rotate" id="col-ave"><div class="rotate">ave. ducks</div></th>
+            <th class="rotate" id="col-limit"><div class="rotate">limit %</div></th>
+          </tr>
+        </thead>
+        <tbody id="tb-stats">
+        </tbody>
+      </table>
+    </div>`
     );
   }
 

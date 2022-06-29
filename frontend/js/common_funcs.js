@@ -83,7 +83,7 @@ export function populate_aside(user_level) {
     manager: [
       "manage hunt",
       "add hunter",
-      "adjust groupings",
+      "adjust groups",
       "pond availability",
       "edit harvest",
     ],
@@ -129,15 +129,21 @@ export function populate_aside_stats() {
   const headings = ["stats"];
 
   const icons = {
-    stats: ["img/user.png", "img/drop.png", "img/bird.png", "img/people.png"],
+    stats: [
+      "img/calendar.png",
+      "img/user.png",
+      "img/drop.png",
+      "img/bird.png",
+      "img/people.png",
+    ],
   };
 
   const text = {
-    stats: ["by hunter", "by pond", "by bird", "club"],
+    stats: ["by date", "by hunter", "by pond", "by bird", "club"],
   };
 
   const links = {
-    stats: ["#s_hunters", "#s_ponds", "#s_birds", "#s_club"],
+    stats: ["#s_dates", "#s_hunters", "#s_ponds", "#s_birds", "#s_club"],
   };
 
   const idx_in = 1;

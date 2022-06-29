@@ -124,3 +124,44 @@ def del_row(user, harvest_id):
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {harvest_id} from table {table_name}"}), 400
+
+
+@harvests_bp.route('/harvests/filtered', methods=['GET'])
+@token_required(all_members)
+def get_stats_birds(users):
+    # convert query selector string in URL to dictionary
+    data_in = request.args.to_dict()
+    if 'hunt_id' in data_in and int(data_in['hunt_id']) > -1:
+        b_filter_hunt = True
+    else:
+        b_filter_hunt = False
+
+    if 'pond_id' in data_in and int(data_in['pond_id']) > -1:
+        b_filter_pond = True
+    else:
+        b_filter_pond = False
+
+    sql_qry_str = f"SELECT harvest.id, ponds.name, hunts.hunt_date, groupings.id, birds.name, harvest.count "\
+                  f"FROM {table_name} "\
+                  f"JOIN groupings ON harvest.group_id=groupings.id "\
+                  f"JOIN birds ON harvest.bird_id=birds.id "\
+                  f"JOIN hunts ON groupings.hunt_id=hunts.id "\
+                  f"JOIN ponds ON groupings.pond_id=ponds.id "
+
+    if b_filter_pond:
+        sql_qry_str += f"WHERE ponds.id={data_in['pond_id']} "
+
+    if b_filter_hunt:
+        sql_qry_str += f"WHERE hunts.id={data_in['hunt_id']} "
+
+    sql_qry_str += f"ORDER BY hunts.hunt_date, ponds.name, birds.type"
+
+    results = db.read_custom(sql_qry_str)
+
+    if results is not None:
+        # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
+        names_all = ["harvest_id", "pond_name", "hunt_date", "group_id", "bird_name", "count"]
+        results_dict = db.format_dict(names_all, results)
+        return jsonify({"harvests": results_dict}), 200
+    else:
+        return jsonify({"message": f"unknown error trying to read harvest"}), 400

@@ -93,6 +93,33 @@ def get_harvest_summary(user):
     hunt_id = hunts[0][0]
     hunt_date = hunts[0][1]
 
+    data, group_id_of_current_user = harvest_summary_helper(hunt_id, user["id"])
+    data["hunt_date"] = hunt_date
+
+    # if calling user is part of current hunt, fetch their group's harvests
+    if group_id_of_current_user is not None:
+        data["this_user"] = get_harvest_detail_core(group_id_of_current_user)
+        # add the list of all birds so they can add a new species to their harvest
+        birds = db.read_custom(f"SELECT id, name FROM birds ORDER BY name")
+        names = ["id", "name"]
+        birds_dict = db.format_dict(names, birds)
+        data["this_user"]["birds"] = birds_dict
+
+    return jsonify({"data": data}), 200
+
+
+@groupings_bp.route('/groupings/harvest_summary/<hunt_id>', methods=['GET'])
+@token_required(all_members)
+def get_harvest_summary_by_hunt_id(user, hunt_id):
+
+    data, dummy = harvest_summary_helper(hunt_id, user["id"])
+
+    return jsonify({"data": data}), 200
+
+
+# this helper function could be called by multiple routes
+def harvest_summary_helper(hunt_id, user_id):
+    # harvest summary
     # regardless of whether they have any harvests yet, we always need to know the group, pond, & #hunters
 
     # now pull all groupings that match this hunt_id
@@ -115,20 +142,23 @@ def get_harvest_summary(user):
     group_id_of_current_user = None
     for group in groups_dict:
         # count the number of hunters in this group
-        results = db.read_custom(f"SELECT slot1_type, slot2_type, slot3_type, slot4_type, slot1_id, slot2_id, slot3_id, slot4_id FROM groupings WHERE id = {group['group_id']}")[0]
+        results = db.read_custom(
+            f"SELECT slot1_type, slot2_type, slot3_type, slot4_type, slot1_id, slot2_id, slot3_id, slot4_id "
+            f"FROM groupings "
+            f"WHERE id = {group['group_id']}")[0]
         slot_types = results[:4]
         slot_ids = results[4:]
         active_slots = []
         for idx, value in enumerate(slot_types):
             if value != "open":
                 active_slots.append(idx)
-            if value == "member" and slot_ids[idx] == user['id']:
+            if value == "member" and slot_ids[idx] == user_id:
                 group_id_of_current_user = group['group_id']
-                # print(f"Current user is in group {group['group_id']}")
         group['num_hunters'] = len(active_slots)
 
         # count the number of ducks harvested
-        harvest_ducks = db.read_custom(f"SELECT harvest.count FROM harvest JOIN birds ON harvest.bird_id=birds.id WHERE birds.type='duck' AND harvest.group_id={group['group_id']}")
+        harvest_ducks = db.read_custom(
+            f"SELECT harvest.count FROM harvest JOIN birds ON harvest.bird_id=birds.id WHERE birds.type='duck' AND harvest.group_id={group['group_id']}")
         if harvest_ducks is None:
             return jsonify({"message": "unkown internal error"}), 500
         group["num_ducks"] = sum([elem[0] for elem in harvest_ducks])
@@ -141,20 +171,10 @@ def get_harvest_summary(user):
         group["num_nonducks"] = sum([elem[0] for elem in harvest_nonducks])
 
     data = {
-        "hunt_date": hunt_date,
         "groups": groups_dict
     }
 
-    # if calling user is part of current hunt, fetch their group's harvests
-    if group_id_of_current_user is not None:
-        data["this_user"] = get_harvest_detail_core(group_id_of_current_user)
-        # add the list of all birds so they can add a new species to their harvest
-        birds = db.read_custom(f"SELECT id, name FROM birds ORDER BY name")
-        names = ["id", "name"]
-        birds_dict = db.format_dict(names, birds)
-        data["this_user"]["birds"] = birds_dict
-
-    return jsonify({"data": data}), 200
+    return data, group_id_of_current_user
 
 
 @groupings_bp.route('/groupings/harvest_detail/<grouping_id>', methods=['GET'])

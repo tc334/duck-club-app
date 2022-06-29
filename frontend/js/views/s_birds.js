@@ -83,17 +83,19 @@ export default class extends AbstractView {
       singular +
       ` stats</h1>
     <p class="sort-helper">Click on any header to sort table</p>
-    <table id="data-table">
-      <thead>
-        <tr>
-          <th id="col-name">name</th>
-          <th id="col-count">count</th>
-          <th id="col-pct">%</th>
-        </tr>
-      </thead>
-      <tbody id="tb-stats">
-      </tbody>
-    </table>`
+    <div class="table-overflow-wrapper">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th id="col-name">name</th>
+            <th id="col-count">count</th>
+            <th id="col-pct">%</th>
+          </tr>
+        </thead>
+        <tbody id="tb-stats">
+        </tbody>
+      </table>
+    </div>`
     );
   }
 

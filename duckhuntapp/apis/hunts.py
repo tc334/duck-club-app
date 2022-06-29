@@ -106,6 +106,23 @@ def convert_time(time_of_day_sec):
     return f"{hours:02d}:{minutes:02d}"
 
 
+@hunts_bp.route('/hunts/dates', methods=['GET'])
+@token_required(all_members)
+def get_hunt_dates(user):
+    results = db.read_custom(f"SELECT id, hunt_date "
+                             f"FROM {table_name} "
+                             f"WHERE hunts.status = 'hunt_closed' "
+                             f"ORDER BY hunt_date DESC")
+
+    if results is not None:
+        # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
+        names_all = ["id", "hunt_date"]
+        results_dict = db.format_dict(names_all, results)
+        return jsonify({"dates": results_dict}), 200
+    else:
+        return jsonify({"error": f"unknown error trying to read hunts"}), 400
+
+
 @hunts_bp.route('/hunts/<hunt_id>', methods=['GET'])
 @token_required(all_members)
 def get_one_row(users, hunt_id):
@@ -185,7 +202,7 @@ def update_row(user, hunt_id):
 
 
 @hunts_bp.route('/hunts/<hunt_id>', methods=['DELETE'])
-@token_required(manager_and_above)
+@token_required(admin_only)
 def del_row(user, hunt_id):
     if db.del_row(table_name, hunt_id):
         return jsonify({'message': 'Successful removal'}), 200

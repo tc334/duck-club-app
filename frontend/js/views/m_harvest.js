@@ -6,12 +6,15 @@ import {
   displayMessageToUser,
   decode_jwt,
   populate_aside,
+  dateConverter,
+  removeAllChildNodes,
 } from "../common_funcs.js";
 
 var jwt_global;
 var db_data;
 var db_data_ponds;
 var db_data_birds;
+var db_data_dates;
 const subroute = "harvests";
 const singular = "harvest";
 const plural = "harvests";
@@ -24,42 +27,42 @@ export default class extends AbstractView {
   async getHtml() {
     return (
       `<div class="reload-message"></div>
-    <div id="harvest-filter-container">
-      <h1 class="heading-primary">filters</h1>
-      <div class="harvest-filter">
-        <div class="filter-date">
-          <h2 class="heading-secondary">Date</h2>
-          <div id="most-recent">
-            <input type="checkbox" id="inp-mostrecent">
-            <label for="inp-mostrecent">most recent hunt</label>
-          </div>
-          <div class="harvest-date">
-            <input type="date" id="inp-date">
-          </div>
-        </div>
-        <div class="filter-pond">
-          <h2 class="heading-secondary">Pond</h2>
-          <select id="select-pond">
-            <option value="">All</option>
-          </select>
-        </div>
-        <button class="btn--form" id="btn-filter">Apply</button>
-      </div>
-    </div>
+      <h2 class="heading-secondary">Filters</h2>
+      <form id="form-filter">
+        <div class="filter-container">
+          <section class="filter-date-exact">
+            <select id="select-date" name="hunt_id" class="fixed-width-harvests">
+              <option value=-1>--select hunt date--</option>
+            </select>
+          </section>
+          <section class="filter-pond">
+            <select id="select-pond" name="pond_id" class="fixed-width-harvests">
+              <option value=-1>&nbsp;&nbsp;&nbsp;--select pond--</option>
+            </select>
+          </section>
+        </div>  
+        <button class="btn--form btn--cntr" id="btn-filter-refresh">Apply</button>
+      </form>
     <h1 class="heading-primary">harvests</h1>
-    <table id="` +
+    <div class="table-overflow-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>date</th>
+            <th>pond</th>
+            <th>group id</th>
+            <th>bird</th>
+            <th>count</th>
+            <th>actions</th>
+          </tr>
+        </thead>
+        <tbody id="` +
       singular +
       `-table">
-      <tr>
-        <th>id</th>
-        <th>date</th>
-        <th>pond</th>
-        <th>group id</th>
-        <th>bird</th>
-        <th>count</th>
-        <th>actions</th>
-      </tr>
-    </table>
+        </tbody>
+      </table>
+    </div>
     
     <!-- EDIT USER FORM -->
     <h1 class="heading-primary">add/edit ` +
@@ -115,26 +118,25 @@ export default class extends AbstractView {
     const user_level = decode_jwt(jwt);
     populate_aside(user_level);
 
-    // First step is to pull data from DB
-    const route = base_uri + "/" + subroute;
+    // For this page, we also need to have the ponds db
+    const route_2 = base_uri + "/" + "ponds";
     callAPI(
       jwt,
-      route,
+      route_2,
       "GET",
       null,
       (response_full_json) => {
-        if (response_full_json[subroute]) {
-          db_data = response_full_json[subroute];
-          // For this page, we also need to have the ponds db
-          const route_2 = base_uri + "/" + "ponds";
+        if (response_full_json["ponds"]) {
+          db_data_ponds = response_full_json["ponds"];
+          const route_2_5 = base_uri + "/hunts/dates";
           callAPI(
             jwt,
-            route_2,
+            route_2_5,
             "GET",
             null,
             (response_full_json) => {
-              if (response_full_json["ponds"]) {
-                db_data_ponds = response_full_json["ponds"];
+              if (response_full_json["dates"]) {
+                db_data_dates = response_full_json["dates"];
                 // For this page, we also need to have the birds db
                 const route_3 = base_uri + "/" + "birds";
                 callAPI(
@@ -145,19 +147,17 @@ export default class extends AbstractView {
                   (response_full_json) => {
                     if (response_full_json["birds"]) {
                       db_data_birds = response_full_json["birds"];
-                      console.log(db_data);
+                      //console.log(db_data);
                       // now, only once harvests, ponds, & birds are successfully loaded, can we call the action
-                      populateTable(db_data);
                       populatePondListBox();
                       populateBirdListBox();
+                      populateDateList_aux(db_data_dates);
                     } else {
                       //console.log(data);
                     }
                   },
                   displayMessageToUser
                 );
-              } else {
-                //console.log(data);
               }
             },
             displayMessageToUser
@@ -168,7 +168,6 @@ export default class extends AbstractView {
       },
       displayMessageToUser
     );
-
     // When the "reset" button is hit, only "add" should be enabled
     // "update" will get enabled if a user hits an "edit" in the main table
     const myForm = document.getElementById("add-edit-form");
@@ -229,27 +228,55 @@ export default class extends AbstractView {
         );
       }
     });
+
+    // What do do on a submit
+    const myForm2 = document.getElementById("form-filter");
+    myForm2.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Pull data from form and put it into the json format the DB wants
+      const formData = new FormData(this);
+
+      var object = {};
+      formData.forEach((value, key) => (object[key] = value));
+
+      // API route for this stats page
+      const route =
+        base_uri +
+        "/" +
+        subroute +
+        "/filtered" +
+        "?" +
+        new URLSearchParams(object).toString();
+
+      callAPI(
+        jwt,
+        route,
+        "GET",
+        null,
+        (data) => {
+          db_data = data["harvests"];
+          populateTable(data["harvests"]);
+        },
+        displayMessageToUser
+      );
+    });
   }
 }
 
 function populateTable(db_data) {
   var table = document.getElementById(singular + "-table");
+  removeAllChildNodes(table);
 
   for (var i = 0; i < db_data.length; i++) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["id"];
+    tabCell.innerHTML = db_data[i]["harvest_id"];
 
     // date
     var tabCell = tr.insertCell(-1);
-    const thisDate = new Date(db_data[i]["hunt_date"]);
-    tabCell.innerHTML =
-      thisDate.getFullYear() +
-      "-" +
-      thisDate.getMonth() +
-      "-" +
-      thisDate.getDay();
+    tabCell.innerHTML = dateConverter(db_data[i]["hunt_date"]);
 
     // pond
     var tabCell = tr.insertCell(-1);
@@ -262,7 +289,7 @@ function populateTable(db_data) {
     // bird
     var tabCell = tr.insertCell(-1);
     tabCell.className += "tr--bird-name";
-    tabCell.innerHTML = db_data[i]["bird"];
+    tabCell.innerHTML = db_data[i]["bird_name"];
 
     // count
     var tabCell = tr.insertCell(-1);
@@ -305,7 +332,7 @@ function populatePondListBox() {
   var select_property = document.getElementById("select-pond");
   for (var i = 0; i < db_data_ponds.length; i++) {
     var option_new = document.createElement("option");
-    option_new.value = db_data_ponds[i]["name"];
+    option_new.value = db_data_ponds[i]["id"];
     option_new.innerHTML = db_data_ponds[i]["name"];
     select_property.appendChild(option_new);
   }
@@ -339,10 +366,20 @@ function populateEdit(e) {
   document.getElementById("btn-update").disabled = false;
   document.getElementById("btn-add").disabled = true;
 
-  document.getElementById(singular + "-id").value = db_data[i]["id"];
+  document.getElementById(singular + "-id").value = db_data[i]["harvest_id"];
   document.getElementById("inp-groupid").value = db_data[i]["group_id"];
   document.getElementById("inp-count").value = db_data[i]["count"];
-  document.getElementById("select-bird").value = db_data[i]["bird"];
+  document.getElementById("select-bird").value = db_data[i]["bird_name"];
 
   document.getElementById("add-edit-form").scrollIntoView();
+}
+
+function populateDateList_aux(db_data) {
+  const select_dates = document.getElementById("select-date");
+  for (var i = 0; i < db_data.length; i++) {
+    var new_opt = document.createElement("option");
+    new_opt.innerHTML = dateConverter(db_data[i]["hunt_date"]);
+    new_opt.value = db_data[i]["id"];
+    select_dates.appendChild(new_opt);
+  }
 }

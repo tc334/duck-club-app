@@ -439,7 +439,7 @@ def get_stats_ponds(users):
         })
 
     # if a pond-id is included in the query, get hunt history on that pond
-    if "pond_id" in data_in:
+    if "pond_id" in data_in and int(data_in["pond_id"]) > -1:
         if data_in["filter-member"] == "whole-club":
             results = db.read_custom(f"SELECT hunts.id, groupings.harvest_ave_ducks, groupings.num_hunters "
                                      f"FROM hunts "

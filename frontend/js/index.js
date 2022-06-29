@@ -14,6 +14,7 @@ import o_ponds from "./views/o_ponds.js";
 import a_hunts from "./views/a_hunts.js";
 import a_groupings from "./views/a_groupings.js";
 import live_hunt from "./views/live_hunt.js";
+import s_dates from "./views/s_dates.js";
 import s_hunters from "./views/s_hunters.js";
 import s_ponds from "./views/s_ponds.js";
 import s_birds from "./views/s_birds.js";
@@ -33,8 +34,8 @@ const router = async () => {
       view: u_pre,
     },
     {
-      path: "/#nav_setup",
-      view: u_pre,
+      path: "#nav_setup",
+      view: u_profile,
     },
     {
       path: "#nav_live",
@@ -95,6 +96,10 @@ const router = async () => {
     {
       path: "#a_groupings",
       view: a_groupings,
+    },
+    {
+      path: "#s_dates",
+      view: s_dates,
     },
     {
       path: "#s_hunters",

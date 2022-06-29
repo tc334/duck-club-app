@@ -43,6 +43,7 @@ Default: 1
 
 html {
   /* percentage of user's browser font-size setting */
+  /* 10px/ 16px = 0.625 = 62.5%*/
   font-size: 62.5%;
   overflow-x: hidden;
   /*scroll-behavior: smooth;*/
@@ -57,23 +58,20 @@ body {
   overflow-x: hidden;
 }
 
+select {
+  border-radius: 3px;
+}
+
 .container {
   max-width: 140rem;
   margin: 0 auto;
 }
-
-/*
-#div-main {
-  align-items: center;
-}
-*/
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 4.8rem;
-  /*height: 9.6rem;*/
   background-color: #a5ae9e;
 }
 
@@ -122,6 +120,7 @@ main {
 .aside {
   background-color: #d0ddd7;
   padding: 3.2rem;
+  flex: 0 0 25rem;
 }
 
 .aside-heading {
@@ -173,8 +172,15 @@ main {
 /* APP
 /* ************************** */
 .app {
-  flex-grow: 1;
+  flex: 1 1 auto;
   padding: 3.2rem;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-overflow-wrapper {
+  overflow-x: auto;
 }
 
 .reload-message {
@@ -183,6 +189,23 @@ main {
   text-align: center;
   color: #2f2504;
   margin-bottom: 3rem;
+}
+
+/* ************************** */
+/* FOOTER
+/* ************************** */
+.footer {
+  font-size: 1.4rem;
+}
+
+.footer article {
+  margin-bottom: 1rem;
+}
+
+.footer a:link,
+.footer a:visited {
+  color: #2f2504;
+  text-decoration: none;
 }
 
 /* ************************** */
@@ -354,7 +377,7 @@ footer {
   color: #2f2504;
   text-align: center;
   font-size: 1.4rem;
-  margin: 4.8rem auto;
+  margin: 3.2rem auto;
 }
 
 .server-message {
@@ -397,11 +420,8 @@ footer {
   margin: 0 auto;
 }
 
-#select-pond,
-#select-hunter {
-  width: 20rem;
-  font-family: inherit;
-  color: #2f2504;
+.fixed-width-harvests {
+  width: 18rem;
 }
 
 #select-hunt {
@@ -860,9 +880,111 @@ Stats
   margin-bottom: 0;
 }
 
-.filter-pond label {
+.filter-pond label,
+.filter-date-exact label {
   display: block;
   font-size: 1.4rem;
   text-align: center;
   margin-bottom: 1rem;
+}
+
+.filter-container select {
+  font-family: inherit;
+  color: #2f2504;
+  font-size: 1.6rem;
+}
+
+.filter-date-exact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.filter-date-exact select {
+  font-size: 1.6rem;
+}
+
+/* ************************** */
+/* LOGIN
+/* ************************** */
+#login-container {
+  flex-direction: column;
+}
+
+#app-name {
+  font-size: 3.6rem;
+  font-weight: 700;
+  margin: 2rem 0;
+}
+
+.eye-candy {
+  display: block;
+}
+
+.eye-candy img {
+  width: 100%;
+}
+
+#section-action {
+  display: flex;
+  justify-content: center;
+  margin-top: 4rem;
+}
+
+#section-action article {
+  display: block;
+  padding: 0 5rem;
+}
+
+#section-action article:first-child {
+  border-right: 2px solid #2f2504;
+}
+
+.login-section {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-section label {
+  font-size: 1.6rem;
+  text-align: right;
+  margin-right: 1rem;
+  width: 10rem;
+}
+
+.login-section input {
+  padding: 0.3rem 0.5rem;
+}
+
+.login-section div {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+}
+
+.login-buttons {
+  display: flex;
+  justify-content: center;
+}
+
+#top-row {
+  display: flex;
+  justify-content: space-between;
+  margin: 1rem 1rem;
+}
+
+#top-row img {
+  width: auto;
+}
+
+.frame {
+  display: flex;
+  justify-content: center;
 }

@@ -20,18 +20,20 @@ export default class extends AbstractView {
   async getHtml() {
     return `<div class="reload-message"></div>
     <h1 class="heading-primary">club members</h1>
-    <table id="user-table">
-      <tr>
-        <th>id</th>
-        <th>first</th>
-        <th>last</th>
-        <th>email</th>
-        <th>level</th>
-        <th>status</th>
-        <th>balance</th>
-        <th>actions</th>
-      </tr>
-    </table>
+    <div class="table-overflow-wrapper">
+      <table id="user-table">
+        <tr>
+          <th>id</th>
+          <th>first</th>
+          <th>last</th>
+          <th>email</th>
+          <th>level</th>
+          <th>status</th>
+          <th>balance</th>
+          <th>actions</th>
+        </tr>
+      </table>
+    </div>
     
     <!-- EDIT USER FORM -->
     <h1 class="heading-primary">add/edit member</h1>

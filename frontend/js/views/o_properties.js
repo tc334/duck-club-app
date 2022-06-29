@@ -20,14 +20,16 @@ export default class extends AbstractView {
   async getHtml() {
     return `<div class="reload-message"></div>
     <h1 class="heading-primary">properties</h1>
-    <table id="data-table">
-      <tr>
-        <th>id</th>
-        <th>name</th>
-        <th>region</th>
-        <th>actions</th>
-      </tr>
-    </table>
+    <div class="table-overflow-wrapper">
+      <table id="data-table">
+        <tr>
+          <th>id</th>
+          <th>name</th>
+          <th>region</th>
+          <th>actions</th>
+        </tr>
+      </table>
+    </div>
     
     <!-- EDIT USER FORM -->
     <h1 class="heading-primary">add/edit property</h1>

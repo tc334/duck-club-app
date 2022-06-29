@@ -92,7 +92,7 @@ export default class extends AbstractView {
         <section class="filter-pond">
           <label for="select-pond">Pick One For Hunt History</label>
           <select id="select-pond" name="pond_id">
-            <option>--select pond--</option>
+            <option value=-1>--select pond--</option>
           </select>
         </section>
       </div>  
@@ -102,36 +102,40 @@ export default class extends AbstractView {
       singular +
       `</h1>
     <p class="sort-helper">Click on any header to sort table</p>
-    <table id="data-table">
-      <thead>
-        <tr>
-          <th id="col-name">name</th>
-          <th id="col-hunts">hunts</th>
-          <th id="col-ducks">ducks</th>
-          <th id="col-non">non-ducks</th>
-          <th id="col-total">total</th>
-          <th id="col-ave">ave. ducks/hunter</th>
-        </tr>
-      </thead>
-      <tbody id="tb-stats">
-      </tbody>
-    </table>
+    <div class="table-overflow-wrapper">
+      <table id="data-table">
+        <thead>
+          <tr>
+            <th id="col-name">name</th>
+            <th id="col-hunts">hunts</th>
+            <th id="col-ducks">ducks</th>
+            <th id="col-non">non-ducks</th>
+            <th id="col-total">total</th>
+            <th id="col-ave">ave. ducks/hunter</th>
+          </tr>
+        </thead>
+        <tbody id="tb-stats">
+        </tbody>
+      </table>
+    </div>
     <h1 class="heading-primary" id="stats-heading-2">
       hunt history of TBD
     </h1>
     <p class="sort-helper">Click on any header to sort table</p>
-    <table id="data-table-2">
-      <thead>
-        <tr>
-          <th id="col-date">date</th>
-          <th id="col-day">day</th>
-          <th id="col-ducks">ducks</th>
-          <th id="col-ave">ave. ducks/hunter</th>
-        </tr>
-      </thead>
-      <tbody id="tb-stats-2">
-      </tbody>
-    </table>`
+    <div class="table-overflow-wrapper">
+      <table id="data-table-2">
+        <thead>
+          <tr>
+            <th id="col-date">date</th>
+            <th id="col-day">day</th>
+            <th id="col-ducks">ducks</th>
+            <th id="col-ave">ave. ducks/hunter</th>
+          </tr>
+        </thead>
+        <tbody id="tb-stats-2">
+        </tbody>
+      </table>
+    </div>`
     );
   }
 
@@ -170,8 +174,8 @@ export default class extends AbstractView {
         (data) => {
           //console.log(data["stats"]);
           populateTable(data["stats"]);
-          prePopTab2();
           if (data["hunt_history"]) {
+            prePopTab2();
             populateTable2(data["hunt_history"]);
           }
         },

@@ -1,0 +1,84 @@
+/*
+rem and em do NOT depend on html font-size in media queries.
+Instead assume, 1rem = 1em = 16px
+*/
+
+/* 1040 px */
+@media (max-width: 65em) {
+  #panorama {
+    width: 104rem;
+  }
+  .aside {
+    padding: 1.6rem;
+    flex-basis: 21rem;
+  }
+  .header {
+    padding: 0 2.4rem;
+  }
+  .nav-list {
+    gap: 2.4rem;
+  }
+  .header-logo {
+    margin: 0.5rem 0;
+  }
+}
+
+/* 880 px */
+@media (max-width: 55em) {
+  html {
+    font-size: 56.25%;
+  }
+
+  /*
+  Login
+  */
+  #section-action {
+    flex-direction: column;
+    margin: 2rem 5rem;
+  }
+
+  #section-action article:first-child {
+    border-bottom: 2px solid #2f2504;
+    border-right: none;
+  }
+
+  #section-action article:nth-child(2) {
+    margin-top: 2rem;
+  }
+
+  .aside {
+    padding-right: 1.4rem;
+    flex-basis: 22rem;
+  }
+
+  .header-logo {
+    height: 6rem;
+  }
+
+  /*
+  Hide aside
+  */
+}
+
+/* 480 px */
+@media (max-width: 30em) {
+  html {
+    font-size: 50%;
+  }
+
+  #section-action {
+    flex-direction: column;
+    margin: 2rem 2rem;
+  }
+
+  #panorama {
+    width: 100%;
+  }
+}
+/*
+- Font sizes (px)
+10 / 12 / 14 / 16 / 18 / 20 / 24 / 30 / 36 / 44 / 52 / 62 / 74 / 86 / 98
+
+- Spacing system (px)
+2 / 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 / 80 / 96 / 128
+*/

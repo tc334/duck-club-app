@@ -23,21 +23,23 @@ export default class extends AbstractView {
     return (
       `<div class="reload-message"></div>
     <h1 class="heading-primary">groups</h1>
-    <table id="data-table">
-      <tr>
-        <th>id</th>
-        <th>hunt</th>
-        <th>pond</th>
-        <th>slot 1</th>
-        <th>slot 2</th>
-        <th>slot 3</th>
-        <th>slot 4</th>
-        <th>#</th>
-        <th>duck</th>
-        <th>non</th>
-        <th>actions</th>
-      </tr>
-    </table>
+    <div class="table-overflow-wrapper">
+      <table id="data-table">
+        <tr>
+          <th>id</th>
+          <th>hunt</th>
+          <th>pond</th>
+          <th>slot 1</th>
+          <th>slot 2</th>
+          <th>slot 3</th>
+          <th>slot 4</th>
+          <th>#</th>
+          <th>duck</th>
+          <th>non</th>
+          <th>actions</th>
+        </tr>
+      </table>
+    </div>
 
     <!-- EDIT USER FORM -->
     <h1 class="heading-primary">add/edit ` +

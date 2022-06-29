@@ -8,20 +8,17 @@ import {
   round,
   removeAllChildNodes,
   sortTable,
+  dateConverter,
 } from "../common_funcs.js";
 
-const subroute = "hunters";
-const singular = "hunter";
-const plural = "hunters";
+const subroute = "ponds";
+const singular = "pond";
+const plural = "ponds";
 // table sorting functions
 const column_id_list = [
   {
-    id: "col-name",
+    id: "col-pond",
     is_numeric: false,
-  },
-  {
-    id: "col-hunts",
-    is_numeric: true,
   },
   {
     id: "col-ducks",
@@ -47,71 +44,35 @@ export default class extends AbstractView {
   }
 
   async getHtml() {
-    return (
-      `<div class="reload-message"></div>
+    return `<div class="reload-message"></div>
     <h2 class="heading-secondary">Filters</h2>
     <form id="form-filter">
       <div class="filter-container">
-        <section class="filter-date">
-          <ul class="filter-list">
-            <li>
-              <input type="radio" name="filter-date" id="radio-current-season" value="current-season" checked>
-              <label for="radio-current-season">current season</label>
-            </li>
-            <li>
-              <input type="radio" name="filter-date" id="radio-all-records" value="all-records">
-              <label for="radio-all-records">all records</label>
-            </li>
-            <li>
-              <input type="radio" name="filter-date" id="radio-custom-date" value="custom-range">
-              <label for="radio-custom-date">custom date range:</label>
-            </li>
-          </ul>
-          <div>
-            <input type="date" class="inp-date-filter" value="2022-03-01" name="date-start" id="date-start">
-            <label for="date-start">start</label>
-          </div>
-          <div>
-            <input type="date" class="inp-date-filter" value="2023-03-01" name="date-end" id="date-end">
-            <label for="date-end">end</label>
-          </div>
-        </section>
-        <section class="filter-member">
-          <ul class="filter-list">
-            <li>
-              <input type="radio" name="filter-member" id="radio-whole-club" value="whole-club" checked>
-              <label for="radio-whole-club">whole club</label>
-            </li>
-            <li>
-              <input type="radio" name="filter-member" id="radio-just-me" value="just-me">
-              <label for="radio-just-me">just me</label>
-            </li>
-          </ul>
+        <section class="filter-date-exact">
+          <label for="select-date">Choose A Hunt Date</label>
+          <select id="select-date" name="hunt_id">
+          </select>
         </section>
       </div>  
       <button class="btn--form btn--cntr" id="btn-filter-refresh">Apply</button>
     </form>
-    <h1 class="heading-primary" id="stats-heading">` +
-      singular +
-      ` stats</h1>
+    <h1 class="heading-primary" id="stats-heading"></h1>
     <p class="sort-helper">Click on any header to sort table</p>
     <div class="table-overflow-wrapper">
       <table id="data-table">
         <thead>
           <tr>
-            <th id="col-name">name</th>
-            <th id="col-hunts">hunts</th>
+            <th id="col-pond">name</th>
             <th id="col-ducks">ducks</th>
             <th id="col-non">non-ducks</th>
             <th id="col-total">total</th>
-            <th id="col-ave">ave. ducks</th>
+            <th id="col-ave">ave. ducks/hunter</th>
           </tr>
         </thead>
         <tbody id="tb-stats">
         </tbody>
       </table>
-    </div>`
-    );
+    </div>`;
   }
 
   js(jwt) {
@@ -119,6 +80,8 @@ export default class extends AbstractView {
     reloadMessage();
 
     populate_aside_stats();
+
+    populateDateList(jwt);
 
     // What do do on a submit
     const myForm = document.getElementById("form-filter");
@@ -133,11 +96,7 @@ export default class extends AbstractView {
 
       // API route for this stats page
       const route =
-        base_uri +
-        "/stats/" +
-        subroute +
-        "?" +
-        new URLSearchParams(object).toString();
+        base_uri + "/groupings/harvest_summary/" + object["hunt_id"];
 
       callAPI(
         jwt,
@@ -145,8 +104,8 @@ export default class extends AbstractView {
         "GET",
         null,
         (data) => {
-          //console.log(data["stats"]);
-          populateTable(data["stats"]);
+          //console.log(data["data"]["groups"]);
+          populateTable(data["data"]["groups"]);
         },
         displayMessageToUser
       );
@@ -170,38 +129,58 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["first_name"] + " " + db_data[i]["last_name"];
+    tabCell.innerHTML = db_data[i]["pond_name"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = db_data[i]["hunts"];
+    tabCell.innerHTML = round(db_data[i]["num_ducks"], 1).toFixed(0);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["ducks"], 1).toFixed(1);
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(1);
+    tabCell.innerHTML = round(db_data[i]["num_nonducks"], 1).toFixed(0);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
     tabCell.innerHTML = round(
-      db_data[i]["ducks"] + db_data[i]["non_ducks"],
-      1
+      db_data[i]["num_ducks"] + db_data[i]["num_nonducks"],
+      0
+    ).toFixed(0);
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.classList.add("cell-fixed-width");
+    tabCell.style.textAlign = "right";
+    tabCell.innerHTML = (
+      db_data[i]["num_ducks"] / db_data[i]["num_hunters"]
     ).toFixed(1);
+  }
+}
 
-    var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(
-      db_data[i]["ducks"] / db_data[i]["hunts"],
-      2
-    ).toFixed(2);
+function populateDateList(jwt) {
+  // API route for this stats page
+  const route = base_uri + "/hunts/dates";
+
+  callAPI(
+    jwt,
+    route,
+    "GET",
+    null,
+    (data) => {
+      //console.log(data["dates"]);
+      populateDateList_aux(data["dates"]);
+    },
+    displayMessageToUser
+  );
+}
+
+function populateDateList_aux(db_data) {
+  const select_dates = document.getElementById("select-date");
+  for (var i = 0; i < db_data.length; i++) {
+    var new_opt = document.createElement("option");
+    new_opt.innerHTML = dateConverter(db_data[i]["hunt_date"]);
+    new_opt.value = db_data[i]["id"];
+    select_dates.appendChild(new_opt);
   }
 }
