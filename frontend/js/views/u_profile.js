@@ -23,41 +23,55 @@ export default class extends AbstractView {
     <h1 class="heading-primary">your profile</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="user-id">User ID</label>
-        <input id="user-id" type="text" placeholder="n/a" name="id" disabled />
+        <div class="form-row">
+          <label for="user-id">User ID</label>
+          <input id="user-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="first-name">First Name</label>
-        <input
-          id="first-name"
-          type="text"
-          name="first_name"
-          required
-        />
+        <div class="form-row">
+          <label for="first-name">First Name</label>
+          <input
+            id="first-name"
+            type="text"
+            name="first_name"
+            required
+          />
+        </div>
     
-        <label for="last-name">Last Name</label>
-        <input
-          id="last-name"
-          type="text"
-          name="last_name"
-          required
-        />
+        <div class="form-row">
+          <label for="last-name">Last Name</label>
+          <input
+            id="last-name"
+            type="text"
+            name="last_name"
+            required
+          />
+        </div>
     
-        <label for="email">Email address</label>
-        <input
-          id="email"
-          type="email"
-          name="email"
-          required
-        />
+        <div class="form-row">
+          <label for="email">Email address</label>
+          <input
+            id="email"
+            type="email"
+            name="email"
+            required
+          />
+        </div>
     
-        <label for="inp-level">Membership Level</label>
-        <input id="inp-level" type="text" name="inp-level" disabled />
+        <div class="form-row">
+          <label for="inp-level">Membership Level</label>
+          <input id="inp-level" type="text" name="inp-level" disabled />
+        </div>
     
-        <label for="inp-status">Membership Status</label>
-        <input id="inp-status" type="text" name="inp-status" disabled />
+        <div class="form-row">
+          <label for="inp-status">Membership Status</label>
+          <input id="inp-status" type="text" name="inp-status" disabled />
+        </div>
     
-        <label for="inp-balance">Balance</label>
-        <input id="inp-balance" type="text" name="inp-balance" disabled />
+        <div class="form-row">
+          <label for="inp-balance">Balance</label>
+          <input id="inp-balance" type="text" name="inp-balance" disabled />
+        </div>
     
         <span class="button-holder">
           <button class="btn--form" id="btn-update">Update</button>

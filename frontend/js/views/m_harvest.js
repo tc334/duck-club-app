@@ -70,32 +70,40 @@ export default class extends AbstractView {
       `</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="` +
+        <div class="form-row">
+          <label for="` +
       singular +
       `-id">Harvest ID</label>
-        <input id="` +
+          <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="inp-groupid">Group ID</label>
-        <input
-          id="inp-groupid"
-          type="number"
-          name="group_id"
-        />
+        <div class="form-row">
+          <label for="inp-groupid">Group ID</label>
+          <input
+            id="inp-groupid"
+            type="number"
+            name="group_id"
+          />
+        </div>
     
-        <label for="select-bird">Bird</label>
-        <select id="select-bird" name="bird_id" required>
-          <option value="">Select one</option>
-        </select>
+        <div class="form-row">
+          <label for="select-bird">Bird</label>
+          <select id="select-bird" name="bird_id" required>
+            <option value="">Select one</option>
+          </select>
+        </div>
     
-        <label for="inp-count">Count</label>
-        <input
-          id="inp-count"
-          type="number"
-          name="count"
-          required
-        />
+        <div class="form-row">
+          <label for="inp-count">Count</label>
+          <input
+            id="inp-count"
+            type="number"
+            name="count"
+            required
+          />
+        </div>
     
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>

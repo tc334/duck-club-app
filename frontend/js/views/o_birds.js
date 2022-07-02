@@ -37,25 +37,31 @@ export default class extends AbstractView {
     <h1 class="heading-primary">add/edit bird</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="bird-id">Bird ID</label>
-        <input id="bird-id" type="text" placeholder="n/a" name="id" disabled />
+        <div class="form-row">
+          <label for="bird-id">Bird ID</label>
+          <input id="bird-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="bird-name">Species Name</label>
-        <input
-          id="bird-name"
-          type="text"
-          name="name"
-          required
-        />
+        <div class="form-row">
+          <label for="bird-name">Species Name</label>
+          <input
+            id="bird-name"
+            type="text"
+            name="name"
+            required
+          />
+        </div>
     
-        <label for="select-type">Type</label>
-        <select id="select-type" name="type" required>
-          <option value="">Select one</option>
-          <option value="duck">Duck</option>
-          <option value="goose">Goose</option>
-          <option value="crane">Crane</option>
-          <option value="other">Other</option>
-        </select>
+        <div class="form-row">
+          <label for="select-type">Type</label>
+          <select id="select-type" name="type" required>
+            <option value="">Select one</option>
+            <option value="duck">Duck</option>
+            <option value="goose">Goose</option>
+            <option value="crane">Crane</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
     
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>

@@ -65,7 +65,7 @@ def update_row(user, bird_id):
 
 
 @birds_bp.route('/birds/<bird_id>', methods=['DELETE'])
-@token_required(owner_and_above)
+@token_required(admin_only)
 def del_row(user, bird_id):
     if db.del_row(table_name, bird_id):
         return jsonify({'message': 'Successful removal'}), 200

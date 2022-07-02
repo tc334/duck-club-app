@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from .. import db
-from .auth_wraps import token_required, manager_and_above, owner_and_above, all_members
+from .auth_wraps import token_required, manager_and_above, owner_and_above, all_members, admin_only
 
 ponds_bp = Blueprint('ponds', __name__)
 table_name = 'ponds'
@@ -94,7 +94,7 @@ def update_many_rows(user):
 
 
 @ponds_bp.route('/ponds/<pond_id>', methods=['DELETE'])
-@token_required(owner_and_above)
+@token_required(admin_only)
 def del_row(user, pond_id):
     if db.del_row(table_name, pond_id):
         return jsonify({'message': 'Successful removal'}), 200

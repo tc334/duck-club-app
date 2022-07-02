@@ -63,7 +63,7 @@ def update_row(user, property_id):
 
 
 @properties_bp.route('/properties/<property_id>', methods=['DELETE'])
-@token_required(owner_and_above)
+@token_required(admin_only)
 def del_row(user, property_id):
     if db.del_row(table_name, property_id):
         return jsonify({'message': 'Successful removal'}), 200

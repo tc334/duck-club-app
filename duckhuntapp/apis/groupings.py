@@ -333,7 +333,7 @@ def update_row(user, grouping_id):
 
 
 @groupings_bp.route('/groupings/<grouping_id>', methods=['DELETE'])
-@token_required(manager_and_above)
+@token_required(admin_only)
 def del_row(user, grouping_id):
     if db.del_row(table_name, grouping_id):
         return jsonify({'message': 'Successful removal'}), 200

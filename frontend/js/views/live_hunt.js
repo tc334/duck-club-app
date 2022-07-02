@@ -8,13 +8,17 @@ import {
   sortIndexes,
   removeAllChildNodes,
   round,
+  menuSwitcher,
 } from "../common_funcs.js";
 
 var jwt_global;
 var group_limits = [];
 const subroute = "groupings";
 
-document.getElementById("aside-main").display = "none";
+document.getElementById("main").classList.remove("menu-open");
+document
+  .getElementById("btn-aside-menu")
+  .addEventListener("click", menuSwitcher);
 
 export default class extends AbstractView {
   constructor() {
@@ -95,7 +99,7 @@ export default class extends AbstractView {
     reloadMessage();
 
     // clear the aside
-    var aside = document.getElementById("aside-main");
+    var aside = document.getElementById("aside-content");
     aside.innerHTML = "";
 
     // First step is to pull data from DB
@@ -255,7 +259,7 @@ function populateLeaderboard(groups, pct_complete) {
 }
 
 function populateAside(group_detail) {
-  var aside = document.getElementById("aside-main");
+  var aside = document.getElementById("aside-content");
   aside.group_id = group_detail["group_id"];
 
   var heading = document.createElement("h2");
@@ -349,7 +353,7 @@ function populateAside(group_detail) {
 
 function updateMyGroup() {
   // this is the parent element
-  var aside = document.getElementById("aside-main");
+  var aside = document.getElementById("aside-content");
 
   // setup the json that will be sent to the PUT command
   var json = {

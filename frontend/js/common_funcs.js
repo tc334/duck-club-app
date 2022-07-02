@@ -55,7 +55,7 @@ export function decode_jwt(jwt_in, property = "level") {
 // Populate the aside depending on user level
 export function populate_aside(user_level) {
   // start by clearing the aside
-  removeAllChildNodes(document.getElementById("aside-main"));
+  removeAllChildNodes(document.getElementById("aside-content"));
 
   // data
   const headings = ["member", "manager", "owner", "administrator"];
@@ -117,13 +117,17 @@ export function populate_aside(user_level) {
     }
   }
 
-  document.getElementById("aside-main").style.display = "block";
+  document.getElementById("main").classList.remove("menu-open");
+  document.getElementById("aside-content").style.display = "block";
+  document
+    .getElementById("btn-aside-menu")
+    .addEventListener("click", menuSwitcher);
 }
 
 // Populate the alternate aside for the stats menu
 export function populate_aside_stats() {
   // start by clearing the aside
-  removeAllChildNodes(document.getElementById("aside-main"));
+  removeAllChildNodes(document.getElementById("aside-content"));
 
   // data
   const headings = ["stats"];
@@ -159,11 +163,15 @@ export function populate_aside_stats() {
     }
   }
 
-  document.getElementById("aside-main").style.display = "block";
+  document.getElementById("main").classList.remove("menu-open");
+  document.getElementById("aside-content").style.display = "block";
+  document
+    .getElementById("btn-aside-menu")
+    .addEventListener("click", menuSwitcher);
 }
 
 function populateOneLevel(heading, text, images, links) {
-  var aside = document.getElementById("aside-main");
+  var aside = document.getElementById("aside-content");
 
   // heading
   var div = document.createElement("div");
@@ -357,5 +365,14 @@ export function sortTable(e) {
         switching = true;
       }
     }
+  }
+}
+
+export function menuSwitcher() {
+  var main_main = document.getElementById("main");
+  if (main_main.classList.contains("menu-open")) {
+    main_main.classList.remove("menu-open");
+  } else {
+    main_main.classList.add("menu-open");
   }
 }

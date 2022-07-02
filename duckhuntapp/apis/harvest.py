@@ -118,7 +118,7 @@ def get_one_row(users, harvest_id):
 
 
 @harvests_bp.route('/harvests/<harvest_id>', methods=['DELETE'])
-@token_required(manager_and_above)
+@token_required(admin_only)
 def del_row(user, harvest_id):
     if db.del_row(table_name, harvest_id):
         return jsonify({'message': 'Successful removal'}), 200

@@ -47,6 +47,7 @@ html {
   font-size: 62.5%;
   overflow-x: hidden;
   /*scroll-behavior: smooth;*/
+  height: 100%;
 }
 
 body {
@@ -56,6 +57,7 @@ body {
   color: #2f2504;
   background-color: #eee;
   overflow-x: hidden;
+  height: 100%;
 }
 
 select {
@@ -166,6 +168,21 @@ main {
 .aside-item-text {
   display: inline;
   height: 100%;
+}
+
+.btn-aside-menu {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  padding: 1rem;
+  background-color: #d0ddd7;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-aside-menu img {
+  height: 4rem;
 }
 
 /* ************************** */
@@ -288,21 +305,36 @@ caption {
 }
 
 .form-data {
-  display: grid;
-  grid-template-columns: 0.5fr 1fr;
-  align-items: center;
-  row-gap: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
   margin-left: auto;
   margin-right: auto;
 }
 
+.form-row {
+  display: flex;
+  align-items: center;
+}
+
+.form-row :nth-child(2) {
+  display: inline-block;
+  flex-grow: 1;
+}
+
+#select-type {
+  display: inline-block;
+}
+
 .edit-form label,
 .harvest-filter label {
+  display: inline-block;
   font-size: 1.4rem;
   margin-right: 1rem;
   text-align: right;
   text-transform: capitalize;
-  width: 18rem;
+  width: 13rem;
   justify-self: right;
 }
 
@@ -835,11 +867,16 @@ Stats
   font-size: 1.6rem;
   text-transform: capitalize;
   vertical-align: middle;
-  height: 100%;
 }
 
 .filter-date div input {
   font-family: inherit;
+}
+
+.custom-date {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 .filter-container li {
@@ -878,6 +915,12 @@ Stats
 #stats-heading-2 {
   margin-top: 8rem;
   margin-bottom: 0;
+}
+
+.filter-pond {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .filter-pond label,

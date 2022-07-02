@@ -47,88 +47,110 @@ export default class extends AbstractView {
       `</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="` +
+        <div class="form-row">
+          <label for="` +
       singular +
       `-id">Group ID</label>
-        <input id="` +
+          <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="inp-hunt-id">hunt ID</label>
-        <input
-          id="inp-hunt-id"
-          type="number"
-          name="hunt_id"
-          required
-        />
+        <div class="form-row">
+          <label for="inp-hunt-id">hunt ID</label>
+          <input
+            id="inp-hunt-id"
+            type="number"
+            name="hunt_id"
+            required
+          />
+        </div>
 
-        <label for="inp-pon-id">pond ID</label>
-        <input
-          id="inp-pond-id"
-          type="number"
-          name="pond_id"
-        />
+        <div class="form-row">
+          <label for="inp-pon-id">pond ID</label>
+          <input
+            id="inp-pond-id"
+            type="number"
+            name="pond_id"
+          />
+        </div>
 
-        <label for="select-slot1type">slot 1 type</label>
-        <select id="select-slot1type" name="slot1_type" required>
-          <option value="open">open</option>
-          <option value="member">member</option>
-          <option value="guest">guest</option>
-          <option value="invitation">invitation</option>
-        </select>
+        <div class="form-row">
+          <label for="select-slot1type">slot 1 type</label>
+          <select id="select-slot1type" name="slot1_type" required>
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
+          </select>
+        </div>
 
-        <label for="inp-slot1-id">slot 1 ID</label>
-        <input
-          id="inp-slot1-id"
-          type="number"
-          name="slot1_id"
-          required
-        />
+        <div class="form-row">
+          <label for="inp-slot1-id">slot 1 ID</label>
+          <input
+            id="inp-slot1-id"
+            type="number"
+            name="slot1_id"
+            required
+          />
+        </div>
 
-        <label for="select-slot2type">slot 2 type</label>
-        <select id="select-slot2type" name="slot2_type">
-          <option value="open">open</option>
-          <option value="member">member</option>
-          <option value="guest">guest</option>
-          <option value="invitation">invitation</option>
-        </select>
+        <div class="form-row">
+          <label for="select-slot2type">slot 2 type</label>
+          <select id="select-slot2type" name="slot2_type">
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
+          </select>
+        </div>
 
-        <label for="inp-slot2-id">slot 2 ID</label>
-        <input
-          id="inp-slot2-id"
-          type="number"
-          name="slot2_id"
-        />
+        <div class="form-row">
+          <label for="inp-slot2-id">slot 2 ID</label>
+          <input
+            id="inp-slot2-id"
+            type="number"
+            name="slot2_id"
+          />
+        </div>
 
-        <label for="select-slot3type">slot 3 type</label>
-        <select id="select-slot3type" name="slot3_type">
-          <option value="open">open</option>
-          <option value="member">member</option>
-          <option value="guest">guest</option>
-          <option value="invitation">invitation</option>
-        </select>
+        <div class="form-row">
+          <label for="select-slot3type">slot 3 type</label>
+          <select id="select-slot3type" name="slot3_type">
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
+          </select>
+        </div>
 
-        <label for="inp-slot3-id">slot 3 ID</label>
-        <input
-          id="inp-slot3-id"
-          type="number"
-          name="slot3_id"
-        />
+        <div class="form-row">
+          <label for="inp-slot3-id">slot 3 ID</label>
+          <input
+            id="inp-slot3-id"
+            type="number"
+            name="slot3_id"
+          />
+        </div>
 
-        <label for="select-slot4type">slot 4 type</label>
-        <select id="select-slot4type" name="slot4_type">
-          <option value="open">open</option>
-          <option value="member">member</option>
-          <option value="guest">guest</option>
-          <option value="invitation">invitation</option>
-        </select>
+        <div class="form-row">
+          <label for="select-slot4type">slot 4 type</label>
+          <select id="select-slot4type" name="slot4_type">
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
+          </select>
+        </div>
 
-        <label for="inp-slot4-id">slot 4 ID</label>
-        <input
-          id="inp-slot4-id"
-          type="number"
-          name="slot4_id"
-        />
+        <div class="form-row">
+          <label for="inp-slot4-id">slot 4 ID</label>
+          <input
+            id="inp-slot4-id"
+            type="number"
+            name="slot4_id"
+          />
+        </div>
 
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>

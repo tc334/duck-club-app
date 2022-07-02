@@ -171,7 +171,7 @@ def update_row(user, public_id):
 
 
 @users_bp.route('/users/<public_id>', methods=['DELETE'])
-@token_required(owner_and_above)
+@token_required(admin_only)
 def del_row(user, public_id):
     if db.del_row(table_name, public_id, "public_id"):
         return jsonify({'message': 'Successful removal'}), 200

@@ -35,80 +35,100 @@ export default class extends AbstractView {
       `</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="` +
+        <div class="form-row">
+          <label for="` +
       singular +
       `-id">Hunt ID</label>
-        <input id="` +
+          <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="inp-hunt-date">hunt date</label>
-        <input
-          id="inp-hunt-date"
-          type="date"
-          name="hunt_date"
-          required
-        />
+        <div class="form-row">
+          <label for="inp-hunt-date">hunt date</label>
+          <input
+            id="inp-hunt-date"
+            type="date"
+            name="hunt_date"
+            required
+          />
+        </div>
 
-        <label for="select-status">Status</label>
-        <select id="select-status" name="status" required>
-          <option value="signup_open">signup open</option>
-          <option value="signup_closed">signup closed</option>
-          <option value="draw_complete">draw complete</option>
-          <option value="hunt_open">hunt open</option>
-          <option value="hunt_closed">hunt closed</option>
-        </select>
+        <div class="form-row">
+          <label for="select-status">Status</label>
+          <select id="select-status" name="status" required>
+            <option value="signup_open">signup open</option>
+            <option value="signup_closed">signup closed</option>
+            <option value="draw_complete">draw complete</option>
+            <option value="hunt_open">hunt open</option>
+            <option value="hunt_closed">hunt closed</option>
+          </select>
+        </div>
 
-        <label for="inp-signup-close-auto" class="chk-lbl">automatically close signup</label>
-        <input
-          type="checkbox"
-          id="inp-signup-close-auto"
-          name="signup_closed_auto"
-          checked="true"
-        />
+        <div class="form-row">
+          <label for="inp-signup-close-auto" class="chk-lbl">auto close signup</label>
+          <input
+            type="checkbox"
+            id="inp-signup-close-auto"
+            name="signup_closed_auto"
+            checked="true"
+          />
+        </div>
 
-        <label for="inp-signup-close-time" class="chk-lbl">signup close time</label>
-        <input
-          id="inp-signup-close-time"
-          type="time"
-          value="18:00"
-          name="signup_closed_time"
-        />
+        <div class="form-row">
+          <label for="inp-signup-close-time" class="chk-lbl">signup close time</label>
+          <input
+            id="inp-signup-close-time"
+            type="time"
+            value="18:00"
+            name="signup_closed_time"
+          />
+        </div>
     
-        <label for="inp-draw-auto" class="chk-lbl">auto draw</label>
-        <input type="checkbox" id="inp-draw-auto" disabled/>
+        <div class="form-row">
+          <label for="inp-draw-auto" class="chk-lbl">auto draw</label>
+          <input type="checkbox" id="inp-draw-auto" disabled/>
+        </div>
 
-        <label for="inp-hunt-open-auto" class="chk-lbl">automatically open hunt</label>
-        <input
-          type="checkbox"
-          id="inp-hunt-open-auto"
-          name="hunt_open_auto"
-          checked
-        />
+        <div class="form-row">
+          <label for="inp-hunt-open-auto" class="chk-lbl">auto open hunt</label>
+          <input
+            type="checkbox"
+            id="inp-hunt-open-auto"
+            name="hunt_open_auto"
+            checked
+          />
+        </div>
 
-        <label for="inp-hunt-open-time">hunt open time</label>
-        <input
-          id="inp-hunt-open-time"
-          type="time"
-          value="06:00"
-          name="hunt_open_time"
-        />
+        <div class="form-row">
+          <label for="inp-hunt-open-time">hunt open time</label>
+          <input
+            id="inp-hunt-open-time"
+            type="time"
+            value="06:00"
+            name="hunt_open_time"
+          />
+        </div>
     
-        <label for="inp-hunt-close-auto" class="chk-lbl">automatically close hunt</label>
-        <input
-          type="checkbox"
-          id="inp-hunt-close-auto"
-          name="hunt_close_auto"
-          checked
-        />
+        <div class="form-row">
+          <label for="inp-hunt-close-auto" class="chk-lbl">auto close hunt</label>
+          <input
+            type="checkbox"
+            id="inp-hunt-close-auto"
+            name="hunt_close_auto"
+            checked
+          />
+        </div>
 
-        <label for="inp-hunt-close-time">hunt close time</label>
-        <input
-          id="inp-hunt-close-time"
-          type="time"
-          value="19:00"
-          name="hunt_close_time"
-        />
+        <div class="form-row">
+          <label for="inp-hunt-close-time">hunt close time</label>
+          <input
+            id="inp-hunt-close-time"
+            type="time"
+            value="19:00"
+            name="hunt_close_time"
+          />
+        </div>
     
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>

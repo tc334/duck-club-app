@@ -44,38 +44,46 @@ export default class extends AbstractView {
       `</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="` +
+        <div class="form-row">
+          <label for="` +
       singular +
       `-id">Pond ID</label>
-        <input id="` +
+          <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="` +
+        <div class="form-row">
+          <label for="` +
       singular +
       `-name">` +
       singular +
       ` Name</label>
-        <input
-          id="` +
+          <input
+            id="` +
       singular +
       `-name"
-          type="text"
-          name="name"
-          required
-        />
+            type="text"
+            name="name"
+            required
+          />
+        </div>
     
-        <label for="select-property">Property</label>
-        <select id="select-property" name="property_id" required>
-          <option value="">Select one</option>
-        </select>
+        <div class="form-row">
+          <label for="select-property">Property</label>
+          <select id="select-property" name="property_id" required>
+            <option value="">Select one</option>
+          </select>
+        </div>
     
-        <label for="select-status">Status</label>
-        <select id="select-status" name="status" required>
-          <option value="">Select one</option>
-          <option value="open">Open</option>
-          <option value="closed">Closed</option>
-        </select>
+        <div class="form-row">
+          <label for="select-status">Status</label>
+          <select id="select-status" name="status" required>
+            <option value="">Select one</option>
+            <option value="open">Open</option>
+            <option value="closed">Closed</option>
+          </select>
+        </div>
     
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>

@@ -35,23 +35,30 @@ export default class extends AbstractView {
     <h1 class="heading-primary">add/edit property</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="property-id">Property ID</label>
-        <input id="property-id" type="text" placeholder="n/a" name="id" disabled />
+      
+        <div class="form-row">
+          <label for="property-id">Property ID</label>
+          <input id="property-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="property-name">Property Name</label>
-        <input
-          id="property-name"
-          type="text"
-          name="name"
-          required
-        />
+        <div class="form-row">
+          <label for="property-name">Property Name</label>
+          <input
+            id="property-name"
+            type="text"
+            name="name"
+            required
+          />
+        </div>
     
-        <label for="select-region">Region</label>
-        <select id="select-region" name="region" required>
-          <option value="">Select one</option>
-          <option value="Northern">Northern</option>
-          <option value="Southern">Southern</option>
-        </select>
+        <div class="form-row">
+          <label for="select-region">Region</label>
+          <select id="select-region" name="region" required>
+            <option value="">Select one</option>
+            <option value="Northern">Northern</option>
+            <option value="Southern">Southern</option>
+          </select>
+        </div>
     
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>

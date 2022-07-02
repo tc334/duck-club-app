@@ -39,51 +39,63 @@ export default class extends AbstractView {
     <h1 class="heading-primary">add/edit member</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="user-id">User ID</label>
-        <input id="user-id" type="text" placeholder="n/a" name="id" disabled />
+        <div class="form-row">
+          <label for="user-id">User ID</label>
+          <input id="user-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="first-name">First Name</label>
-        <input
-          id="first-name"
-          type="text"
-          placeholder="John"
-          name="first_name"
-          required
-        />
+        <div class="form-row">
+          <label for="first-name">First Name</label>
+          <input
+            id="first-name"
+            type="text"
+            placeholder="John"
+            name="first_name"
+            required
+          />
+        </div>
     
-        <label for="last-name">Last Name</label>
-        <input
-          id="last-name"
-          type="text"
-          placeholder="Doe"
-          name="last_name"
-          required
-        />
+        <div class="form-row">
+          <label for="last-name">Last Name</label>
+          <input
+            id="last-name"
+            type="text"
+            placeholder="Doe"
+            name="last_name"
+            required
+          />
+        </div>
     
-        <label for="email">Email address</label>
-        <input
-          id="email"
-          type="email"
-          placeholder="john.doe@domain.com"
-          name="email"
-          required
-        />
+        <div class="form-row">
+          <label for="email">Email address</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="john.doe@domain.com"
+            name="email"
+            required
+          />
+        </div>
     
-        <label for="select-level">Membership Level</label>
-        <select id="select-level" name="level" required>
-          <option value="">Select one</option>
-          <option value="member">Member</option>
-          <option value="manager">Manager</option>
-          <option value="owner">Owner</option>
-          <option value="administrator">Administrator</option>
-        </select>
+        <div class="form-row">
+          <label for="select-level">Membership Level</label>
+          <select id="select-level" name="level" required>
+            <option value="">Select one</option>
+            <option value="member">Member</option>
+            <option value="manager">Manager</option>
+            <option value="owner">Owner</option>
+            <option value="administrator">Administrator</option>
+          </select>
+        </div>
     
-        <label for="select-status">Membership Status</label>
-        <select id="select-status" name="status" required>
-          <option value="">Select one</option>
-          <option value="active">Active</option>
-          <option value="inactive">Inactive</option>
-        </select>
+        <div class="form-row">
+          <label for="select-status">Membership Status</label>
+          <select id="select-status" name="status" required>
+            <option value="">Select one</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
     
         <span class="button-holder">
           <button class="btn--form" id="btn-add">Add</button>

@@ -68,11 +68,11 @@ export default class extends AbstractView {
               <label for="radio-custom-date">custom date range:</label>
             </li>
           </ul>
-          <div>
+          <div class="custom-date">
             <input type="date" class="inp-date-filter" value="2022-03-01" name="date-start" id="date-start">
             <label for="date-start">start</label>
           </div>
-          <div>
+          <div class="custom-date">
             <input type="date" class="inp-date-filter" value="2023-03-01" name="date-end" id="date-end">
             <label for="date-end">end</label>
           </div>

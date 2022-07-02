@@ -48,29 +48,35 @@ export default class extends AbstractView {
       `</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
-        <label for="` +
+        <div class="form-row">
+          <label for="` +
       singular +
       `-id">Hunt ID</label>
-        <input id="` +
+          <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
+        </div>
     
-        <label for="inp-hunt-date">hunt date</label>
-        <input
-          id="inp-hunt-date"
-          type="date"
-          name="hunt_date"
-          required
-        />
+        <div class="form-row">
+          <label for="inp-hunt-date">hunt date</label>
+          <input
+            id="inp-hunt-date"
+            type="date"
+            name="hunt_date"
+            required
+          />
+        </div>
 
-        <label for="select-status">Status</label>
-        <select id="select-status" name="status" required>
-          <option value="signup_open">signup open</option>
-          <option value="signup_closed">signup closed</option>
-          <option value="draw_complete">draw complete</option>
-          <option value="hunt_open">hunt open</option>
-          <option value="hunt_closed">hunt closed</option>
-        </select>
+        <div class="form-row">
+          <label for="select-status">Status</label>
+          <select id="select-status" name="status" required>
+            <option value="signup_open">signup open</option>
+            <option value="signup_closed">signup closed</option>
+            <option value="draw_complete">draw complete</option>
+            <option value="hunt_open">hunt open</option>
+            <option value="hunt_closed">hunt closed</option>
+          </select>
+        </div>
 
         <span class="button-holder">
           <button class="btn--form">Add</button>
