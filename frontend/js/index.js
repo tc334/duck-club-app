@@ -1,24 +1,24 @@
 // functions, constants imported from other javascript files
-import { decode_jwt, populate_aside } from "./common_funcs.js";
-import u_pre from "./views/u_pre.js";
-import u_profile from "./views/u_profile.js";
-import m_hunts from "./views/m_hunts.js";
-import m_add from "./views/m_add.js";
-import m_groupings from "./views/m_groupings.js";
-import m_availability from "./views/m_availability.js";
-import m_harvest from "./views/m_harvest.js";
-import o_properties from "./views/o_properties.js";
-import o_members from "./views/o_members.js";
-import o_birds from "./views/o_birds.js";
-import o_ponds from "./views/o_ponds.js";
-import a_hunts from "./views/a_hunts.js";
-import a_groupings from "./views/a_groupings.js";
+//import { decode_jwt, populate_aside } from "./common_funcs.js";
+import u_pre from "./views/Setup/members/u_pre.js";
+import u_profile from "./views/Setup/members/u_profile.js";
+import m_hunts from "./views/Setup/managers/m_hunts.js";
+import m_add from "./views/Setup/managers/m_add.js";
+import m_groupings from "./views/Setup/managers/m_groupings.js";
+import m_availability from "./views/Setup/managers/m_availability.js";
+import m_harvest from "./views/Setup/managers/m_harvest.js";
+import o_properties from "./views/Setup/owners/o_properties.js";
+import o_members from "./views/Setup/owners/o_members.js";
+import o_birds from "./views/Setup/owners/o_birds.js";
+import o_ponds from "./views/Setup/owners/o_ponds.js";
+import a_hunts from "./views/Setup/administrators/a_hunts.js";
+import a_groupings from "./views/Setup/administrators/a_groupings.js";
 import live_hunt from "./views/live_hunt.js";
-import s_dates from "./views/s_dates.js";
-import s_hunters from "./views/s_hunters.js";
-import s_ponds from "./views/s_ponds.js";
-import s_birds from "./views/s_birds.js";
-import s_club from "./views/s_club.js";
+import s_dates from "./views/Stats/s_dates.js";
+import s_hunters from "./views/Stats/s_hunters.js";
+import s_ponds from "./views/Stats/s_ponds.js";
+import s_birds from "./views/Stats/s_birds.js";
+import s_club from "./views/Stats/s_club.js";
 
 // only do this once
 const jwt = localStorage.getItem("token");

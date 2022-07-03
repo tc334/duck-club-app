@@ -1,19 +1,18 @@
-import AbstractView from "./AbstractView.js";
-import { base_uri } from "../constants.js";
+import AbstractView from "../../AbstractView.js";
+import { base_uri } from "../../../constants.js";
 import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
   decode_jwt,
   populate_aside,
-} from "../common_funcs.js";
+} from "../../../common_funcs.js";
 
 var jwt_global;
 var db_data;
-var db_data_properties;
-const subroute = "ponds";
-const singular = "pond";
-const plural = "ponds";
+const subroute = "birds";
+const plural = "birds";
+const singular = "bird";
 
 export default class extends AbstractView {
   constructor() {
@@ -21,48 +20,32 @@ export default class extends AbstractView {
   }
 
   async getHtml() {
-    return (
-      `<div class="reload-message"></div>
-    <h1 class="heading-primary">ponds</h1>
+    return `<div class="reload-message"></div>
+    <h1 class="heading-primary">birds</h1>
     <div class="table-overflow-wrapper">
-      <table id="` +
-      singular +
-      `-table">
+      <table id="data-table">
         <tr>
           <th>id</th>
           <th>name</th>
-          <th>property</th>
-          <th>status</th>
+          <th>type</th>
           <th>actions</th>
         </tr>
       </table>
     </div>
     
     <!-- EDIT USER FORM -->
-    <h1 class="heading-primary">add/edit ` +
-      singular +
-      `</h1>
+    <h1 class="heading-primary">add/edit bird</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
         <div class="form-row">
-          <label for="` +
-      singular +
-      `-id">Pond ID</label>
-          <input id="` +
-      singular +
-      `-id" type="text" placeholder="n/a" name="id" disabled />
+          <label for="bird-id">Bird ID</label>
+          <input id="bird-id" type="text" placeholder="n/a" name="id" disabled />
         </div>
     
         <div class="form-row">
-          <label for="` +
-      singular +
-      `-name">` +
-      singular +
-      ` Name</label>
+          <label for="bird-name">Species Name</label>
           <input
-            id="` +
-      singular +
-      `-name"
+            id="bird-name"
             type="text"
             name="name"
             required
@@ -70,18 +53,13 @@ export default class extends AbstractView {
         </div>
     
         <div class="form-row">
-          <label for="select-property">Property</label>
-          <select id="select-property" name="property_id" required>
+          <label for="select-type">Type</label>
+          <select id="select-type" name="type" required>
             <option value="">Select one</option>
-          </select>
-        </div>
-    
-        <div class="form-row">
-          <label for="select-status">Status</label>
-          <select id="select-status" name="status" required>
-            <option value="">Select one</option>
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
+            <option value="duck">Duck</option>
+            <option value="goose">Goose</option>
+            <option value="crane">Crane</option>
+            <option value="other">Other</option>
           </select>
         </div>
     
@@ -91,8 +69,7 @@ export default class extends AbstractView {
           <input class="btn--form" type="reset" />
         </span>
       </div>
-    </form>`
-    );
+    </form>`;
   }
 
   js(jwt) {
@@ -116,25 +93,7 @@ export default class extends AbstractView {
       (response_full_json) => {
         if (response_full_json[subroute]) {
           db_data = response_full_json[subroute];
-          // For the ponds page, we also need to have the properties db
-          const route_2 = base_uri + "/" + "properties";
-          callAPI(
-            jwt,
-            route_2,
-            "GET",
-            null,
-            (response_full_json) => {
-              if (response_full_json["properties"]) {
-                db_data_properties = response_full_json["properties"];
-                // now, only once both ponds & properties are successfully loaded, can we call the action
-                populateTable(db_data);
-                populatePropertyListBox();
-              } else {
-                //console.log(data);
-              }
-            },
-            displayMessageToUser
-          );
+          populateTable(db_data);
         } else {
           //console.log(data);
         }
@@ -159,14 +118,6 @@ export default class extends AbstractView {
 
       var object = {};
       formData.forEach((value, key) => (object[key] = value));
-
-      // for ponds, we need to extract the property["id"] from what we currently have, which is the property["name"]
-      const searchResult = db_data_properties.filter(function (property) {
-        return property["name"] === object["property_id"];
-      })[0]["id"];
-      object["property_id"] = searchResult;
-
-      // now we can stringify the json just like we do on the other views
       var json = JSON.stringify(object);
 
       if (e.submitter.id == "btn-add") {
@@ -211,7 +162,7 @@ export default class extends AbstractView {
 }
 
 function populateTable(db_data) {
-  var table = document.getElementById(singular + "-table");
+  var table = document.getElementById("data-table");
 
   for (var i = 0; i < db_data.length; i++) {
     var tr = table.insertRow(-1);
@@ -220,28 +171,17 @@ function populateTable(db_data) {
     tabCell.innerHTML = db_data[i]["id"];
 
     var tabCell = tr.insertCell(-1);
+    tabCell.className += "tr--bird-name";
     tabCell.innerHTML = db_data[i]["name"];
 
     var tabCell = tr.insertCell(-1);
-    // match up the corresponding property name
-    const searchResult = db_data_properties.filter(function (property) {
-      return property["id"] === db_data[i]["property_id"];
-    });
-    var propertyName = "undefined";
-    if (searchResult.length == 1) {
-      propertyName = searchResult[0]["name"];
-    }
-    tabCell.innerHTML = propertyName;
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["status"];
+    tabCell.innerHTML = db_data[i]["type"];
 
     var tabCell = tr.insertCell(-1);
 
     // Edit button
     var btn_edt = document.createElement("button");
     btn_edt.index = i;
-    btn_edt.property_name = propertyName;
     btn_edt.innerHTML = "Edit";
     btn_edt.className += "btn--action";
     btn_edt.addEventListener("click", populateEdit);
@@ -255,16 +195,6 @@ function populateTable(db_data) {
     btn_del.className += "btn--action";
     btn_del.addEventListener("click", delMember);
     tabCell.appendChild(btn_del);
-  }
-}
-
-function populatePropertyListBox() {
-  var select_property = document.getElementById("select-property");
-  for (var i = 0; i < db_data_properties.length; i++) {
-    var option_new = document.createElement("option");
-    option_new.value = db_data_properties[i]["name"];
-    option_new.innerHTML = db_data_properties[i]["name"];
-    select_property.appendChild(option_new);
   }
 }
 
@@ -298,9 +228,7 @@ function populateEdit(e) {
 
   document.getElementById(singular + "-id").value = db_data[i]["id"];
   document.getElementById(singular + "-name").value = db_data[i]["name"];
-  document.getElementById("select-property").value =
-    e.currentTarget.property_name;
-  document.getElementById("select-status").value = db_data[i]["status"];
+  document.getElementById("select-type").value = db_data[i]["type"];
 
   document.getElementById("add-edit-form").scrollIntoView();
 }

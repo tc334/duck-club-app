@@ -1,19 +1,18 @@
-import AbstractView from "./AbstractView.js";
-import { base_uri } from "../constants.js";
+import AbstractView from "../../AbstractView.js";
+import { base_uri } from "../../../constants.js";
 import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
   populate_aside,
-  dateConverter,
   decode_jwt,
-} from "../common_funcs.js";
+} from "../../../common_funcs.js";
 
 var jwt_global;
 var db_data;
-const subroute = "hunts";
-const singular = "hunt";
-const plural = "hunts";
+const subroute = "groupings";
+const singular = "grouping";
+const plural = "groupings";
 
 export default class extends AbstractView {
   constructor() {
@@ -23,20 +22,20 @@ export default class extends AbstractView {
   async getHtml() {
     return (
       `<div class="reload-message"></div>
-    <h1 class="heading-primary">hunts</h1>
+    <h1 class="heading-primary">groups</h1>
     <div class="table-overflow-wrapper">
       <table id="data-table">
         <tr>
           <th>id</th>
-          <th>date</th>
-          <th>status</th>
-          <th>auto CS</th>
-          <th>SC time</th>
-          <th>auto draw</th>
-          <th>auto OH</th>
-          <th>HO time</th>
-          <th>auto CH</th>
-          <th>hunt CT</th>
+          <th>hunt</th>
+          <th>pond</th>
+          <th>slot 1</th>
+          <th>slot 2</th>
+          <th>slot 3</th>
+          <th>slot 4</th>
+          <th>#</th>
+          <th>duck</th>
+          <th>non</th>
           <th>actions</th>
         </tr>
       </table>
@@ -51,35 +50,110 @@ export default class extends AbstractView {
         <div class="form-row">
           <label for="` +
       singular +
-      `-id">Hunt ID</label>
+      `-id">Group ID</label>
           <input id="` +
       singular +
       `-id" type="text" placeholder="n/a" name="id" disabled />
         </div>
     
         <div class="form-row">
-          <label for="inp-hunt-date">hunt date</label>
+          <label for="inp-hunt-id">hunt ID</label>
           <input
-            id="inp-hunt-date"
-            type="date"
-            name="hunt_date"
+            id="inp-hunt-id"
+            type="number"
+            name="hunt_id"
             required
           />
         </div>
 
         <div class="form-row">
-          <label for="select-status">Status</label>
-          <select id="select-status" name="status" required>
-            <option value="signup_open">signup open</option>
-            <option value="signup_closed">signup closed</option>
-            <option value="draw_complete">draw complete</option>
-            <option value="hunt_open">hunt open</option>
-            <option value="hunt_closed">hunt closed</option>
+          <label for="inp-pon-id">pond ID</label>
+          <input
+            id="inp-pond-id"
+            type="number"
+            name="pond_id"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="select-slot1type">slot 1 type</label>
+          <select id="select-slot1type" name="slot1_type" required>
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
           </select>
         </div>
 
+        <div class="form-row">
+          <label for="inp-slot1-id">slot 1 ID</label>
+          <input
+            id="inp-slot1-id"
+            type="number"
+            name="slot1_id"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="select-slot2type">slot 2 type</label>
+          <select id="select-slot2type" name="slot2_type">
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="inp-slot2-id">slot 2 ID</label>
+          <input
+            id="inp-slot2-id"
+            type="number"
+            name="slot2_id"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="select-slot3type">slot 3 type</label>
+          <select id="select-slot3type" name="slot3_type">
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="inp-slot3-id">slot 3 ID</label>
+          <input
+            id="inp-slot3-id"
+            type="number"
+            name="slot3_id"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="select-slot4type">slot 4 type</label>
+          <select id="select-slot4type" name="slot4_type">
+            <option value="open">open</option>
+            <option value="member">member</option>
+            <option value="guest">guest</option>
+            <option value="invitation">invitation</option>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="inp-slot4-id">slot 4 ID</label>
+          <input
+            id="inp-slot4-id"
+            type="number"
+            name="slot4_id"
+          />
+        </div>
+
         <span class="button-holder">
-          <button class="btn--form">Add</button>
+          <button class="btn--form" id="btn-add">Add</button>
           <button class="btn--form" id="btn-update" disabled>Update</button>
           <input class="btn--form" type="reset" />
         </span>
@@ -107,11 +181,11 @@ export default class extends AbstractView {
       "GET",
       null,
       (response_full_json) => {
-        if (response_full_json[subroute]) {
-          db_data = response_full_json[subroute];
+        if (response_full_json[plural]) {
+          db_data = response_full_json[plural];
           populateTable(db_data);
         } else {
-          //console.log(data);
+          // ?
         }
       },
       displayMessageToUser
@@ -123,7 +197,6 @@ export default class extends AbstractView {
     myForm.addEventListener("reset", function (e) {
       document.getElementById("btn-add").disabled = false;
       document.getElementById("btn-update").disabled = true;
-      setDefaultDate();
     });
 
     // What do do on a submit
@@ -134,21 +207,11 @@ export default class extends AbstractView {
       const formData = new FormData(this);
 
       var object = {};
-      formData.forEach((value, key) => (object[key] = value));
+      formData.forEach((value, key) => {
+        if (value != null && value.length > 0) object[key] = value;
+      });
 
-      // checkboxes require special handling
-      const checkbox_names = [
-        "hunt_close_auto",
-        "hunt_open_auto",
-        "signup_closed_auto",
-      ];
-      for (var i = 0; i < checkbox_names.length; i++) {
-        if (object[checkbox_names[i]] && object[checkbox_names[i]] == "on") {
-          object[checkbox_names[i]] = 1;
-        } else {
-          object[checkbox_names[i]] = 0;
-        }
-      }
+      // now we can stringify the json just like we do on the other views
       var json = JSON.stringify(object);
 
       if (e.submitter.id == "btn-add") {
@@ -185,9 +248,7 @@ export default class extends AbstractView {
             window.scrollTo(0, 0);
             location.reload();
           },
-          (data) => {
-            displayMessageToUser(data);
-          }
+          displayMessageToUser
         );
       }
     });
@@ -204,38 +265,42 @@ function populateTable(db_data) {
     tabCell.innerHTML = db_data[i]["id"];
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = dateConverter(db_data[i]["hunt_date"], true);
+    tabCell.innerHTML = db_data[i]["hunt_id"];
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["status"];
+    tabCell.innerHTML = db_data[i]["pond_id"];
 
-    // auto close signup
+    // slot 1
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["signup_closed_auto"];
+    tabCell.innerHTML =
+      db_data[i]["slot1_type"] + " - " + db_data[i]["slot1_id"];
 
-    // signup close time
+    // slot 2
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["signup_closed_time"];
+    tabCell.innerHTML =
+      db_data[i]["slot2_type"] + " - " + db_data[i]["slot2_id"];
 
-    // auto draw
+    // slot 3
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["draw_method_auto"];
+    tabCell.innerHTML =
+      db_data[i]["slot3_type"] + " - " + db_data[i]["slot3_id"];
 
-    // auto open hunt
+    // slot 4
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["hunt_open_auto"];
+    tabCell.innerHTML =
+      db_data[i]["slot4_type"] + " - " + db_data[i]["slot4_id"];
 
-    // hunt open time
+    // # hunters
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["hunt_open_time"];
+    tabCell.innerHTML = db_data[i]["num_hunters"];
 
-    // auto close hunt
+    // duck average
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["hunt_close_auto"];
+    tabCell.innerHTML = db_data[i]["harvest_ave_ducks"];
 
-    // hunt close time
+    // duck average
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["hunt_close_time"];
+    tabCell.innerHTML = db_data[i]["harvest_ave_non"];
 
     var tabCell = tr.insertCell(-1);
 
@@ -287,11 +352,19 @@ function populateEdit(e) {
   document.getElementById("btn-add").disabled = true;
 
   document.getElementById(singular + "-id").value = db_data[i]["id"];
-  // lots more to add here
-  document.getElementById("inp-hunt-date").value = dateConverter(
-    db_data[i]["hunt_date"]
-  );
-  document.getElementById("select-status").value = db_data[i]["status"];
+  document.getElementById("inp-hunt-id").value = db_data[i]["hunt_id"];
+  document.getElementById("inp-pond-id").value = db_data[i]["pond_id"];
+  document.getElementById("select-slot1type").value = db_data[i]["slot1_type"];
+  document.getElementById("inp-slot1-id").value = db_data[i]["slot1_id"];
+
+  document.getElementById("select-slot2type").value = db_data[i]["slot2_type"];
+  document.getElementById("inp-slot2-id").value = db_data[i]["slot2_id"];
+
+  document.getElementById("select-slot3type").value = db_data[i]["slot3_type"];
+  document.getElementById("inp-slot3-id").value = db_data[i]["slot3_id"];
+
+  document.getElementById("select-slot4type").value = db_data[i]["slot4_type"];
+  document.getElementById("inp-slot4-id").value = db_data[i]["slot4_id"];
 
   document.getElementById("add-edit-form").scrollIntoView();
 }

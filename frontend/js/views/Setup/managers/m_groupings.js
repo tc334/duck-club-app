@@ -1,5 +1,5 @@
-import AbstractView from "./AbstractView.js";
-import { base_uri } from "../constants.js";
+import AbstractView from "../../AbstractView.js";
+import { base_uri } from "../../../constants.js";
 import {
   callAPI,
   reloadMessage,
@@ -7,7 +7,7 @@ import {
   dateConverter,
   decode_jwt,
   populate_aside,
-} from "../common_funcs.js";
+} from "../../../common_funcs.js";
 
 var jwt_global;
 var db_data_groupings;

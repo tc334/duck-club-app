@@ -1,5 +1,5 @@
-import AbstractView from "./AbstractView.js";
-import { base_uri } from "../constants.js";
+import AbstractView from "../AbstractView.js";
+import { base_uri } from "../../constants.js";
 import {
   callAPI,
   reloadMessage,
@@ -8,7 +8,7 @@ import {
   round,
   removeAllChildNodes,
   sortTable,
-} from "../common_funcs.js";
+} from "../../common_funcs.js";
 
 const subroute = "hunters";
 const singular = "hunter";

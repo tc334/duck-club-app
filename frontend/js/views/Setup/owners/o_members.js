@@ -1,18 +1,16 @@
-import AbstractView from "./AbstractView.js";
-import { base_uri } from "../constants.js";
+import AbstractView from "../../AbstractView.js";
+import { base_uri } from "../../../constants.js";
 import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  decode_jwt,
   populate_aside,
-} from "../common_funcs.js";
+  decode_jwt,
+} from "../../../common_funcs.js";
 
 var jwt_global;
 var db_data;
-const subroute = "birds";
-const plural = "birds";
-const singular = "bird";
+const subroute = "users";
 
 export default class extends AbstractView {
   constructor() {
@@ -21,45 +19,81 @@ export default class extends AbstractView {
 
   async getHtml() {
     return `<div class="reload-message"></div>
-    <h1 class="heading-primary">birds</h1>
+    <h1 class="heading-primary">club members</h1>
     <div class="table-overflow-wrapper">
-      <table id="data-table">
+      <table id="user-table">
         <tr>
           <th>id</th>
-          <th>name</th>
-          <th>type</th>
+          <th>first</th>
+          <th>last</th>
+          <th>email</th>
+          <th>level</th>
+          <th>status</th>
+          <th>balance</th>
           <th>actions</th>
         </tr>
       </table>
     </div>
     
     <!-- EDIT USER FORM -->
-    <h1 class="heading-primary">add/edit bird</h1>
+    <h1 class="heading-primary">add/edit member</h1>
     <form id="add-edit-form" class="edit-form" name="edit-user" netlify>
       <div class="form-data">
         <div class="form-row">
-          <label for="bird-id">Bird ID</label>
-          <input id="bird-id" type="text" placeholder="n/a" name="id" disabled />
+          <label for="user-id">User ID</label>
+          <input id="user-id" type="text" placeholder="n/a" name="id" disabled />
         </div>
     
         <div class="form-row">
-          <label for="bird-name">Species Name</label>
+          <label for="first-name">First Name</label>
           <input
-            id="bird-name"
+            id="first-name"
             type="text"
-            name="name"
+            placeholder="John"
+            name="first_name"
             required
           />
         </div>
     
         <div class="form-row">
-          <label for="select-type">Type</label>
-          <select id="select-type" name="type" required>
+          <label for="last-name">Last Name</label>
+          <input
+            id="last-name"
+            type="text"
+            placeholder="Doe"
+            name="last_name"
+            required
+          />
+        </div>
+    
+        <div class="form-row">
+          <label for="email">Email address</label>
+          <input
+            id="email"
+            type="email"
+            placeholder="john.doe@domain.com"
+            name="email"
+            required
+          />
+        </div>
+    
+        <div class="form-row">
+          <label for="select-level">Membership Level</label>
+          <select id="select-level" name="level" required>
             <option value="">Select one</option>
-            <option value="duck">Duck</option>
-            <option value="goose">Goose</option>
-            <option value="crane">Crane</option>
-            <option value="other">Other</option>
+            <option value="member">Member</option>
+            <option value="manager">Manager</option>
+            <option value="owner">Owner</option>
+            <option value="administrator">Administrator</option>
+          </select>
+        </div>
+    
+        <div class="form-row">
+          <label for="select-status">Membership Status</label>
+          <select id="select-status" name="status" required>
+            <option value="">Select one</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
     
@@ -136,13 +170,8 @@ export default class extends AbstractView {
           displayMessageToUser
         );
       } else if (e.submitter.id == "btn-update") {
-        // attach the primary key (id) to the json & send at PUT instead of POST
-        const route =
-          base_uri +
-          "/" +
-          subroute +
-          "/" +
-          document.getElementById(singular + "-id").value;
+        // attach the users public-id to the json & send at PUT instead of POST
+        const route = base_uri + "/" + subroute + "/" + e.submitter.public_id;
 
         callAPI(
           jwt,
@@ -161,21 +190,32 @@ export default class extends AbstractView {
   }
 }
 
-function populateTable(db_data) {
-  var table = document.getElementById("data-table");
+function populateTable(users) {
+  var table = document.getElementById("user-table");
 
-  for (var i = 0; i < db_data.length; i++) {
+  for (var i = 0; i < users.length; i++) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["id"];
+    tabCell.innerHTML = users[i]["id"];
 
     var tabCell = tr.insertCell(-1);
-    tabCell.className += "tr--bird-name";
-    tabCell.innerHTML = db_data[i]["name"];
+    tabCell.innerHTML = users[i]["first_name"];
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["type"];
+    tabCell.innerHTML = users[i]["last_name"];
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = users[i]["email"];
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = users[i]["level"];
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = users[i]["status"];
+
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = "$" + users[i]["outstanding_balance"];
 
     var tabCell = tr.insertCell(-1);
 
@@ -190,7 +230,7 @@ function populateTable(db_data) {
     tabCell.insertAdjacentText("beforeend", "\x2F");
     // Delete button
     var btn_del = document.createElement("button");
-    btn_del.my_id = db_data[i]["id"];
+    btn_del.public_id = users[i]["public_id"];
     btn_del.innerHTML = "Del";
     btn_del.className += "btn--action";
     btn_del.addEventListener("click", delMember);
@@ -199,11 +239,10 @@ function populateTable(db_data) {
 }
 
 function delMember(e) {
-  const route = base_uri + "/" + subroute + "/" + e.currentTarget.my_id;
+  const public_id = e.currentTarget.public_id;
+  const route = base_uri + "/" + subroute + "/" + public_id;
 
-  if (
-    window.confirm("You are about to delte a " + singular + ". Are you sure?")
-  ) {
+  if (window.confirm("You are about to delte a member. Are you sure?")) {
     callAPI(
       jwt_global,
       route,
@@ -222,13 +261,20 @@ function delMember(e) {
 function populateEdit(e) {
   const i = e.currentTarget.index;
 
+  // attach the public_id to the "Update" button
+  var btn_update = document.getElementById("btn-update");
+  btn_update.public_id = db_data[i]["public_id"];
+
   // disable the "Add" and enable the "Update"
-  document.getElementById("btn-update").disabled = false;
+  btn_update.disabled = false;
   document.getElementById("btn-add").disabled = true;
 
-  document.getElementById(singular + "-id").value = db_data[i]["id"];
-  document.getElementById(singular + "-name").value = db_data[i]["name"];
-  document.getElementById("select-type").value = db_data[i]["type"];
+  document.getElementById("user-id").value = i.toString();
+  document.getElementById("first-name").value = db_data[i]["first_name"];
+  document.getElementById("last-name").value = db_data[i]["last_name"];
+  document.getElementById("email").value = db_data[i]["email"];
+  document.getElementById("select-level").value = db_data[i]["level"];
+  document.getElementById("select-status").value = db_data[i]["status"];
 
   document.getElementById("add-edit-form").scrollIntoView();
 }
