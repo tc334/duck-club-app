@@ -11,9 +11,6 @@ import {
   dateConverter,
 } from "../../common_funcs.js";
 
-const subroute = "ponds";
-const singular = "pond";
-const plural = "ponds";
 // table sorting functions
 const column_id_list = [
   {
@@ -81,34 +78,13 @@ export default class extends AbstractView {
 
     populate_aside_stats();
 
-    populateDateList(jwt);
+    const myForm = document.getElementById("form-filter");
+    populateDateList(jwt, myForm);
 
     // What do do on a submit
-    const myForm = document.getElementById("form-filter");
     myForm.addEventListener("submit", function (e) {
       e.preventDefault();
-
-      // Pull data from form and put it into the json format the DB wants
-      const formData = new FormData(this);
-
-      var object = {};
-      formData.forEach((value, key) => (object[key] = value));
-
-      // API route for this stats page
-      const route =
-        base_uri + "/groupings/harvest_summary/" + object["hunt_id"];
-
-      callAPI(
-        jwt,
-        route,
-        "GET",
-        null,
-        (data) => {
-          //console.log(data["data"]["groups"]);
-          populateTable(data["data"]["groups"]);
-        },
-        displayMessageToUser
-      );
+      mySubmit(jwt, this);
     });
 
     // table sorting functions
@@ -119,6 +95,30 @@ export default class extends AbstractView {
       temp.addEventListener("click", sortTable);
     }
   }
+}
+
+// separating this function out allows me to call it automatically on page load
+function mySubmit(jwt, myForm) {
+  // Pull data from form and put it into the json format the DB wants
+  const formData = new FormData(myForm); // myForm was this
+
+  var object = {};
+  formData.forEach((value, key) => (object[key] = value));
+
+  // API route for this stats page
+  const route = base_uri + "/groupings/harvest_summary/" + object["hunt_id"];
+
+  callAPI(
+    jwt,
+    route,
+    "GET",
+    null,
+    (data) => {
+      //console.log(data["data"]["groups"]);
+      populateTable(data["data"]["groups"]);
+    },
+    displayMessageToUser
+  );
 }
 
 function populateTable(db_data) {
@@ -158,7 +158,7 @@ function populateTable(db_data) {
   }
 }
 
-function populateDateList(jwt) {
+function populateDateList(jwt, myForm) {
   // API route for this stats page
   const route = base_uri + "/hunts/dates";
 
@@ -170,6 +170,9 @@ function populateDateList(jwt) {
     (data) => {
       //console.log(data["dates"]);
       populateDateList_aux(data["dates"]);
+      if (data["dates"] && data["dates"].length > 0) {
+        mySubmit(jwt, myForm);
+      }
     },
     displayMessageToUser
   );

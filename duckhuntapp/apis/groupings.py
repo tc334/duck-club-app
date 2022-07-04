@@ -242,6 +242,12 @@ def get_groups_in_current_hunt(user):
     # now pull all groupings that match this hunt_id
     groupings = db.read_custom(f"SELECT * FROM groupings WHERE hunt_id = {hunts_dict['id']} ORDER BY id")
     groupings_dict = db.format_dict(None, groupings, table_name)
+    # time has to be cleaned up before it can be jsonified
+    for item in groupings_dict:
+        if item["harvest_update_time"] is not None:
+            item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
+        else:
+            item["harvest_update_time"] = "00:00"
 
     # now pull all hunter names & id
     users = db.read_custom(f"SELECT id, first_name, last_name, public_id FROM users")
@@ -318,16 +324,22 @@ def update_row(user, grouping_id):
         if pond_id_last is not None and pond_id_last != data_in['pond_id']:
             db.update_custom(f"UPDATE ponds SET selected=0 WHERE id={pond_id_last}")
 
-    # count the number of hunters
-    num_hunters = 0
-    for slot in range(1, 5):
-        key = 'slot' + str(slot) + '_id'
-        if key in data_in:
-            num_hunters += 1
-    data_in["num_hunters"] = num_hunters
-
     if db.update_row(table_name, grouping_id, data_in):
-        return jsonify({'message': f'Successful update of id {grouping_id} in {table_name}'}), 200
+
+        # count the number of hunters
+        results = db.read_custom(f"SELECT slot1_type, slot2_type, slot3_type, slot4_type FROM {table_name} WHERE id={grouping_id}")
+        if results is not None and len(results) == 1:
+            num_hunters = 0
+            for slot in range(1, 5):
+                key_id = 'slot' + str(slot) + '_id'
+                # this slot is filled if there is input data for it or there is already someone in it
+                if key_id in data_in or results[0][slot-1] != 'open':
+                    num_hunters += 1
+            data_in["num_hunters"] = num_hunters
+
+            return jsonify({'message': f'Successful update of id {grouping_id} in {table_name}'}), 200
+        else:
+            return jsonify({"message": f"Unable to update id {grouping_id} of table {table_name}"}), 400
     else:
         return jsonify({"message": f"Unable to update id {grouping_id} of table {table_name}"}), 400
 

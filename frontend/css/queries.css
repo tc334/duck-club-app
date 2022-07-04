@@ -63,6 +63,10 @@ Instead assume, 1rem = 1em = 16px
     margin-left: 0rem;
     margin-right: 0rem;
   }
+
+  .modal-content {
+    width: 50%;
+  }
 }
 
 /* 704 px */
@@ -90,6 +94,10 @@ Instead assume, 1rem = 1em = 16px
 
   .menu-open .aside {
     transform: translateX(0);
+  }
+
+  .modal-content {
+    width: 65%;
   }
 }
 
@@ -147,6 +155,10 @@ Instead assume, 1rem = 1em = 16px
     flex-direction: column;
     align-items: center;
   }
+
+  .modal-content {
+    width: 75%;
+  }
 }
 
 /* 432  px */
@@ -165,6 +177,10 @@ Instead assume, 1rem = 1em = 16px
   .nav-item a {
     width: 75vw;
     text-align: center;
+  }
+
+  .modal-content {
+    width: 90%;
   }
 }
 /*

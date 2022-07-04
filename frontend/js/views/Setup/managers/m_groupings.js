@@ -26,7 +26,7 @@ export default class extends AbstractView {
     return `<div class="reload-message"></div>
     <h1 class="heading-primary">groupings</h1>
     <div class="hunt-identifier" id="hunt-identifier"></div>
-    <div id="tables-container"></div>
+    <div id="tables-container" class="table-overflow-wrapper"></div>
     <div id="groupings-modal" class="modal">
       <div class="modal-content">
         <span class="close">&times;</span>
@@ -140,7 +140,7 @@ export default class extends AbstractView {
 
 function populateTables() {
   var container = document.getElementById("tables-container");
-  const column_headings = ["#", "id", "hunters", "pond", "actions"];
+  const column_headings = ["#", "hunters", "pond", "actions"];
   var select = document.getElementById("groupings-modal-select");
 
   for (var iGroup = 0; iGroup < db_data_groupings.length; iGroup++) {
@@ -167,10 +167,6 @@ function populateTables() {
     // grouping label 1:N that makes sense to managers
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = iGroup + 1;
-
-    // ID
-    var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data_groupings[iGroup]["id"];
 
     // Hunters
     var tabCell = tr.insertCell(-1);

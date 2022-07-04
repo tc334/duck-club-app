@@ -145,7 +145,7 @@ export default class extends AbstractView {
         "GET",
         null,
         (data) => {
-          //console.log(data["stats"]);
+          console.log(data["stats"]);
           populateTable(data["stats"]);
         },
         displayMessageToUser

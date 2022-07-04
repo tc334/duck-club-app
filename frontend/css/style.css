@@ -239,6 +239,7 @@ main {
   font-size: 3rem;
   text-align: center;
   margin-bottom: 1.2rem;
+  line-height: 1.2;
 }
 
 .heading-tertiary {
@@ -589,7 +590,7 @@ manual add
   margin: 15% auto; /* 15% from the top and centered */
   padding: 20px;
   border: 1px solid #888;
-  width: 30%; /* Could be more or less, depending on screen size */
+  width: 40%; /* Could be more or less, depending on screen size */
 }
 
 /* The Close Button */
@@ -735,7 +736,7 @@ leaderboard
 }
 
 .pond-name-container {
-  width: 12rem;
+  width: 16rem;
   text-align: left;
 }
 
@@ -762,7 +763,7 @@ leaderboard
 
 #leaderboard-header span:first-child {
   display: inline-block;
-  width: 14rem;
+  width: 16rem;
   padding-left: 1rem;
   text-align: left;
 }
@@ -788,6 +789,8 @@ leaderboard
 leaderboard aside for my harvest
 */
 .myharvest-row {
+  display: flex;
+  align-items: center;
   text-align: center;
   margin-bottom: 1rem;
 }

@@ -238,7 +238,7 @@ function prePopTab2() {
   var heading = document.getElementById("stats-heading-2");
   const select_ponds = document.getElementById("select-pond");
   heading.innerHTML =
-    "Hunt History of " + select_ponds.options[select_ponds.value].text;
+    "Hunt History of " + select_ponds.options[select_ponds.selectedIndex].text;
 
   var table = document.getElementById("tb-stats-2");
   removeAllChildNodes(table);
@@ -285,6 +285,10 @@ function populatePondList(jwt) {
 }
 
 function populatePondList_aux(db_data) {
+  // sort ponds alphabetically
+  db_data.sort(function (left, right) {
+    return left["name"] > right["name"] ? 1 : -1;
+  });
   const select_ponds = document.getElementById("select-pond");
   for (var i = 0; i < db_data.length; i++) {
     var new_opt = document.createElement("option");

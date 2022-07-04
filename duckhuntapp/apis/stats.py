@@ -136,15 +136,15 @@ def update_group_harvest():
         # defaults
         update_dict = {
             'harvest_ave_ducks': 0.0,
-            'harvest_ave_non': 0.0,
-            'limit': False
+            'harvest_ave_non': 0.0
         }
         b_write = False  # default is to skip writes that aren't necessary
 
         # test to see if there is a duck count for this group id
         count = [tup[1] for tup in id_ducks if tup[0] == group[0]]
         if len(count) == 1:
-            update_dict["harvest_ave_ducks"] = float(count[0]) / group[1]
+            if group[1] != 0:
+                update_dict["harvest_ave_ducks"] = float(count[0]) / group[1]
             # only update if there is a significant change in the average
             if math.fabs(update_dict["harvest_ave_ducks"] - group[2]) > 0.01:
                 b_write = True
@@ -152,7 +152,8 @@ def update_group_harvest():
         # repeat for non-ducks
         count = [tup[1] for tup in id_non if tup[0] == group[0]]
         if len(count) == 1:
-            update_dict["harvest_ave_non"] = float(count[0]) / group[1]
+            if group[1] != 0:
+                update_dict["harvest_ave_non"] = float(count[0]) / group[1]
             # only update if there is a significant change in the average
             if math.fabs(update_dict["harvest_ave_non"] - group[3]) > 0.01:
                 b_write = True
@@ -272,7 +273,7 @@ def get_stats_birds(users):
         results = []
         for slot_num in range(1, 5):
             this_slot = db.read_custom(f"SELECT birds.id, "
-                                       f"SUM(harvest.count) "
+                                       f"SUM(harvest.count/groupings.num_hunters) "
                                        f"FROM birds "
                                        f"JOIN harvest ON harvest.bird_id=birds.id "
                                        f"JOIN groupings ON harvest.group_id=groupings.id "
@@ -372,7 +373,7 @@ def get_stats_ponds(users):
         nonduck = []
         for slot_num in range(1, 5):
             this_slot = db.read_custom(f"SELECT ponds.id, "
-                                       f"SUM(harvest.count), COUNT( DISTINCT harvest.group_id ), "
+                                       f"SUM(harvest.count/groupings.num_hunters), COUNT( DISTINCT harvest.group_id ), "
                                        f"AVG(groupings.harvest_ave_ducks) "
                                        f"FROM ponds "
                                        f"JOIN groupings ON groupings.pond_id=ponds.id "
@@ -389,8 +390,7 @@ def get_stats_ponds(users):
                                        f"ORDER BY ponds.id")
             results = merge_slots(results, this_slot)
             this_slot = db.read_custom(f"SELECT ponds.id, "
-                                       f"SUM(harvest.count), COUNT( DISTINCT harvest.group_id ), "
-                                       f"AVG(groupings.harvest_ave_ducks) "
+                                       f"SUM(harvest.count/groupings.num_hunters) "
                                        f"FROM ponds "
                                        f"JOIN groupings ON groupings.pond_id=ponds.id "
                                        f"JOIN hunts ON groupings.hunt_id=hunts.id "
@@ -427,14 +427,14 @@ def get_stats_ponds(users):
         # check to see if this pond has any non-duck results
         idx_non = [count for count, value in enumerate(nonduck) if value[0] == results[i][0]]
         if len(idx_non) == 1:
-            num_non_ducks = nonduck[idx_non][1]
+            num_non_ducks = nonduck[idx_non[0]][1]
         else:
             num_non_ducks = 0
         list_of_dicts.append({
             'pond_name': names[i][0],
             'num_hunts': float(results[i][2]),
             'num_ducks': float(results[i][1]),
-            'non_ducks': num_non_ducks,
+            'non_ducks': float(num_non_ducks),
             'ave_ducks': float(results[i][3])
         })
 
