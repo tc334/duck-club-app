@@ -16,7 +16,8 @@ def create_app():
         app.config["SQL_IPADDR"],
         app.config["SQL_PORT"],
         app.config["SQL_UNAME"],
-        app.config["SQL_PASSWORD"]
+        app.config["SQL_PASSWORD"],
+        app.config["SQL_ADMIN_EMAIL"]
     )
     db.connect_to_existing(app.config["SQL_DB_NAME"])
 

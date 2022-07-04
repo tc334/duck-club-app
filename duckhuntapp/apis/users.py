@@ -34,9 +34,7 @@ def login():
 
 @users_bp.route('/signup', methods=['POST'])
 def signup():
-    print(f"Alpha")
     data_in = request.get_json()  # expecting keys: email, password, first_name, last_name, combo
-    print(f"Bravo:{data_in}")
 
     # Error checking
     if data_in is None:

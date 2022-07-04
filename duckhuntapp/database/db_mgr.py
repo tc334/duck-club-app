@@ -12,8 +12,12 @@ class DbManager:
         self.my_cursor = None
         self.schema = None
         self.tables = None
+        self.admin_email = None
+        self.databases_in_server = None
 
-    def init_app(self, host, port, user_name, password):
+    def init_app(self, host, port, user_name, password, admin_email):
+
+        self.admin_email = admin_email
 
         self.db = mysql.connector.connect(
             host=host,
@@ -25,7 +29,7 @@ class DbManager:
         # connect to MySQL server
         self.my_cursor = self.db.cursor()
         print(f"Successful connection to MySQL server at {host}:{port}")
-        self.list_databases(True)
+        self.databases_in_server = self.list_databases(True)
 
         # load schema from local file
         self.schema = schema
@@ -35,12 +39,13 @@ class DbManager:
 
     def list_databases(self, print_on=False):
         self.my_cursor.execute("SHOW DATABASES")
-        databases = self.my_cursor.fetchall()
+        results = self.my_cursor.fetchall()
+        databases = [item[0] for item in results]
         if print_on:
             print("********************")
             print("List of existing databases in this server:")
             for database in databases:
-                print(database[0])
+                print(database)
             print("********************")
         return databases
 
@@ -57,9 +62,19 @@ class DbManager:
         self.my_cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
     def select_db(self, db_name):
+        b_build = False
+        if db_name not in self.databases_in_server:
+            # the requested DB doesn't exist, so create it
+            self.create_db(db_name)
+            b_build = True
+
         try:
             self.my_cursor.execute(f"USE {db_name}")
-            return True
+            if b_build:
+                # newly created DB needs to be built out too
+                return self.build(db_name, self.admin_email)
+            else:
+                return True
         except mysql.connector.Error:
             print(f"Unable to select database {db_name}")
             return False
@@ -114,7 +129,7 @@ class DbManager:
         print(f"Creating table: {table_name}")
         self.my_cursor.execute(f"CREATE TABLE {table_name}({self.tables[table_name].get_schema_string()})")
 
-    def nuke_and_rebuild(self, db_name, recovery_email):
+    def nuke_and_rebuild(self, db_name):
         print("Starting nuke & rebuild")
         self.delete_db(db_name)
         print("Delete Complete")
@@ -122,9 +137,12 @@ class DbManager:
         print("Create Complete")
         self.select_db(db_name)
         print("Select Complete")
+        self.build(db_name, self.admin_email)
+
+    def build(self, db_name, recovery_email):
         for key in self.tables:
             self.create_table(key)
-        print(f"Created database {db_name}")
+        print(f"Built database {db_name}")
         self.list_tables(print_on=True)
         # populate one administrator in the DB
         admin = {
@@ -136,6 +154,8 @@ class DbManager:
             'level': 'administrator'
         }
         self.add_row('users', admin)
+        self.populate_basic_tables()
+        return True
 
     def connect_to_existing(self, db_name):
         if self.select_db(db_name):
@@ -240,3 +260,33 @@ class DbManager:
         for row in results_tuple:
             results_lod.append({name: row[col] for col, name in enumerate(names_all)})
         return results_lod
+
+    def populate_basic_tables(self):
+        self.add_row("properties", {'name': 'Oak Meadows', 'region': 'Southern'})
+        self.add_row("properties", {'name': 'Harrison', 'region': 'Southern'})
+        self.add_row("properties", {'name': 'Hughson Lakes', 'region': 'Southern'})
+        self.add_row("properties", {'name': 'Radley', 'region': 'Northern'})
+        self.add_row("properties", {'name': 'Blue Creek', 'region': 'Northern'})
+        self.add_row("properties", {'name': 'Northern', 'region': 'Northern'})
+
+        self.add_row("birds", {'name': 'Blue Winged Teal', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Green Winged Teal', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Pintail', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Wigeon', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Gadwall', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Mallard', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Northern Shoveler', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Wood', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Mottled', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Ruddy', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Red Head', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Canvasback', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Lesser Scaup', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Greater Scaup', 'type': 'duck'})
+        self.add_row("birds", {'name': 'Snow', 'type': 'goose'})
+        self.add_row("birds", {'name': 'Speckled Belly', 'type': 'goose'})
+        self.add_row("birds", {'name': 'Sand Hill', 'type': 'crane'})
+        self.add_row("birds", {'name': 'Blue', 'type': 'goose'})
+        self.add_row("birds", {'name': 'Canadian', 'type': 'goose'})
+
+        return True

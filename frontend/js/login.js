@@ -74,7 +74,6 @@ let signup = form_signup.submit.addEventListener("click", (e) => {
       form_signup.combo[2].value +
       form_signup.combo[3].value,
   });
-  console.log(body);
   callAPI(
     null,
     route,

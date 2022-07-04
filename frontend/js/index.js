@@ -1,5 +1,6 @@
 // functions, constants imported from other javascript files
 //import { decode_jwt, populate_aside } from "./common_funcs.js";
+import setup_landing from "./views/Setup/setup_landing.js";
 import u_pre from "./views/Setup/members/u_pre.js";
 import u_profile from "./views/Setup/members/u_profile.js";
 import m_hunts from "./views/Setup/managers/m_hunts.js";
@@ -31,11 +32,11 @@ const router = async () => {
   const routes = [
     {
       path: "/",
-      view: u_pre,
+      view: setup_landing,
     },
     {
       path: "#nav_setup",
-      view: u_profile,
+      view: setup_landing,
     },
     {
       path: "#nav_live",
@@ -43,7 +44,7 @@ const router = async () => {
     },
     {
       path: "#nav_stats",
-      view: s_hunters,
+      view: s_dates,
     },
     {
       path: "#u_pre",
