@@ -1,4 +1,5 @@
 # duck-hunt-app
+
 Full-stack web application for duck hunting clubs
 
 Features:
@@ -11,4 +12,4 @@ Features:
 Tools:
 Frontend: Single page application using HTML, CSS, & vanilla JavaScript
 Backend: Flask web server with MySQL database
-Hosting: Initially targeting Heroku
+Hosting: Initially targeting Heroku.
