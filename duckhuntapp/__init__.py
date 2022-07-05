@@ -33,4 +33,12 @@ def create_app():
     app.register_blueprint(apis.harvests_bp)
     app.register_blueprint(apis.stats_bp)
 
+    # WHITENOISE_MAX_AGE = 31536000 if not app.config["DEBUG"] else 0
+    # app.wsgi_app = WhiteNoise(
+    #     app.wsgi_app,
+    #     root=os.path.join(os.path.dirname(__file__), "frontend"),
+    #     index_file=True,
+    #     max_age=WHITENOISE_MAX_AGE
+    # )
+
     return app

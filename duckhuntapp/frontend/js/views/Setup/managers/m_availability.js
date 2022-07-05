@@ -167,6 +167,11 @@ export default class extends AbstractView {
 function populateTable(db_data) {
   var table = document.getElementById(singular + "-table");
 
+  // sort ponds alphabetically
+  db_data.sort(function (left, right) {
+    return left["name"] > right["name"] ? 1 : -1;
+  });
+
   for (var i = 0; i < db_data.length; i++) {
     var tr = table.insertRow(-1);
 
