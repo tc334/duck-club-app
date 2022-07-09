@@ -7,6 +7,7 @@ db = DbManager()
 
 
 def create_app():
+    print("Alpha")
     app = Flask(__name__)
     CORS(app)
 
