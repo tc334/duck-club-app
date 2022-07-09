@@ -1,4 +1,4 @@
 # wsgi.py
 
-from . import create_app
+from app_nodb import create_app
 app = create_app()
