@@ -5,7 +5,7 @@ import os
 def create_app():
     app = Flask(__name__)
 
-    filename = os.path.join(app.instance_path, 'settings.py')
+    filename = os.path.join('..', 'settings.py')
     print(f"***filename***{filename}")
     app.config.from_pyfile(filename)
 
