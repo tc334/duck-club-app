@@ -11,3 +11,4 @@ from os import environ
 
 #SIGNUP_CODE = environ.get('SIGNUP_CODE')
 CLEARDB_DATABASE_URL = environ.get('CLEARDB_DATABASE_URL')
+print(f"settings.py, CLEARDB={CLEARDB_DATABASE_URL}")
