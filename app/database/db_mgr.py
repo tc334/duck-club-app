@@ -21,7 +21,6 @@ class DbManager:
 
         self.db = mysql.connector.connect(
             host=host,
-            port=port,
             user=user_name,
             passwd=password
         )
