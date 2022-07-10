@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, make_response
+from urllib.parse import urlparse
 
 nodb_bp = Blueprint('nodb', __name__)
 
@@ -14,4 +15,14 @@ def signup():
 
     print(f"data_in={data_in}")
 
-    return jsonify({'message': f'This is a response from the signup route**{current_app.config["CLEARDB_DATABASE_URL"]}'}), 201
+    url = urlparse(current_app.config["CLEARDB_DATABASE_URL"])
+
+    return jsonify({
+        'message': f'This is a response from the signup route',
+        'full': current_app.config["CLEARDB_DATABASE_URL"],
+        'scheme': url.scheme,
+        'hostname': url.hostname,
+        'username': url.username,
+        'password': url.password,
+        'database_name': url.path.lstrip('/')
+    }), 201

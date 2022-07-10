@@ -5,8 +5,7 @@ import os
 def create_app():
     app = Flask(__name__)
 
-    filename = os.path.join('..', 'settings.py')
-    app.config.from_pyfile(filename)
+    app.config.from_pyfile(os.path.join('..', 'settings.py'))
 
     from .views import main
     from . import apis
