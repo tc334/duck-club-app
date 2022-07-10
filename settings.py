@@ -10,5 +10,9 @@ from os import environ
 #SQL_PORT = environ.get('SQL_PORT')
 
 #SIGNUP_CODE = environ.get('SIGNUP_CODE')
-CLEARDB_DATABASE_URL = environ.get('CLEARDB_DATABASE_URL')
-print(f"settings.py, CLEARDB={CLEARDB_DATABASE_URL}")
+try:
+    CLEARDB_DATABASE_URL = environ.get('CLEARDB_DATABASE_URL')
+    print(f"settings.py, CLEARDB={CLEARDB_DATABASE_URL}")
+except:
+    print(f"Failed to find CLEARDB environment variable")
+    CLEARDB_DATABASE_URL = "Boo"
