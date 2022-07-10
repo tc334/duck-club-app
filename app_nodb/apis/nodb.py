@@ -24,5 +24,6 @@ def signup():
         'hostname': url.hostname,
         'username': url.username,
         'password': url.password,
+        'port': url.port,
         'database_name': url.path.lstrip('/')
     }), 201

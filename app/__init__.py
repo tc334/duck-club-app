@@ -1,7 +1,8 @@
 from flask import Flask
 from flask_cors import CORS
 from .database.db_mgr import DbManager
-import pathlib
+from urllib.parse import urlparse
+import os
 
 
 # instance of database
@@ -13,7 +14,14 @@ def create_app():
     app = Flask(__name__)
     CORS(app)
 
-    app.config.from_pyfile('..\\settings.py')
+    app.config.from_pyfile(os.path.join('..', 'settings.py'))
+
+    if "SQL_IPADDR" in app.config:
+        # environment specifies each connection param separately
+        sql_ipaddr = app.config["SQL_IPADDR"]
+    else:
+        url = urlparse(app.config["CLEARDB_DATABASE_URL"])
+        sql_ipaddr = url.hostname
 
     db.init_app(
         app.config["SQL_IPADDR"],
