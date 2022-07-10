@@ -10,7 +10,6 @@ db = DbManager()
 
 
 def create_app():
-    print("Alpha")
     app = Flask(__name__)
     CORS(app)
 
@@ -19,18 +18,26 @@ def create_app():
     if "SQL_IPADDR" in app.config:
         # environment specifies each connection param separately
         sql_ipaddr = app.config["SQL_IPADDR"]
+        sql_port = app.config["SQL_PORT"]
+        sql_user = app.config["SQL_UNAME"]
+        sql_password = app.config["SQL_PASSWORD"]
+        sql_db_name = app.config["SQL_DB_NAME"]
     else:
         url = urlparse(app.config["CLEARDB_DATABASE_URL"])
         sql_ipaddr = url.hostname
+        sql_port = url.port
+        sql_user = url.username
+        sql_password = url.password
+        sql_db_name = url.path.lstrip('/')
 
     db.init_app(
-        app.config["SQL_IPADDR"],
-        app.config["SQL_PORT"],
-        app.config["SQL_UNAME"],
-        app.config["SQL_PASSWORD"],
+        sql_ipaddr,
+        sql_port,
+        sql_user,
+        sql_password,
         app.config["SQL_ADMIN_EMAIL"]
     )
-    db.connect_to_existing(app.config["SQL_DB_NAME"])
+    db.connect_to_existing(sql_db_name)
 
     from .views import main
     from . import apis
