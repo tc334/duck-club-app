@@ -6,7 +6,6 @@ def create_app():
     app = Flask(__name__)
 
     filename = os.path.join('..', 'settings.py')
-    print(f"***filename***{filename}")
     app.config.from_pyfile(filename)
 
     from .views import main
