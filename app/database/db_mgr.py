@@ -71,16 +71,21 @@ class DbManager:
             self.my_cursor.execute(f"USE {db_name}")
             if b_build:
                 # newly created DB needs to be built out too
-                return self.build(db_name, self.admin_email)
+                return self.build(db_name)
             else:
                 return True
         except mysql.connector.Error:
             print(f"Unable to select database {db_name}")
             return False
 
-    def compare_db(self):
+    def compare_db(self, db_name):
         # check to see if the currently selected database matches the schema loaded from local file
         tables_db = self.list_tables()
+        # if the db has no tables, build it
+        if len(tables_db) == 0:
+            if not self.build(db_name):
+                # stop execution of this function if the build fails. Continue otherwise
+                return False
         tables_local = [key for key in self.tables]
         tables_local.sort()
         if len(tables_db) == len(tables_local):
@@ -136,9 +141,9 @@ class DbManager:
         print("Create Complete")
         self.select_db(db_name)
         print("Select Complete")
-        self.build(db_name, self.admin_email)
+        self.build(db_name)
 
-    def build(self, db_name, recovery_email):
+    def build(self, db_name):
         for key in self.tables:
             self.create_table(key)
         print(f"Built database {db_name}")
@@ -147,7 +152,7 @@ class DbManager:
         admin = {
             'first_name': 'TBD',  # admin can go update this through web app
             'last_name': 'TBD',  # admin can go update this through web app
-            'email': recovery_email,
+            'email': self.admin_email,
             'public_id': str(uuid.uuid4()),
             'password_hash': generate_password_hash('password', method='sha256'),
             'level': 'administrator'
@@ -159,7 +164,7 @@ class DbManager:
     def connect_to_existing(self, db_name):
         if self.select_db(db_name):
             print(f"Selected database {db_name}")
-            if self.compare_db():
+            if self.compare_db(db_name):
                 print(f"{db_name} matches the local schema file")
 
     def add_row(self, table_name, row_data_dict):
