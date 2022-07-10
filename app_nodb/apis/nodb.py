@@ -5,7 +5,7 @@ nodb_bp = Blueprint('nodb', __name__)
 
 @nodb_bp.route('/login')
 def login():
-    return make_response("Could not verify password", 401, {"WWW-Authenticate": "Basic realm='Login Required'"})
+    return jsonify({'message': 'This is a response from the login route'}), 201
 
 
 @nodb_bp.route('/signup', methods=['POST'])
@@ -14,4 +14,4 @@ def signup():
 
     print(f"data_in={data_in}")
 
-    return jsonify({'message': 'This is a response from the signup route'}), 201
+    return jsonify({'message': f'This is a response from the signup route**{current_app.config["CLEARDB_DATABASE_URL"]}'}), 201
