@@ -20,20 +20,16 @@ class DbManager:
         self.port = None
         self.user_name = None
         self.password = None
+        self.connection_pool = None
+        self.connection_object = None
 
     def init_app(self, host, port, user_name, password, admin_email):
 
         self.admin_email = admin_email
 
-        #self.host = host
-        #self.port = port
-        #self.user_name = user_name
-        #self.password = password
-
         # setup pooling
         try:
-            time.sleep(2)
-            connection_pool = pooling.MySQLConnectionPool(pool_name="my_conn_pool",
+            self.connection_pool = pooling.MySQLConnectionPool(pool_name="my_conn_pool",
                                                           pool_size=2,
                                                           pool_reset_session=True,
                                                           host=host,
@@ -41,36 +37,27 @@ class DbManager:
                                                           password=password)
 
             print("Printing connection pool properties ")
-            print("Connection Pool Name - ", connection_pool.pool_name)
-            print("Connection Pool Size - ", connection_pool.pool_size)
+            print("Connection Pool Name - ", self.connection_pool.pool_name)
+            print("Connection Pool Size - ", self.connection_pool.pool_size)
 
             # Get connection object from a pool
-            connection_object = connection_pool.get_connection()
+            self.connection_object = self.connection_pool.get_connection()
 
-            if connection_object.is_connected():
-                db_Info = connection_object.get_server_info()
+            if self.connection_object.is_connected():
+                db_Info = self.connection_object.get_server_info()
                 print("Connected to MySQL database using connection pool ... MySQL Server version on ", db_Info)
 
-                self.my_cursor = connection_object.cursor()
+                self.my_cursor = self.connection_object.cursor()
                 self.databases_in_server = self.list_databases(True)
-                #self.my_cursor.execute("select database();")
-                #record = self.my_cursor.fetchone()
-                #print("Your connected to - ", record)
 
         except Error as e:
             print("Error while connecting to MySQL using Connection pool ", e)
         finally:
             # closing database connection.
-            if connection_object.is_connected():
+            if self.connection_object.is_connected():
                 self.my_cursor.close()
-                connection_object.close()
+                self.connection_object.close()
                 print("MySQL connection is closed")
-        #self.connect()
-
-        # connect to MySQL server
-        #self.my_cursor = self.db.cursor()
-        #print(f"Successful connection to MySQL server at {host}:{port}")
-        #self.databases_in_server = self.list_databases(True)
 
         # load schema from local file
         self.schema = schema
@@ -84,6 +71,31 @@ class DbManager:
             user=self.user_name,
             passwd=self.password
         )
+
+    def get_conn(self):
+        try:
+            # Get connection object from a pool
+            self.connection_object = self.connection_pool.get_connection()
+
+            if self.connection_object.is_connected():
+                print("Just got new connection from pool")
+                self.my_cursor = self.connection_object.cursor()
+                return True
+            else:
+                return False
+        except Error as e:
+            print("Error while connecting to MySQL using Connection pool ", e)
+            return False
+
+    def release_conn(self):
+        # closing database connection.
+        try:
+            if self.connection_object.is_connected():
+                self.my_cursor.close()
+                self.connection_object.close()
+                print("MySQL connection is closed")
+        except Error as e:
+            print("Error while connecting to MySQL using Connection pool ", e)
 
     def list_databases(self, print_on=False):
         self.my_cursor.execute("SHOW DATABASES")
@@ -216,21 +228,6 @@ class DbManager:
             if self.compare_db(db_name):
                 print(f"{db_name} matches the local schema file")
 
-    def query(self, sql, sql_tuple=None):
-        try:
-            if sql_tuple is None:
-                self.my_cursor.execute(sql)
-            else:
-                self.my_cursor.execute(sql, sql_tuple)
-        except (AttributeError, mysql.connector.Error) as err:
-            print("Something went wrong: {}".format(err))
-            self.connect()
-            if sql_tuple is None:
-                self.my_cursor.execute(sql)
-            else:
-                self.my_cursor.execute(sql, sql_tuple)
-        return self.my_cursor
-
     def add_row(self, table_name, row_data_dict):
         col_names, insert_tuple = self.tables[table_name].get_add_row(row_data_dict)
 
@@ -239,7 +236,7 @@ class DbManager:
         my_sql_insert_query = f"INSERT INTO {table_name} ({col_names}) VALUES ({value_types[:-2]}) "
 
         try:
-            self.query(my_sql_insert_query, insert_tuple)
+            self.my_cursor.execute(my_sql_insert_query, insert_tuple)
             self.db.commit()
         except mysql.connector.Error as error:
             print("Failed to add record to table: {}".format(error))
@@ -247,7 +244,7 @@ class DbManager:
     def read_all(self, table_name, post_fix=""):
         s = f"SELECT * FROM {table_name} {post_fix}"
         try:
-            self.query(s)
+            self.my_cursor.execute(s)
             results_tuple = self.my_cursor.fetchall()
         except mysql.connector.Error as error:
             print("Failed to read all from table: {}".format(error))
@@ -261,7 +258,7 @@ class DbManager:
 
     def read_custom(self, custom_query):
         try:
-            self.query(custom_query)
+            self.my_cursor.execute(custom_query)
             results = self.my_cursor.fetchall()
         except mysql.connector.Error as error:
             print("Failed to execute custom query: {}".format(error))
@@ -284,7 +281,7 @@ class DbManager:
         my_sql_insert_query = f"UPDATE {table_name} SET {set_str[:-1]} WHERE {id_field}=%s"
 
         try:
-            self.query(my_sql_insert_query, tuple(data_list))
+            self.my_cursor.execute(my_sql_insert_query, tuple(data_list))
             self.db.commit()
             return True
         except mysql.connector.Error as error:
@@ -293,7 +290,7 @@ class DbManager:
 
     def update_custom(self, my_sql_insert_query):
         try:
-            self.query(my_sql_insert_query)
+            self.my_cursor.execute(my_sql_insert_query)
             self.db.commit()
             return True
         except mysql.connector.Error as error:
@@ -303,7 +300,7 @@ class DbManager:
     def del_row(self, table_name, row_id, id_field="id"):
         sql_delete_query = f"DELETE from {table_name} where {id_field} = '{row_id}'"
         try:
-            self.query(sql_delete_query)
+            self.my_cursor.execute(sql_delete_query)
             self.db.commit()
             print('number of rows deleted', self.my_cursor.rowcount)
             return True
