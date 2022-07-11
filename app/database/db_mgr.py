@@ -73,6 +73,7 @@ class DbManager:
         )
 
     def get_conn(self):
+        print("Entering the get_conn() function")
         try:
             # Get connection object from a pool
             self.connection_object = self.connection_pool.get_connection()
@@ -82,6 +83,7 @@ class DbManager:
                 self.my_cursor = self.connection_object.cursor()
                 return True
             else:
+                print("Boooooooooooooooo")
                 return False
         except Error as e:
             print("Error while connecting to MySQL using Connection pool ", e)
