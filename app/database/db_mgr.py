@@ -23,7 +23,7 @@ class DbManager:
         self.connection_pool = None
         self.connection_object = None
 
-    def init_app(self, host, port, user_name, password, admin_email):
+    def init_app(self, host, port, user_name, password, admin_email, db_name=None):
 
         self.admin_email = admin_email
 
@@ -49,6 +49,9 @@ class DbManager:
 
                 self.my_cursor = self.connection_object.cursor()
                 self.databases_in_server = self.list_databases(True)
+
+                if db_name is not None:
+                    self.connect_to_existing(db_name)
 
         except Error as e:
             print("Error while connecting to MySQL using Connection pool ", e)

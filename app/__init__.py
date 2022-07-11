@@ -35,7 +35,8 @@ def create_app():
         sql_port,
         sql_user,
         sql_password,
-        app.config["SQL_ADMIN_EMAIL"]
+        app.config["SQL_ADMIN_EMAIL"],
+        db_name=sql_db_name
     )
     #db.connect_to_existing(sql_db_name)
 
