@@ -4,6 +4,7 @@ from .tables.schema import schema
 from .tables.table import Table
 import uuid
 from werkzeug.security import generate_password_hash
+import time
 
 
 class DbManager:
@@ -31,6 +32,7 @@ class DbManager:
 
         # setup pooling
         try:
+            time.sleep(2)
             connection_pool = pooling.MySQLConnectionPool(pool_name="my_conn_pool",
                                                           pool_size=2,
                                                           pool_reset_session=True,
