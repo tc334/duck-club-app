@@ -1,4 +1,5 @@
 import mysql.connector
+from mysql.connector import Error, pooling
 from .tables.schema import schema
 from .tables.table import Table
 import uuid
@@ -23,16 +24,51 @@ class DbManager:
 
         self.admin_email = admin_email
 
-        self.host = host
-        self.port = port
-        self.user_name = user_name
-        self.password = password
-        self.connect()
+        #self.host = host
+        #self.port = port
+        #self.user_name = user_name
+        #self.password = password
+
+        # setup pooling
+        try:
+            connection_pool = pooling.MySQLConnectionPool(pool_name="my_conn_pool",
+                                                          pool_size=2,
+                                                          pool_reset_session=True,
+                                                          host=host,
+                                                          user=user_name,
+                                                          password=password)
+
+            print("Printing connection pool properties ")
+            print("Connection Pool Name - ", connection_pool.pool_name)
+            print("Connection Pool Size - ", connection_pool.pool_size)
+
+            # Get connection object from a pool
+            connection_object = connection_pool.get_connection()
+
+            if connection_object.is_connected():
+                db_Info = connection_object.get_server_info()
+                print("Connected to MySQL database using connection pool ... MySQL Server version on ", db_Info)
+
+                self.my_cursor = connection_object.cursor()
+                self.databases_in_server = self.list_databases(True)
+                #self.my_cursor.execute("select database();")
+                #record = self.my_cursor.fetchone()
+                #print("Your connected to - ", record)
+
+        except Error as e:
+            print("Error while connecting to MySQL using Connection pool ", e)
+        finally:
+            # closing database connection.
+            if connection_object.is_connected():
+                self.my_cursor.close()
+                connection_object.close()
+                print("MySQL connection is closed")
+        #self.connect()
 
         # connect to MySQL server
-        self.my_cursor = self.db.cursor()
-        print(f"Successful connection to MySQL server at {host}:{port}")
-        self.databases_in_server = self.list_databases(True)
+        #self.my_cursor = self.db.cursor()
+        #print(f"Successful connection to MySQL server at {host}:{port}")
+        #self.databases_in_server = self.list_databases(True)
 
         # load schema from local file
         self.schema = schema

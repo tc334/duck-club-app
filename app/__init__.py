@@ -37,7 +37,7 @@ def create_app():
         sql_password,
         app.config["SQL_ADMIN_EMAIL"]
     )
-    db.connect_to_existing(sql_db_name)
+    #db.connect_to_existing(sql_db_name)
 
     from .views import main
     from . import apis
