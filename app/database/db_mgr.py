@@ -14,16 +14,20 @@ class DbManager:
         self.tables = None
         self.admin_email = None
         self.databases_in_server = None
+        self.host = None
+        self.port = None
+        self.user_name = None
+        self.password = None
 
     def init_app(self, host, port, user_name, password, admin_email):
 
         self.admin_email = admin_email
 
-        self.db = mysql.connector.connect(
-            host=host,
-            user=user_name,
-            passwd=password
-        )
+        self.host = host
+        self.port = port
+        self.user_name = user_name
+        self.password = password
+        self.connect()
 
         # connect to MySQL server
         self.my_cursor = self.db.cursor()
@@ -35,6 +39,13 @@ class DbManager:
         self.tables = {}
         for key in self.schema:
             self.tables[key] = Table(self.schema[key])
+
+    def connect(self):
+        self.db = mysql.connector.connect(
+            host=self.host,
+            user=self.user_name,
+            passwd=self.password
+        )
 
     def list_databases(self, print_on=False):
         self.my_cursor.execute("SHOW DATABASES")
@@ -167,6 +178,21 @@ class DbManager:
             if self.compare_db(db_name):
                 print(f"{db_name} matches the local schema file")
 
+    def query(self, sql, sql_tuple=None):
+        try:
+            if sql_tuple is None:
+                self.my_cursor.execute(sql)
+            else:
+                self.my_cursor.execute(sql, sql_tuple)
+        except (AttributeError, mysql.connector.Error) as err:
+            print("Something went wrong: {}".format(err))
+            self.connect()
+            if sql_tuple is None:
+                self.my_cursor.execute(sql)
+            else:
+                self.my_cursor.execute(sql, sql_tuple)
+        return self.my_cursor
+
     def add_row(self, table_name, row_data_dict):
         col_names, insert_tuple = self.tables[table_name].get_add_row(row_data_dict)
 
@@ -175,7 +201,7 @@ class DbManager:
         my_sql_insert_query = f"INSERT INTO {table_name} ({col_names}) VALUES ({value_types[:-2]}) "
 
         try:
-            self.my_cursor.execute(my_sql_insert_query, insert_tuple)
+            self.query(my_sql_insert_query, insert_tuple)
             self.db.commit()
         except mysql.connector.Error as error:
             print("Failed to add record to table: {}".format(error))
@@ -183,7 +209,7 @@ class DbManager:
     def read_all(self, table_name, post_fix=""):
         s = f"SELECT * FROM {table_name} {post_fix}"
         try:
-            self.my_cursor.execute(s)
+            self.query(s)
             results_tuple = self.my_cursor.fetchall()
         except mysql.connector.Error as error:
             print("Failed to read all from table: {}".format(error))
@@ -197,7 +223,7 @@ class DbManager:
 
     def read_custom(self, custom_query):
         try:
-            self.my_cursor.execute(custom_query)
+            self.query(custom_query)
             results = self.my_cursor.fetchall()
         except mysql.connector.Error as error:
             print("Failed to execute custom query: {}".format(error))
@@ -220,7 +246,7 @@ class DbManager:
         my_sql_insert_query = f"UPDATE {table_name} SET {set_str[:-1]} WHERE {id_field}=%s"
 
         try:
-            self.my_cursor.execute(my_sql_insert_query, tuple(data_list))
+            self.query(my_sql_insert_query, tuple(data_list))
             self.db.commit()
             return True
         except mysql.connector.Error as error:
@@ -229,7 +255,7 @@ class DbManager:
 
     def update_custom(self, my_sql_insert_query):
         try:
-            self.my_cursor.execute(my_sql_insert_query)
+            self.query(my_sql_insert_query)
             self.db.commit()
             return True
         except mysql.connector.Error as error:
@@ -239,7 +265,7 @@ class DbManager:
     def del_row(self, table_name, row_id, id_field="id"):
         sql_delete_query = f"DELETE from {table_name} where {id_field} = '{row_id}'"
         try:
-            self.my_cursor.execute(sql_delete_query)
+            self.query(sql_delete_query)
             self.db.commit()
             print('number of rows deleted', self.my_cursor.rowcount)
             return True
