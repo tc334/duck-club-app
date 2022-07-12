@@ -67,7 +67,6 @@ class DbManager:
                 print("MySQL connection is closed")
 
     def get_conn(self):
-        print("Entering the get_conn() function")
         try:
             # Get connection object from a pool
             self.connection_object = self.connection_pool.get_connection()

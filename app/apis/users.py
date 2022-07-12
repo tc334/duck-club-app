@@ -76,30 +76,22 @@ def signup():
 @users_bp.route('/users', methods=['POST'])
 @token_required(owner_and_above)
 def manual_add(user):
-    db.get_conn()  # grabs a connection from the pool
-
     data_in = request.get_json()  # expecting keys: email, first_name, last_name
 
     # Error checking
     if data_in is None:
-        db.release_conn()
         return jsonify({'error': 'No data received'}), 400
     if 'first_name' not in data_in or len(data_in['first_name']) < 2:
-        db.release_conn()
         return jsonify({'error': 'First name missing'}), 400
     if 'last_name' not in data_in or len(data_in['last_name']) < 2:
-        db.release_conn()
         return jsonify({'error': 'Last name missing'}), 400
     if 'email' not in data_in or len(data_in['email']) < 2:
-        db.release_conn()
         return jsonify({'error': 'Email missing'}), 400
     # check for duplicates
     existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
     if existing is None:
-        db.release_conn()
         return jsonify({"error": "Internal error"}), 400
     if existing:
-        db.release_conn()
         return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
 
     # append this information to what the user put in
@@ -109,14 +101,12 @@ def manual_add(user):
 
     db.add_row(table_name, data_in)
 
-    db.release_conn()
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
 
 
 @users_bp.route('/users', methods=['GET'])
 @token_required(owner_and_above)
 def get_all_rows(user):
-    db.get_conn()  # grabs a connection from the pool
 
     # this SQL postfix will sort the results by member level
     pf = "ORDER BY CASE " \
@@ -127,35 +117,26 @@ def get_all_rows(user):
          "END ASC"
     results = db.read_all(table_name, post_fix=pf)
 
-    db.release_conn()
     return jsonify({"users": results}), 200
 
 
 @users_bp.route('/users/active', methods=['GET'])
 @token_required(manager_and_above)
 def get_all_active(user):
-    db.get_conn()  # grabs a connection from the pool
-
     results = db.read_custom(f"SELECT id, first_name, last_name FROM {table_name} WHERE status = 'active' ORDER BY last_name")
 
     if results:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
         names_all = ["id", "first_name", "last_name"]
         results_dict = db.format_dict(names_all, results)
-        db.release_conn()
         return jsonify({"users": results_dict}), 200
     else:
-        db.release_conn()
         return jsonify({"error": f"unknown error trying to read harvest"}), 400
 
 
 @users_bp.route('/users/<public_id>', methods=['GET'])
 @token_required(all_members)
 def get_one_row(user, public_id):
-    print("starting the get_one_row() function")
-    # result = db.get_conn()  # grabs a connection from the pool
-    # print(f"Alpha={result}")
-
     # members can only read their own info. owners can read anything
     if not (user["level"] == "owner" or
             user["level"] == "administrator" or
@@ -173,8 +154,6 @@ def get_one_row(user, public_id):
 @users_bp.route('/users/<public_id>', methods=['PUT'])
 @token_required(all_members)
 def update_row(user, public_id):
-    db.get_conn()  # grabs a connection from the pool
-
     data_in = request.get_json()
 
     # members can only change their own first_name, last_name, email. owners can change anything
@@ -183,35 +162,26 @@ def update_row(user, public_id):
     if not (user["level"] == "owner" or
             user["level"] == "administrator" or
             user["public_id"] == public_id and b_non_white_keys):
-        db.release_conn()
         return jsonify({"error": f"You are not allowed to make this change to {table_name}"}), 403
 
     # check for duplicate email if attempting to change email
     if 'email' in data_in:
         existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}' AND public_id != '{public_id}'")
         if existing is None:
-            db.release_conn()
             return jsonify({"error": f"Internal error in {__name__}:update_row()"}), 500
         if existing:
-            db.release_conn()
             return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
 
     if db.update_row(table_name, public_id, data_in, "public_id"):
-        db.release_conn()
         return jsonify({'message': f'Successful update of {table_name}'}), 200
     else:
-        db.release_conn()
         return jsonify({"error": f"Unable to update table {table_name}"}), 400
 
 
 @users_bp.route('/users/<public_id>', methods=['DELETE'])
 @token_required(admin_only)
 def del_row(user, public_id):
-    db.get_conn()  # grabs a connection from the pool
-
     if db.del_row(table_name, public_id, "public_id"):
-        db.release_conn()
         return jsonify({'message': 'Successful removal'}), 200
     else:
-        db.release_conn()
         return jsonify({"error": f"Unable to remove id {public_id} from table {table_name}"}), 400
