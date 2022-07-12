@@ -29,7 +29,7 @@ export default class extends AbstractView {
         </div>
       </article>
       <img src="img/left-arrow.png" class="step-img">
-      <img src="img/masters-leaderboard.jpg" class="step-img">
+      <img src="img/Masters-leaderboard.jpg" class="step-img">
       <article class="instruction">
         <div class="step-text-box">
           <p class="step-num">02</p>
