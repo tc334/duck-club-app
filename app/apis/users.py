@@ -152,7 +152,9 @@ def get_all_active(user):
 @users_bp.route('/users/<public_id>', methods=['GET'])
 @token_required(all_members)
 def get_one_row(user, public_id):
-    db.get_conn()  # grabs a connection from the pool
+    print("starting the get_one_row() function")
+    result = db.get_conn()  # grabs a connection from the pool
+    print(f"Alpha={result}")
 
     # members can only read their own info. owners can read anything
     if not (user["level"] == "owner" or
