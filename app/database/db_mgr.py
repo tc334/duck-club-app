@@ -279,7 +279,7 @@ class DbManager:
 
         try:
             self.my_cursor.execute(my_sql_insert_query, tuple(data_list))
-            self.db.commit()
+            self.connection_object.commit()
             return True
         except mysql.connector.Error as error:
             print("Failed to update record: {}".format(error))
