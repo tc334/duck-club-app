@@ -12,16 +12,21 @@ def token_required(member_level_test):
                 token = request.headers['x-access-token']
                 if token:
                     try:
+                        db.get_conn()
                         jwt_data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
                         results = db.read_custom(f"SELECT id, level FROM users WHERE public_id='{jwt_data['user']}' LIMIT 1")
                         if results and len(results) == 1:
                             current_user = db.sql_to_dict(results, names=["id", "level"])
                             current_user["public_id"] = jwt_data["user"]
                             if member_level_test(current_user["level"]):
-                                return f(current_user, *args, **kwargs)
+                                ret_val = f(current_user, *args, **kwargs)
+                                db.release_conn()
+                                return ret_val
                             else:
+                                db.release_conn()
                                 return jsonify({'error': 'User not authorized'}), 403
                     except jwt.exceptions.InvalidTokenError as e:
+                        db.release_conn()
                         return jsonify({'error': 'Token is invalid! ' + repr(e)}), 401
             return jsonify({'error': 'Token is missing'}), 401
         return wrapper

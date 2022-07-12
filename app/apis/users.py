@@ -153,23 +153,20 @@ def get_all_active(user):
 @token_required(all_members)
 def get_one_row(user, public_id):
     print("starting the get_one_row() function")
-    result = db.get_conn()  # grabs a connection from the pool
-    print(f"Alpha={result}")
+    # result = db.get_conn()  # grabs a connection from the pool
+    # print(f"Alpha={result}")
 
     # members can only read their own info. owners can read anything
     if not (user["level"] == "owner" or
             user["level"] == "administrator" or
             user["public_id"] == public_id):
-        db.release_conn()
         return jsonify({"error": f"You are not allowed to make this change to {table_name}"}), 400
 
     result = db.read_custom(f"SELECT * FROM {table_name} WHERE public_id='{public_id}'")
 
     if result and len(result) == 1:
-        db.release_conn()
         return jsonify({"user": db.sql_to_dict(result, table_name=table_name)}), 200
     else:
-        db.release_conn()
         return jsonify({"error": f"Could not find id {public_id} in table {table_name}"}), 400
 
 
