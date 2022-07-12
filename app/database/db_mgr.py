@@ -16,16 +16,14 @@ class DbManager:
         self.tables = None
         self.admin_email = None
         self.databases_in_server = None
-        self.host = None
-        self.port = None
-        self.user_name = None
-        self.password = None
+        self.db_name = None
         self.connection_pool = None
         self.connection_object = None
 
     def init_app(self, host, port, user_name, password, admin_email, db_name=None):
 
         self.admin_email = admin_email
+        self.db_name = db_name
 
         # load schema from local file
         self.schema = schema
@@ -68,13 +66,6 @@ class DbManager:
                 self.connection_object.close()
                 print("MySQL connection is closed")
 
-    def connect(self):
-        self.db = mysql.connector.connect(
-            host=self.host,
-            user=self.user_name,
-            passwd=self.password
-        )
-
     def get_conn(self):
         print("Entering the get_conn() function")
         try:
@@ -84,6 +75,7 @@ class DbManager:
             if self.connection_object.is_connected():
                 print("Just got new connection from pool")
                 self.my_cursor = self.connection_object.cursor()
+                self.select_db(self.db_name)
                 return True
             else:
                 print("Boooooooooooooooo")
