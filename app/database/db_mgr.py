@@ -27,6 +27,12 @@ class DbManager:
 
         self.admin_email = admin_email
 
+        # load schema from local file
+        self.schema = schema
+        self.tables = {}
+        for key in self.schema:
+            self.tables[key] = Table(self.schema[key])
+
         # setup pooling
         try:
             self.connection_pool = pooling.MySQLConnectionPool(pool_name="my_conn_pool",
@@ -61,12 +67,6 @@ class DbManager:
                 self.my_cursor.close()
                 self.connection_object.close()
                 print("MySQL connection is closed")
-
-        # load schema from local file
-        self.schema = schema
-        self.tables = {}
-        for key in self.schema:
-            self.tables[key] = Table(self.schema[key])
 
     def connect(self):
         self.db = mysql.connector.connect(
