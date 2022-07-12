@@ -258,7 +258,8 @@ class DbManager:
             self.my_cursor.execute(custom_query)
             results = self.my_cursor.fetchall()
         except mysql.connector.Error as error:
-            print("Failed to execute custom query: {}".format(error))
+            print(f"Failed to execute custom query: {custom_query}.")
+            print(f"Error: {error}")
             return None
         return results
 
