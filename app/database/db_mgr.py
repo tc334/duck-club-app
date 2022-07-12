@@ -233,7 +233,7 @@ class DbManager:
 
         try:
             self.my_cursor.execute(my_sql_insert_query, insert_tuple)
-            self.db.commit()
+            self.connection_object.commit()
         except mysql.connector.Error as error:
             print("Failed to add record to table: {}".format(error))
 
@@ -288,7 +288,7 @@ class DbManager:
     def update_custom(self, my_sql_insert_query):
         try:
             self.my_cursor.execute(my_sql_insert_query)
-            self.db.commit()
+            self.connection_object.commit()
             return True
         except mysql.connector.Error as error:
             print("Failed to execute custom update: {}".format(error))
@@ -298,7 +298,7 @@ class DbManager:
         sql_delete_query = f"DELETE from {table_name} where {id_field} = '{row_id}'"
         try:
             self.my_cursor.execute(sql_delete_query)
-            self.db.commit()
+            self.connection_object.commit()
             print('number of rows deleted', self.my_cursor.rowcount)
             return True
         except mysql.connector.Error as error:
