@@ -324,51 +324,53 @@ class DbManager:
         return results_lod
 
     def populate_basic_tables(self):
-        pond_id = 1
+        print("populating basic table")
         self.add_row("properties", {'name': 'Oak Meadows', 'region': 'Southern'})
-        self.add_row("ponds", {'name': 'Remington', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Winchester', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Benelli', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Castle', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Middle', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Swale', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Appelt', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Lodge', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Road', 'property_id': pond_id})
+        property_id = self.read_custom("SELECT id FROM properties WHERE name='Oak Meadows'")[0][0]
+        print(f"property_id={property_id}")
+        self.add_row("ponds", {'name': 'Remington', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Winchester', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Benelli', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Castle', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Middle', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Swale', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Appelt', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Lodge', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Road', 'property_id': property_id})
 
-        pond_id += 1
+        property_id += 1
         self.add_row("properties", {'name': 'Harrison', 'region': 'Southern'})
-        self.add_row("ponds", {'name': 'Green Wing', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Blue Wing', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Shoveler', 'property_id': pond_id})
+        self.add_row("ponds", {'name': 'Green Wing', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Blue Wing', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Shoveler', 'property_id': property_id})
 
-        pond_id += 1
+        property_id += 1
         self.add_row("properties", {'name': 'Hughson Lakes', 'region': 'Southern'})
-        self.add_row("ponds", {'name': 'Thunder', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Andi', 'property_id': pond_id})
+        self.add_row("ponds", {'name': 'Thunder', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Andi', 'property_id': property_id})
 
-        pond_id += 1
+        property_id += 1
         self.add_row("properties", {'name': 'Radley', 'region': 'Northern'})
-        self.add_row("ponds", {'name': 'Mallard', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Pintail', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Gadwall', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Wigeon', 'property_id': pond_id})
+        self.add_row("ponds", {'name': 'Mallard', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Pintail', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Gadwall', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Wigeon', 'property_id': property_id})
 
-        pond_id += 1
+        property_id += 1
         self.add_row("properties", {'name': 'Blue Creek', 'region': 'Northern'})
-        self.add_row("ponds", {'name': 'Forrest West', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Forrest Middle', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Forrest East', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Brooks', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Hunter NW', 'property_id': pond_id})
+        self.add_row("ponds", {'name': 'Forrest West', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Forrest Middle', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Forrest East', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Brooks', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Hunter NW', 'property_id': property_id})
 
-        pond_id += 1
+        property_id += 1
         self.add_row("properties", {'name': 'Northern', 'region': 'Northern'})
-        self.add_row("ponds", {'name': 'Bo', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Toby', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Nelly', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Cali', 'property_id': pond_id})
-        self.add_row("ponds", {'name': 'Bree', 'property_id': pond_id})
+        self.add_row("ponds", {'name': 'Bo', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Toby', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Nelly', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Cali', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Bree', 'property_id': property_id})
 
         self.add_row("birds", {'name': 'Blue Winged Teal', 'type': 'duck'})
         self.add_row("birds", {'name': 'Green Winged Teal', 'type': 'duck'})
