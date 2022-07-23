@@ -79,7 +79,7 @@ export default class extends AbstractView {
         </div>
 
         <span class="button-holder">
-          <button class="btn--form">Add</button>
+          <button class="btn--form" id="btn-add">Add</button>
           <button class="btn--form" id="btn-update" disabled>Update</button>
           <input class="btn--form" type="reset" />
         </span>
@@ -280,6 +280,7 @@ function delMember(e) {
 }
 
 function populateEdit(e) {
+  console.log("Hi");
   const i = e.currentTarget.index;
 
   // disable the "Add" and enable the "Update"

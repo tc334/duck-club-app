@@ -793,6 +793,7 @@ leaderboard aside for my harvest
   align-items: center;
   text-align: center;
   margin-bottom: 1rem;
+  justify-content: space-evenly;
 }
 
 .myharvest-name,
@@ -820,6 +821,7 @@ leaderboard aside for my harvest
   font-weight: 500;
   padding-top: 0.1rem;
   padding-bottom: 0.1rem;
+  padding-right: 0.5rem;
 }
 
 .heading-minor {

@@ -9,6 +9,7 @@ import {
   removeAllChildNodes,
   round,
   menuSwitcher,
+  selectAll,
 } from "../common_funcs.js";
 
 var jwt_global;
@@ -278,7 +279,7 @@ function populateAside(group_detail) {
     div.appendChild(bird_name);
 
     var count = document.createElement("input");
-    count.type = "number";
+    count.type = "tel";
     count.min = 0;
     count.max = 24;
     count.step = 1;
@@ -287,6 +288,7 @@ function populateAside(group_detail) {
     count.classList.add("myharvest-count");
     count.classList.add("myharvest-count-old");
     count.bird_id = group_detail["harvests"][i]["bird_id"];
+    count.addEventListener("focus", selectAll);
     div.appendChild(count);
 
     aside.appendChild(div);
@@ -331,14 +333,14 @@ function populateAside(group_detail) {
   div.appendChild(bird_list);
 
   var count = document.createElement("input");
-  count.type = "number";
+  count.type = "tel";
   count.min = 0;
   count.max = 24;
   count.step = 1;
   count.value = 0;
   count.id = "myharvest-count-new";
   count.classList.add("myharvest-count");
-  //count.classList.add("myharvest-count-new");
+  count.addEventListener("focus", selectAll);
   div.appendChild(count);
 
   aside.appendChild(div);

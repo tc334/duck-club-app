@@ -159,6 +159,26 @@ Instead assume, 1rem = 1em = 16px
   .modal-content {
     width: 75%;
   }
+
+  /*
+  The next few will make the live hunt aside larger & easier to use
+  */
+  .myharvest-name,
+  .myharvest-count {
+    font-size: 3rem;
+  }
+
+  .myharvest-count {
+    width: 5rem;
+  }
+
+  .aside {
+    width: 85vw;
+  }
+
+  .myharvest-name {
+    width: 75%;
+  }
 }
 
 /* 432  px */
