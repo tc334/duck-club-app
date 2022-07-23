@@ -81,7 +81,7 @@ def update_harvest(user):
     if db.update_row("groupings", data_in["group_id"], {"harvest_update_time": central_time_now()}):
         return jsonify({'message': f"Successful update of id {harvest_id} in {table_name}"}), 200
     else:
-        return jsonify({"message": f"Unable to update id {harvest_id} of table {table_name}"}), 500
+        return jsonify({"message": f"Unable to harvest for group {data_in['group_id']} of table {table_name}"}), 500
 
 
 @harvests_bp.route('/harvests', methods=['GET'])

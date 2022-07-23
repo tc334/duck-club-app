@@ -33,12 +33,15 @@ class DbManager:
 
         # setup pooling
         try:
+            if port is None:
+                port = 3306
             self.connection_pool = pooling.MySQLConnectionPool(pool_name="my_conn_pool",
-                                                          pool_size=2,
-                                                          pool_reset_session=True,
-                                                          host=host,
-                                                          user=user_name,
-                                                          password=password)
+                                                               pool_size=2,
+                                                               pool_reset_session=True,
+                                                               host=host,
+                                                               port=port,
+                                                               user=user_name,
+                                                               password=password)
 
             print("Printing connection pool properties ")
             print("Connection Pool Name - ", self.connection_pool.pool_name)
@@ -384,10 +387,10 @@ class DbManager:
         self.add_row("birds", {'name': 'Canvasback', 'type': 'duck'})
         self.add_row("birds", {'name': 'Lesser Scaup', 'type': 'duck'})
         self.add_row("birds", {'name': 'Greater Scaup', 'type': 'duck'})
-        self.add_row("birds", {'name': 'Snow', 'type': 'goose'})
+        self.add_row("birds", {'name': 'Snow Goose', 'type': 'goose'})
         self.add_row("birds", {'name': 'Speckled Belly', 'type': 'goose'})
         self.add_row("birds", {'name': 'Sand Hill', 'type': 'crane'})
-        self.add_row("birds", {'name': 'Blue', 'type': 'goose'})
+        self.add_row("birds", {'name': 'Blue Goose', 'type': 'goose'})
         self.add_row("birds", {'name': 'Canadian', 'type': 'goose'})
 
         return True

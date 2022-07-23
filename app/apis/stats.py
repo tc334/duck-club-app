@@ -28,12 +28,12 @@ def get_stats_hunters(users):
     elif data_in["filter-date"] == "current-season":
         current_month = datetime.now().month
         current_year = datetime.now().year
-        if current_month > 7:
-            date_start = str(current_year) + "-07-01"
-            date_end = str(current_year+1) + "-07-01"
+        if current_month >= 9:
+            date_start = str(current_year) + "-09-01"
+            date_end = str(current_year + 1) + "-09-01"
         else:
-            date_start = str(current_year-1) + "-07-01"
-            date_end = str(current_year) + "-07-01"
+            date_start = str(current_year - 1) + "-09-01"
+            date_end = str(current_year) + "-09-01"
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
@@ -182,12 +182,12 @@ def get_stats_club(users):
     elif data_in["filter-date"] == "current-season":
         current_month = datetime.now().month
         current_year = datetime.now().year
-        if current_month > 7:
-            date_start = str(current_year) + "-07-01"
-            date_end = str(current_year+1) + "-07-01"
+        if current_month >= 9:
+            date_start = str(current_year) + "-09-01"
+            date_end = str(current_year+1) + "-09-01"
         else:
-            date_start = str(current_year-1) + "-07-01"
-            date_end = str(current_year) + "-07-01"
+            date_start = str(current_year-1) + "-09-01"
+            date_end = str(current_year) + "-09-01"
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
@@ -249,12 +249,12 @@ def get_stats_birds(users):
     elif data_in["filter-date"] == "current-season":
         current_month = datetime.now().month
         current_year = datetime.now().year
-        if current_month > 7:
-            date_start = str(current_year) + "-07-01"
-            date_end = str(current_year + 1) + "-07-01"
+        if current_month >= 9:
+            date_start = str(current_year) + "-09-01"
+            date_end = str(current_year + 1) + "-09-01"
         else:
-            date_start = str(current_year - 1) + "-07-01"
-            date_end = str(current_year) + "-07-01"
+            date_start = str(current_year - 1) + "-09-01"
+            date_end = str(current_year) + "-09-01"
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
@@ -333,12 +333,12 @@ def get_stats_ponds(users):
     elif data_in["filter-date"] == "current-season":
         current_month = datetime.now().month
         current_year = datetime.now().year
-        if current_month > 7:
-            date_start = str(current_year) + "-07-01"
-            date_end = str(current_year + 1) + "-07-01"
+        if current_month >= 9:
+            date_start = str(current_year) + "-09-01"
+            date_end = str(current_year + 1) + "-09-01"
         else:
-            date_start = str(current_year - 1) + "-07-01"
-            date_end = str(current_year) + "-07-01"
+            date_start = str(current_year - 1) + "-09-01"
+            date_end = str(current_year) + "-09-01"
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 

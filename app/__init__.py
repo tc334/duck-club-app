@@ -15,7 +15,7 @@ def create_app():
 
     app.config.from_pyfile(os.path.join('..', 'settings.py'))
 
-    if "SQL_IPADDR" in app.config:
+    if app.config['ENV'] == "development":
         # environment specifies each connection param separately
         sql_ipaddr = app.config["SQL_IPADDR"]
         sql_port = app.config["SQL_PORT"]
@@ -38,7 +38,6 @@ def create_app():
         app.config["SQL_ADMIN_EMAIL"],
         db_name=sql_db_name
     )
-    #db.connect_to_existing(sql_db_name)
 
     from .views import main
     from . import apis

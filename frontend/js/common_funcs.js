@@ -376,3 +376,9 @@ export function menuSwitcher() {
     main_main.classList.add("menu-open");
   }
 }
+
+export function selectAll(e) {
+  var input = e.currentTarget;
+  var len_of_val = input.value.length;
+  input.setSelectionRange(0, len_of_val);
+}
