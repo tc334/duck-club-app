@@ -37,8 +37,6 @@ def login():
 
 @users_bp.route('/signup', methods=['POST'])
 def signup():
-    db.get_conn()  # grabs a connection from the pool
-
     data_in = request.get_json()  # expecting keys: email, password, first_name, last_name, combo
 
     # Error checking
@@ -54,6 +52,9 @@ def signup():
         return jsonify({'error': 'Password too short'}), 400
     if 'combo' not in data_in or data_in['combo'] != current_app.config["SIGNUP_CODE"]:
         return jsonify({'error': 'Wrong access code'}), 400
+
+    db.get_conn()  # grabs a connection from the pool
+
     # check for duplicates
     existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
     if existing is None:

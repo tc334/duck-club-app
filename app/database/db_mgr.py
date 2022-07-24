@@ -49,6 +49,7 @@ class DbManager:
 
             # Get connection object from a pool
             self.connection_object = self.connection_pool.get_connection()
+            print("Just got new connection from pool")
 
             if self.connection_object.is_connected():
                 db_Info = self.connection_object.get_server_info()

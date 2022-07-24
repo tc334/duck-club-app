@@ -22,7 +22,7 @@ def token_required(member_level_test):
                             current_user = db.sql_to_dict(results, names=["id", "level"])
                             current_user["public_id"] = jwt_data["user"]
                             if member_level_test(current_user["level"]):
-                                # print(f"Charlie: {f}")
+                                print(f"wrapped function: {f}")
                                 ret_val = f(current_user, *args, **kwargs)
                                 # print(f"Charlie 2")
                                 db.release_conn()

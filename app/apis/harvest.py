@@ -12,7 +12,6 @@ def central_time_now():
     IST = pytz.timezone('US/Central')
     datetime_ist = datetime.now(IST)
     result = datetime_ist.strftime('%H:%M')
-    print(f"Current time:{result}")
     return result
 
 
@@ -56,12 +55,14 @@ def update_harvest(user):
         data_in["bird_id"] = (data_in["bird_id"],)
 
     # check to see if a record already exists
+    harvest_id = None
     for idxBird in range(len(data_in['count'])):
         existing = db.read_custom(f"SELECT id FROM {table_name} WHERE group_id = {data_in['group_id']} AND bird_id = {data_in['bird_id'][idxBird]}")
         if existing is None:
             return jsonify({"message": "Internal error"}), 500
         if existing:
             harvest_id = existing[0][0]
+            print(f"harvest_id={harvest_id}")
             update_dict = {
                 "count": data_in["count"][idxBird],
                 "bird_id": data_in["bird_id"][idxBird]
@@ -81,7 +82,7 @@ def update_harvest(user):
     if db.update_row("groupings", data_in["group_id"], {"harvest_update_time": central_time_now()}):
         return jsonify({'message': f"Successful update of id {harvest_id} in {table_name}"}), 200
     else:
-        return jsonify({"message": f"Unable to harvest for group {data_in['group_id']} of table {table_name}"}), 500
+        return jsonify({"message": f"Unable to update harvest for group {data_in['group_id']} of table {table_name}"}), 500
 
 
 @harvests_bp.route('/harvests', methods=['GET'])
