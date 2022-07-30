@@ -41,17 +41,17 @@ def signup():
 
     # Error checking
     if data_in is None:
-        return jsonify({'error': 'No data received'}), 400
+        return jsonify({'message': 'No data received'}), 400
     if 'first_name' not in data_in or len(data_in['first_name']) < 2:
-        return jsonify({'error': 'First name missing'}), 400
+        return jsonify({'message': 'First name missing'}), 400
     if 'last_name' not in data_in or len(data_in['last_name']) < 2:
-        return jsonify({'error': 'Last name missing'}), 400
+        return jsonify({'message': 'Last name missing'}), 400
     if 'email' not in data_in or len(data_in['email']) < 2:
-        return jsonify({'error': 'Email missing'}), 400
+        return jsonify({'message': 'Email missing'}), 400
     if 'password' not in data_in or len(data_in['password']) < 8:
-        return jsonify({'error': 'Password too short'}), 400
+        return jsonify({'message': 'Password too short'}), 400
     if 'combo' not in data_in or data_in['combo'] != current_app.config["SIGNUP_CODE"]:
-        return jsonify({'error': 'Wrong access code'}), 400
+        return jsonify({'message': 'Wrong access code'}), 400
 
     db.get_conn()  # grabs a connection from the pool
 
@@ -59,10 +59,10 @@ def signup():
     existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
     if existing is None:
         db.release_conn()
-        return jsonify({"error": "Internal error"}), 500
+        return jsonify({"message": "Internal error"}), 500
     if existing:
         db.release_conn()
-        return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name}), 400
+        return jsonify({"message": "Entry " + data_in["email"] + " already exists in " + table_name}), 400
 
     # append this information to what the user put in
     data_in['public_id'] = str(uuid.uuid4())
@@ -81,13 +81,13 @@ def manual_add(user):
 
     # Error checking
     if data_in is None:
-        return jsonify({'error': 'No data received'}), 400
+        return jsonify({'message': 'No data received'}), 400
     if 'first_name' not in data_in or len(data_in['first_name']) < 2:
-        return jsonify({'error': 'First name missing'}), 400
+        return jsonify({'message': 'First name missing'}), 400
     if 'last_name' not in data_in or len(data_in['last_name']) < 2:
-        return jsonify({'error': 'Last name missing'}), 400
+        return jsonify({'message': 'Last name missing'}), 400
     if 'email' not in data_in or len(data_in['email']) < 2:
-        return jsonify({'error': 'Email missing'}), 400
+        return jsonify({'message': 'Email missing'}), 400
     # check for duplicates
     existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
     if existing is None:
