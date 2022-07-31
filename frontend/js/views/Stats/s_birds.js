@@ -160,7 +160,7 @@ function populateTable(db_data) {
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = db_data[i]["count"];
+    tabCell.innerHTML = db_data[i]["count"].toFixed(1);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");

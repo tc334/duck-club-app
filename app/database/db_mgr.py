@@ -1,10 +1,18 @@
 import mysql.connector
 from mysql.connector import Error, pooling
-from .tables.schema import schema
+from .tables.schema import schema, secondary_indices
 from .tables.table import Table
 import uuid
 from werkzeug.security import generate_password_hash
-import time
+
+
+def get_index_str(d):
+    s = f"CREATE INDEX {d['name']} ON {d['table']} ("
+    for item in d['columns']:
+        s = s + item + ", "
+    s = s[:-2] + ")"
+    # print(f"get_index_str:{s}")
+    return s
 
 
 class DbManager:
@@ -19,8 +27,12 @@ class DbManager:
         self.db_name = None
         self.connection_pool = None
         self.connection_object = None
+        self.cache = None
 
-    def init_app(self, host, port, user_name, password, admin_email, db_name=None):
+    def init_app(self, host, port, user_name, password, admin_email, db_name=None, cache=None):
+
+        if cache:
+            self.cache = cache
 
         self.admin_email = admin_email
         self.db_name = db_name
@@ -97,8 +109,16 @@ class DbManager:
         except Error as e:
             print("Error while connecting to MySQL using Connection pool ", e)
 
+    def execute(self, s, t=None):
+        if self.cache:
+            self.cache.increment()
+        if t:
+            self.my_cursor.execute(s, t)
+        else:
+            self.my_cursor.execute(s)
+
     def list_databases(self, print_on=False):
-        self.my_cursor.execute("SHOW DATABASES")
+        self.execute("SHOW DATABASES")
         results = self.my_cursor.fetchall()
         databases = [item[0] for item in results]
         if print_on:
@@ -115,11 +135,11 @@ class DbManager:
             if db[0] == db_name:
                 print(f"Error creating database: {db_name} already exists")
                 return False
-        self.my_cursor.execute(f"CREATE DATABASE {db_name}")
+        self.execute(f"CREATE DATABASE {db_name}")
         return True
 
     def delete_db(self, db_name):
-        self.my_cursor.execute(f"DROP DATABASE IF EXISTS {db_name}")
+        self.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
     def select_db(self, db_name):
         b_build = False
@@ -129,7 +149,7 @@ class DbManager:
             b_build = True
 
         try:
-            self.my_cursor.execute(f"USE {db_name}")
+            self.execute(f"USE {db_name}")
             if b_build:
                 # newly created DB needs to be built out too
                 return self.build(db_name)
@@ -169,7 +189,7 @@ class DbManager:
         return True
 
     def list_tables(self, print_on=False):
-        self.my_cursor.execute("SHOW TABLES")
+        self.execute("SHOW TABLES")
         tables = self.my_cursor.fetchall()
         if print_on:
             print("*******************")
@@ -180,7 +200,7 @@ class DbManager:
         return tables
 
     def list_columns(self, table_name, print_on=False):
-        self.my_cursor.execute(f"SHOW COLUMNS FROM {table_name}")
+        self.execute(f"SHOW COLUMNS FROM {table_name}")
         columns = self.my_cursor.fetchall()
         if print_on:
             print("**********************")
@@ -192,7 +212,7 @@ class DbManager:
 
     def create_table(self, table_name):
         print(f"Creating table: {table_name}")
-        self.my_cursor.execute(f"CREATE TABLE {table_name}({self.tables[table_name].get_schema_string()})")
+        self.execute(f"CREATE TABLE {table_name}({self.tables[table_name].get_schema_string()})")
 
     def nuke_and_rebuild(self, db_name):
         print("Starting nuke & rebuild")
@@ -207,6 +227,8 @@ class DbManager:
     def build(self, db_name):
         for key in self.tables:
             self.create_table(key)
+        for item in secondary_indices:
+            self.execute(get_index_str(item))
         print(f"Built database {db_name}")
         self.list_tables(print_on=True)
         # populate one administrator in the DB
@@ -236,7 +258,7 @@ class DbManager:
         my_sql_insert_query = f"INSERT INTO {table_name} ({col_names}) VALUES ({value_types[:-2]}) "
 
         try:
-            self.my_cursor.execute(my_sql_insert_query, insert_tuple)
+            self.execute(my_sql_insert_query, insert_tuple)
             self.connection_object.commit()
         except mysql.connector.Error as error:
             print("Failed to add record to table: {}".format(error))
@@ -244,7 +266,7 @@ class DbManager:
     def read_all(self, table_name, post_fix=""):
         s = f"SELECT * FROM {table_name} {post_fix}"
         try:
-            self.my_cursor.execute(s)
+            self.execute(s)
             results_tuple = self.my_cursor.fetchall()
         except mysql.connector.Error as error:
             print("Failed to read all from table: {}".format(error))
@@ -258,7 +280,7 @@ class DbManager:
 
     def read_custom(self, custom_query):
         try:
-            self.my_cursor.execute(custom_query)
+            self.execute(custom_query)
             results = self.my_cursor.fetchall()
         except mysql.connector.Error as error:
             print(f"Failed to execute custom query: {custom_query}.")
@@ -282,7 +304,7 @@ class DbManager:
         my_sql_insert_query = f"UPDATE {table_name} SET {set_str[:-1]} WHERE {id_field}=%s"
 
         try:
-            self.my_cursor.execute(my_sql_insert_query, tuple(data_list))
+            self.execute(my_sql_insert_query, tuple(data_list))
             self.connection_object.commit()
             return True
         except mysql.connector.Error as error:
@@ -291,7 +313,7 @@ class DbManager:
 
     def update_custom(self, my_sql_insert_query):
         try:
-            self.my_cursor.execute(my_sql_insert_query)
+            self.execute(my_sql_insert_query)
             self.connection_object.commit()
             return True
         except mysql.connector.Error as error:
@@ -301,7 +323,7 @@ class DbManager:
     def del_row(self, table_name, row_id, id_field="id"):
         sql_delete_query = f"DELETE from {table_name} where {id_field} = '{row_id}'"
         try:
-            self.my_cursor.execute(sql_delete_query)
+            self.execute(sql_delete_query)
             self.connection_object.commit()
             print('number of rows deleted', self.my_cursor.rowcount)
             return True

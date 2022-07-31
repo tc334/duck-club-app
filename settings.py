@@ -13,3 +13,6 @@ SQL_ADMIN_EMAIL = "tegan.counts@gmail.com"
 SIGNUP_CODE = environ.get('SIGNUP_CODE')
 
 CLEARDB_DATABASE_URL = environ.get('CLEARDB_DATABASE_URL')
+
+REDIS_IPADDR = environ.get('REDIS_IPADDR')
+REDIS_PORT = environ.get('REDIS_PORT')

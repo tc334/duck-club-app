@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .. import db
+from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 import math
 
@@ -63,6 +63,7 @@ def add_row(user):
     # Input passes criteria - write to database
     data_in["num_hunters"] = num_hunters
     db.add_row(table_name, data_in)
+    cache.delete("bravo")
 
     return jsonify({"message": "New group successfully added to hunt " + str(data_in['hunt_id'])}), 201
 
@@ -84,25 +85,37 @@ def get_all_rows(user):
 @token_required(all_members)
 def get_harvest_summary(user):
 
-    # First figure out the id of the open hunt
-    hunts = db.read_custom(f"SELECT id, hunt_date FROM hunts WHERE status = 'hunt_open'")
-    if hunts is None:
-        return jsonify({"message": "internal error"}), 500
-    if len(hunts) == 0:
-        return jsonify({"message": "Couldn't find an open hunt"}), 400
-    hunt_id = hunts[0][0]
-    hunt_date = hunts[0][1]
+    # First figure out the id of the current hunt
+    hunts_dict = cache.get("echo")
+    if len(hunts_dict) < 1:
+        # no stored value in cache, must go to db
+        hunts = db.read_custom(f"SELECT id, hunt_date FROM hunts WHERE status = 'hunt_open'")
+        if hunts is None:
+            return jsonify({"message": "internal error"}), 500
+        if len(hunts) == 0:
+            return jsonify({"message": "Couldn't find a hunt in a pre-hunt state"}), 400
+        names = ["id", "hunt_date"]
+        hunts_dict = db.format_dict(names, hunts)[0]
+        # datetime requires special handling
+        hunts_dict["hunt_date"] = hunts_dict["hunt_date"].isoformat()
+        # push response to cache
+        cache.add("echo", hunts_dict, 60 * 60)
 
-    data, group_id_of_current_user = harvest_summary_helper(hunt_id, user["id"])
-    data["hunt_date"] = hunt_date
+    data, group_id_of_current_user = harvest_summary_helper(hunts_dict["id"], user["id"])
+    data["hunt_date"] = hunts_dict["hunt_date"]
 
     # if calling user is part of current hunt, fetch their group's harvests
     if group_id_of_current_user is not None:
         data["this_user"] = get_harvest_detail_core(group_id_of_current_user)
         # add the list of all birds so they can add a new species to their harvest
-        birds = db.read_custom(f"SELECT id, name FROM birds ORDER BY name")
-        names = ["id", "name"]
-        birds_dict = db.format_dict(names, birds)
+        birds_dict = cache.get("foxtrot")
+        if len(birds_dict) < 1:
+            # no stored value in cache, must go to db
+            birds = db.read_custom(f"SELECT id, name FROM birds ORDER BY name")
+            names = ["id", "name"]
+            birds_dict = db.format_dict(names, birds)
+            # push response to cache
+            cache.add("foxtrot", birds_dict, 24*60*60)
         data["this_user"]["birds"] = birds_dict
 
     return jsonify({"data": data}), 200
@@ -123,52 +136,76 @@ def harvest_summary_helper(hunt_id, user_id):
     # regardless of whether they have any harvests yet, we always need to know the group, pond, & #hunters
 
     # now pull all groupings that match this hunt_id
-    foo = db.read_custom(f"SELECT "
-                         f"groupings.id, groupings.harvest_update_time, ponds.name FROM groupings "
-                         f"JOIN ponds ON groupings.pond_id=ponds.id "
-                         f"WHERE groupings.hunt_id={hunt_id} "
-                         f"ORDER BY groupings.id")
-
-    # now convert to list of dictionaries
-    names = ["group_id", "harvest_update_time", "pond_name"]
-    groups_dict = db.format_dict(names, foo)
-    # time has to be cleaned up before it can be jsonified
-    for item in groups_dict:
-        if item["harvest_update_time"] is not None:
-            item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
-        else:
-            item["harvest_update_time"] = "00:00"
+    groups_dict = cache.get(f"golf:{hunt_id}")
+    if len(groups_dict) < 1:
+        # no cache hit, go to db
+        foo = db.read_custom(f"SELECT "
+                             f"groupings.id, groupings.harvest_update_time, ponds.name FROM groupings "
+                             f"JOIN ponds ON groupings.pond_id=ponds.id "
+                             f"WHERE groupings.hunt_id={hunt_id} "
+                             f"ORDER BY groupings.id")
+        # now convert to list of dictionaries
+        names = ["group_id", "harvest_update_time", "pond_name"]
+        groups_dict = db.format_dict(names, foo)
+        # time has to be cleaned up before it can be jsonified
+        for item in groups_dict:
+            if item["harvest_update_time"] is not None:
+                item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
+            else:
+                item["harvest_update_time"] = "00:00"
+        # update cache
+        cache.add(f"golf:{hunt_id}", groups_dict, 24*60*60)
 
     group_id_of_current_user = None
     for group in groups_dict:
         # count the number of hunters in this group
-        results = db.read_custom(
-            f"SELECT slot1_type, slot2_type, slot3_type, slot4_type, slot1_id, slot2_id, slot3_id, slot4_id "
-            f"FROM groupings "
-            f"WHERE id = {group['group_id']}")[0]
-        slot_types = results[:4]
-        slot_ids = results[4:]
+        slot_dict = get_slots_dict(group['group_id'])
+        if not slot_dict:
+            return jsonify({"message": f"Unable to update id {group['group_id']} of table {table_name}"}), 400
+
         active_slots = []
-        for idx, value in enumerate(slot_types):
+        for idx, value in enumerate(slot_dict["types"]):
             if value != "open":
                 active_slots.append(idx)
-            if value == "member" and slot_ids[idx] == user_id:
+            if value == "member" and slot_dict["ids"][idx] == user_id:
                 group_id_of_current_user = group['group_id']
         group['num_hunters'] = len(active_slots)
 
         # count the number of ducks harvested
-        harvest_ducks = db.read_custom(
-            f"SELECT harvest.count FROM harvest JOIN birds ON harvest.bird_id=birds.id WHERE birds.type='duck' AND harvest.group_id={group['group_id']}")
-        if harvest_ducks is None:
-            return jsonify({"message": "unkown internal error"}), 500
-        group["num_ducks"] = sum([elem[0] for elem in harvest_ducks])
+        cache_reply = cache.get(f"india:{group['group_id']}")
+        if not cache_reply:
+            # cache miss, go to db
+            harvest_ducks = db.read_custom(
+                f"SELECT harvest.count "
+                f"FROM harvest "
+                f"JOIN birds ON harvest.bird_id=birds.id "
+                f"WHERE birds.type='duck' "
+                f"AND harvest.group_id={group['group_id']}")
+            if harvest_ducks is None:
+                return jsonify({"message": "unknown internal error"}), 500
+            group["num_ducks"] = sum([elem[0] for elem in harvest_ducks])
+            # update cache
+            cache.add(f"india:{group['group_id']}", group["num_ducks"], 60*60)
+        else:
+            group["num_ducks"] = int(cache_reply)
 
         # count the number of non-ducks harvested
-        harvest_nonducks = db.read_custom(
-            f"SELECT harvest.count FROM harvest JOIN birds ON harvest.bird_id=birds.id WHERE birds.type!='duck' AND harvest.group_id={group['group_id']}")
-        if harvest_nonducks is None:
-            return jsonify({"message": "unkown internal error"}), 500
-        group["num_nonducks"] = sum([elem[0] for elem in harvest_nonducks])
+        cache_reply = cache.get(f"juliett:{group['group_id']}")
+        if not cache_reply:
+            # cache miss, go to db
+            harvest_nonducks = db.read_custom(
+                f"SELECT harvest.count "
+                f"FROM harvest "
+                f"JOIN birds ON harvest.bird_id=birds.id "
+                f"WHERE birds.type!='duck' "
+                f"AND harvest.group_id={group['group_id']}")
+            if harvest_nonducks is None:
+                return jsonify({"message": "unknown internal error"}), 500
+            group["num_nonducks"] = sum([elem[0] for elem in harvest_nonducks])
+            # update cache
+            cache.add(f"juliett:{group['group_id']}", group["num_nonducks"], 60*60)
+        else:
+            group["num_nonducks"] = int(cache_reply)
 
     data = {
         "groups": groups_dict
@@ -183,44 +220,79 @@ def get_harvest_detail(user, grouping_id):
 
     # the guts of this function are broken out so that it can be called from multiple routes
     data = get_harvest_detail_core(grouping_id)
+    if not data:
+        return jsonify({"message": "error in get_harvest_detail_core"}), 500
 
     return jsonify({"data": data}), 200
 
 
 def get_harvest_detail_core(grouping_id):
     # we need to know the names of the hunters in this group. start with the slot types
-    foo = db.read_custom(f"SELECT "
-                         f"slot1_type, slot2_type, slot3_type, slot4_type, "
-                         f"slot1_id, slot2_id, slot3_id, slot4_id FROM groupings "
-                         f"WHERE groupings.id={grouping_id}")[0]
+    slot_dict = cache.get(f"hotel:{grouping_id}")
+    if len(slot_dict) < 1:
+        # cache miss; go to db
+        results = db.read_custom(
+            f"SELECT slot1_type, slot2_type, slot3_type, slot4_type, slot1_id, slot2_id, slot3_id, slot4_id "
+            f"FROM groupings "
+            f"WHERE id = {grouping_id}")[0]
+        slot_dict = {
+            "types": results[:4],
+            "ids": results[4:]
+        }
+        # update cache
+        cache.add(f"hotel:{grouping_id}", slot_dict, 60 * 60)
 
     # for each slot type that is "member", pull the name
-    foo_idx = [idx + 4 for idx, val in enumerate(foo[:4]) if val == "member"]
-    if len(foo_idx) > 0:
-        s = ""
-        for idx in foo_idx:
-            s += f" OR users.id={foo[idx]}"
-        users = db.read_custom(f"SELECT first_name, last_name FROM users WHERE {s[4:]}")
-        names = ["first_name", "last_name"]
-        users_dict = db.format_dict(names, users)
+    users_dict = cache.get(f"kilo:{grouping_id}")
+    if len(users_dict) < 1:
+        # cache miss, go to db
+        idx_members = [idx for idx, val in enumerate(slot_dict['types']) if val == "member"]
+        if len(idx_members) > 0:
+            s = ""
+            for idx in idx_members:
+                s += f" OR users.id={slot_dict['ids'][idx]}"
+            users = db.read_custom(f"SELECT first_name, last_name FROM users WHERE {s[4:]}")
+            names = ["first_name", "last_name"]
+            users_dict = db.format_dict(names, users)
+        else:
+            return False
+        # update cache
+        cache.add(f"kilo:{grouping_id}", users_dict, 60*60)
 
     # get the pond name
-    pond = db.read_custom(
-        f"SELECT ponds.name FROM ponds JOIN groupings ON groupings.pond_id=ponds.id WHERE groupings.id={grouping_id}")
-    if not pond or len(pond) == 0:
-        return jsonify({"message": "Unknown internal error"}), 500
+    pond_name = cache.get(f"lima:{grouping_id}")
+    if len(pond_name) < 1:
+        # cache miss, go to db
+        results = db.read_custom(
+            f"SELECT ponds.name "
+            f"FROM ponds "
+            f"JOIN groupings ON groupings.pond_id=ponds.id "
+            f"WHERE groupings.id={grouping_id}")
+        if not results or len(results) == 0:
+            return False
+        else:
+            pond_name = results[0][0]
+        # update cache
+        cache.add(f"lima:{grouping_id}", [pond_name], 60*60)
+    else:
+        pond_name = pond_name[0]  # strip off the list; length should always be 1
 
     # pull all harvests associated with this group
-    foo = db.read_custom(f"SELECT birds.id, birds.name, harvest.count FROM birds "
-                         f"JOIN harvest ON harvest.bird_id=birds.id "
-                         f"WHERE harvest.group_id={grouping_id} "
-                         f"ORDER BY birds.name")
-    names = ["bird_id", "bird_name", "count"]
-    harvest_dict = db.format_dict(names, foo)
+    harvest_dict = cache.get(f"mike:{grouping_id}")
+    if len(harvest_dict) < 1:
+        # cache miss, go to db
+        foo = db.read_custom(f"SELECT birds.id, birds.name, harvest.count FROM birds "
+                             f"JOIN harvest ON harvest.bird_id=birds.id "
+                             f"WHERE harvest.group_id={grouping_id} "
+                             f"ORDER BY birds.name")
+        names = ["bird_id", "bird_name", "count"]
+        harvest_dict = db.format_dict(names, foo)
+        # update cache
+        cache.add(f"mike:{grouping_id}", harvest_dict, 60*60)
 
     return {
         "hunters": users_dict,
-        "pond": pond[0][0],
+        "pond": pond_name,
         "harvests": harvest_dict,
         "group_id": grouping_id
     }
@@ -231,33 +303,60 @@ def get_harvest_detail_core(grouping_id):
 def get_groups_in_current_hunt(user):
 
     # First figure out the id of the current hunt
-    hunts = db.read_custom(f"SELECT id, hunt_date, status FROM hunts WHERE status = 'signup_open' OR status = 'signup_closed' OR status='draw_complete'")
-    if hunts is None:
-        return jsonify({"message": "internal error"}), 500
-    if len(hunts) == 0:
-        return jsonify({"message": "Couldn't find a hunt in a pre-hunt state"}), 400
-    names = ["id", "hunt_date", "status"]
-    hunts_dict = db.format_dict(names, hunts)[0]
+    hunts_dict = cache.get("alpha")
+    if len(hunts_dict) < 1:
+        # no stored value in cache, must go to db
+        hunts = db.read_custom(
+            f"SELECT id, hunt_date, status "
+            f"FROM hunts "
+            f"WHERE status = 'signup_open' "
+            f"OR status = 'signup_closed' "
+            f"OR status='draw_complete'")
+        if hunts is None:
+            return jsonify({"message": "internal error"}), 500
+        if len(hunts) == 0:
+            return jsonify({"message": "Couldn't find a hunt in a pre-hunt state"}), 400
+        names = ["id", "hunt_date", "status"]
+        hunts_dict = db.format_dict(names, hunts)[0]
+        # datetime requires special handling
+        hunts_dict["hunt_date"] = hunts_dict["hunt_date"].isoformat()
+        # push response to cache
+        cache.add("alpha", hunts_dict, 10*60)
 
     # now pull all groupings that match this hunt_id
-    groupings = db.read_custom(f"SELECT * FROM groupings WHERE hunt_id = {hunts_dict['id']} ORDER BY id")
-    groupings_dict = db.format_dict(None, groupings, table_name)
-    # time has to be cleaned up before it can be jsonified
-    for item in groupings_dict:
-        if item["harvest_update_time"] is not None:
-            item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
-        else:
-            item["harvest_update_time"] = "00:00"
+    groupings_dict = cache.get(f"bravo:{hunts_dict['id']}")
+    if len(groupings_dict) < 1:
+        # no stored value in cache, must go to db
+        groupings = db.read_custom(f"SELECT * FROM groupings WHERE hunt_id = {hunts_dict['id']} ORDER BY id")
+        groupings_dict = db.format_dict(None, groupings, table_name)
+        # time has to be cleaned up before it can be jsonified
+        for item in groupings_dict:
+            if item["harvest_update_time"] is not None:
+                item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
+            else:
+                item["harvest_update_time"] = "00:00"
+        # push response to cache
+        cache.add(f"bravo:{hunts_dict['id']}", groupings_dict, 5*60)
 
     # now pull all hunter names & id
-    users = db.read_custom(f"SELECT id, first_name, last_name, public_id FROM users")
-    names = ["id", "first_name", "last_name", "public_id"]
-    users_dict = db.format_dict(names, users)
+    users_dict = cache.get("charlie")
+    if len(users_dict) < 1:
+        # no stored value in cache, must go to db
+        users = db.read_custom(f"SELECT id, first_name, last_name, public_id FROM users")
+        names = ["id", "first_name", "last_name", "public_id"]
+        users_dict = db.format_dict(names, users)
+        # push response to cache
+        cache.add("charlie", users_dict, 30*60)
 
     # now pull all open ponds
-    ponds = db.read_custom(f"SELECT id, name FROM ponds WHERE status='open' ORDER BY name")
-    names = ["id", "name"]
-    ponds_dict = db.format_dict(names, ponds)
+    ponds_dict = cache.get("delta")
+    if len(ponds_dict) < 1:
+        # no stored value in cache, must go to db
+        ponds = db.read_custom(f"SELECT id, name FROM ponds WHERE status='open' ORDER BY name")
+        names = ["id", "name"]
+        ponds_dict = db.format_dict(names, ponds)
+        # push response to cache
+        cache.add("delta", ponds_dict, 30*60)
 
     # now see if the calling user is signed up for this hunt
     result = db.read_custom(f"SELECT id "
@@ -306,15 +405,25 @@ def update_row(user, grouping_id):
     if 'pond_id' in data_in and data_in['pond_id'] is not None:
 
         # ponds can only be changed when the hunt state is signup_closed
-        result = db.read_custom(f"SELECT hunts.status FROM hunts INNER JOIN groupings ON groupings.hunt_id=hunts.id WHERE groupings.id={grouping_id}")
-        if not result[0][0] == 'signup_closed':
+        hunt_dict = get_hunt_dict(grouping_id)
+        if not hunt_dict:
+            return jsonify({"message": "Internal error, invalid read of hunt dictionary"}), 500
+        if not hunt_dict["status"] == 'signup_closed':
             return jsonify({'message': f"Cannot assign new pond {data_in['pond_id']} because hunt is not in the signup_closed state"}), 400
 
-        # if a pond is being assigned to a group, check to see if it is already selected. If not, mark the pond as selected
-        result = db.read_custom(f"SELECT status, selected FROM ponds WHERE id={data_in['pond_id']}")
-        if result[0][0] == 'open' and result[0][1] == 0:
+        # if a pond is being assigned to a group, check to see if it is already selected. If not, mark the pond as
+        # selected
+        result = db.read_custom(
+            f"SELECT status, selected "
+            f"FROM ponds "
+            f"WHERE id={data_in['pond_id']}")
+        names = ["status", "selected"]
+        ponds_dict = db.format_dict(names, result)[0]
+        if ponds_dict["status"] == 'open' and ponds_dict["selected"] == 0:
             # pond is open and available. now mark pond as selected
             db.update_custom(f"UPDATE ponds SET selected=1 WHERE id={data_in['pond_id']}")
+            # invalidate cache
+            cache.delete(f"lima:{grouping_id}")  # cached value is now stale
         else:
             return jsonify({'message': f"Cannot assign pond {data_in['pond_id']} because it is not available"}), 400
 
@@ -324,22 +433,29 @@ def update_row(user, grouping_id):
         if pond_id_last is not None and pond_id_last != data_in['pond_id']:
             db.update_custom(f"UPDATE ponds SET selected=0 WHERE id={pond_id_last}")
 
+    # count the number of hunters
+    slot_dict = get_slots_dict(grouping_id)
+    if not slot_dict:
+        return jsonify({"message": f"Unable to update id {grouping_id} of table {table_name}"}), 400
+
+    num_hunters = 0
+    for slot in range(1, 5):
+        key_id = 'slot' + str(slot) + '_id'
+        # this slot is filled if there is input data for it or there is already someone in it
+        if key_id in data_in:
+            # input data trumps existing DB entry
+            if data_in[key_id] != 'open':
+                num_hunters += 1
+        elif slot_dict["types"][slot - 1] != 'open':
+            num_hunters += 1
+    data_in["num_hunters"] = num_hunters
+
     if db.update_row(table_name, grouping_id, data_in):
-
-        # count the number of hunters
-        results = db.read_custom(f"SELECT slot1_type, slot2_type, slot3_type, slot4_type FROM {table_name} WHERE id={grouping_id}")
-        if results is not None and len(results) == 1:
-            num_hunters = 0
-            for slot in range(1, 5):
-                key_id = 'slot' + str(slot) + '_id'
-                # this slot is filled if there is input data for it or there is already someone in it
-                if key_id in data_in or results[0][slot-1] != 'open':
-                    num_hunters += 1
-            data_in["num_hunters"] = num_hunters
-
-            return jsonify({'message': f'Successful update of id {grouping_id} in {table_name}'}), 200
-        else:
-            return jsonify({"message": f"Unable to update id {grouping_id} of table {table_name}"}), 400
+        cache.delete("bravo")
+        cache.delete(f"hotel:{grouping_id}")
+        cache.delete(f"kilo:{grouping_id}")
+        cache.delete(f"romeo:{grouping_id}")
+        return jsonify({'message': f'Successful update of id {grouping_id} in {table_name}'}), 200
     else:
         return jsonify({"message": f"Unable to update id {grouping_id} of table {table_name}"}), 400
 
@@ -348,6 +464,11 @@ def update_row(user, grouping_id):
 @token_required(admin_only)
 def del_row(user, grouping_id):
     if db.del_row(table_name, grouping_id):
+        cache.delete("bravo")
+        cache.delete(f"hotel:{grouping_id}")
+        cache.delete(f"kilo:{grouping_id}")
+        cache.delete(f"lima:{grouping_id}")
+        cache.delete(f"romeo:{grouping_id}")
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {grouping_id} from table {table_name}"}), 400
@@ -361,21 +482,27 @@ def merge_groups(user, group1_id, group2_id):
 
     # Error checking
     # Both groups must be part of same hunt
-    result = db.read_custom(f"SELECT hunt_id FROM groupings WHERE id = {group1_id} or id = {group2_id}")
-    if len(result) != 2 or result[0][0] != result[1][0]:
+    hunt_dict1 = get_hunt_dict(group1_id)
+    if not hunt_dict1:
+        return jsonify({"message": "Internal error, invalid read of hunt dictionary"}), 500
+    hunt_dict2 = get_hunt_dict(group2_id)
+    if not hunt_dict2:
+        return jsonify({"message": "Internal error, invalid read of hunt dictionary"}), 500
+    if hunt_dict1["id"] != hunt_dict2["id"]:
         return jsonify({"message": "The groups you are trying to merge aren't part of the same hunt"})
     # Groups can only be merged in certain hunt statuses
-    hunt_status = db.read_custom(f"SELECT status FROM hunts WHERE id = {result[0][0]}")[0][0]
-    if hunt_status not in ('signup_open', 'signup_closed'):
-        return jsonify({"message": f"Cannot merge groups in hunt {result[0][0]} because hunt status is {hunt_status}"})
+    if hunt_dict1["status"] not in ('signup_open', 'signup_closed'):
+        return jsonify({"message": f"Cannot merge groups in hunt {hunt_dict1['id']} because hunt status is {hunt_dict1['status']}"})
     # Total number of hunters between groups must be <= 4
     slot_ids = []
     slot_types = []
     active_slots = []
     for idx, group_id in enumerate((group1_id, group2_id)):
-        hunters = db.read_custom(f"SELECT slot1_id, slot2_id, slot3_id, slot4_id, slot1_type, slot2_type, slot3_type, slot4_type FROM groupings WHERE id = {group_id}")
-        slot_ids.append(hunters[0][:4])
-        slot_types.append(hunters[0][4:])
+        slot_dict = get_slots_dict(group_id)
+        if not slot_dict:
+            return jsonify({"message": f"Unable to update id {group_id} of table {table_name}"}), 400
+        slot_ids.append(slot_dict["ids"])
+        slot_types.append(slot_dict["types"])
         active_slots.append([idx2 for idx2, value in enumerate(slot_types[idx]) if value != "open"])
     total_hunters = sum([len(slot) for slot in active_slots])
     if total_hunters > 4:
@@ -399,6 +526,13 @@ def merge_groups(user, group1_id, group2_id):
 
     # delete the second group
     db.del_row("groupings", group2_id)
+    cache.delete("bravo")
+    cache.delete(f"hotel:{group1_id}")
+    cache.delete(f"hotel:{group2_id}")
+    cache.delete(f"kilo:{group1_id}")
+    cache.delete(f"kilo:{group2_id}")
+    cache.delete(f"romeo:{group1_id}")
+    cache.delete(f"romeo:{group2_id}")
 
     return jsonify({"message": f"Successfully merged groups {group1_id} and {group2_id} into group {group1_id}"})
 
@@ -409,20 +543,18 @@ def breakup_group(user, group_id):
 
     # Error checking
     # Groups can only be broken up in certain hunt statuses
-    result = db.read_custom(f"SELECT h.status, h.id FROM hunts h INNER JOIN groupings g ON (g.hunt_id = h.id AND g.id = {group_id})")
-    if len(result) > 0:
-        hunt_status = result[0][0]
-        hunt_id = result[0][1]
-    else:
-        return jsonify({"error": f"Could not find a hunt associated with group {group_id}"})
-    if hunt_status not in ('signup_open', 'signup_closed'):
-        return jsonify({"error": f"Cannot breakup group {group_id} in hunt {hunt_id} because hunt status is {hunt_status}"})
+    hunt_dict = get_hunt_dict(group_id)
+    if not hunt_dict:
+        return jsonify({"message": "Internal error in breakup_group(), invalid read of hunt dictionary"}), 500
+
+    if hunt_dict["status"] not in ('signup_open', 'signup_closed'):
+        return jsonify({"error": f"Cannot breakup group {group_id} in hunt {hunt_dict['id']} because hunt status is {hunt_dict['status']}"})
 
     # Extract group info
-    result = db.read_custom(f"SELECT slot1_id, slot2_id, slot3_id, slot4_id, slot1_type, slot2_type, slot3_type, slot4_type FROM groupings WHERE id = {group_id}")[0]
-    slot_ids = result[:4]
-    slot_types = result[4:]
-    active_slots = [idx for idx, value in enumerate(slot_types) if value != "open"]
+    slot_dict = get_slots_dict(group_id)
+    if not slot_dict:
+        return jsonify({"message": f"Unable to update id {group_id} of table {table_name}"}), 400
+    active_slots = [idx for idx, value in enumerate(slot_dict["types"]) if value != "open"]
     total_hunters = len(active_slots)
 
     if total_hunters <= 1:
@@ -432,9 +564,9 @@ def breakup_group(user, group_id):
     update_dict = {'num_hunters': total_hunters}
     for i in active_slots[1:]:
         new_dict = {
-            'hunt_id': hunt_id,
-            'slot1_id': slot_ids[i],
-            'slot1_type': slot_types[i],
+            'hunt_id': hunt_dict['id'],
+            'slot1_id': slot_dict["ids"][i],
+            'slot1_type': slot_dict["types"][i],
             'num_hunters': 1
         }
         db.add_row("groupings", new_dict)
@@ -444,6 +576,10 @@ def breakup_group(user, group_id):
 
     # clear out the slots where you just moved users to new group
     db.update_row("groupings", group_id, update_dict)
+    cache.delete("bravo")
+    cache.delete(f"hotel:{group_id}")
+    cache.delete(f"kilo:{group_id}")
+    cache.delete(f"romeo:{group_id}")
 
     return jsonify({"message": f"Successfully broke up group {group_id}"})
 
@@ -456,29 +592,28 @@ def remove_specific_slot(user, group_id, slot):
 
     # Error checking
     # Groups can only be modified in certain hunt statuses
-    result = db.read_custom(f"SELECT h.status, h.id FROM hunts h INNER JOIN groupings g ON (g.hunt_id = h.id AND g.id = {group_id})")
-    if len(result) > 0:
-        hunt_status = result[0][0]
-        hunt_id = result[0][1]
-    else:
-        return jsonify({"error": f"Could not find a hunt associated with group {group_id}"})
-    if hunt_status not in ('signup_open', 'signup_closed'):
-        return jsonify({"error": f"Cannot modify group {group_id} in hunt {hunt_id} because hunt status is {hunt_status}"})
+    hunt_dict = get_hunt_dict(group_id)
+    if not hunt_dict:
+        return jsonify({"message": "Internal error in breakup_group(), invalid read of hunt dictionary"}), 500
+
+    if hunt_dict["status"] not in ('signup_open', 'signup_closed'):
+        return jsonify({
+                           "error": f"Cannot breakup group {group_id} in hunt {hunt_dict['id']} because hunt status is {hunt_dict['status']}"})
 
     # Extract group info
-    result = db.read_custom(f"SELECT slot1_id, slot2_id, slot3_id, slot4_id, slot1_type, slot2_type, slot3_type, slot4_type FROM groupings WHERE id = {group_id}")[0]
-    slot_ids = result[:4]
-    slot_types = result[4:]
+    slot_dict = get_slots_dict(group_id)
+    if not slot_dict:
+        return jsonify({"message": f"Unable to update id {group_id} of table {table_name}"}), 400
 
     # Check to make sure there is a member in the slot that is to be vacated
-    if slot_types[slot_idx] == "open":
+    if slot_dict["types"][slot_idx] == "open":
         return jsonify({"error": f"Slot {slot} in group {group_id} is open, so there is no one to remove"})
 
     # create a new group for this user
     new_dict = {
-        'hunt_id': hunt_id,
-        'slot1_id': slot_ids[slot_idx],
-        'slot1_type': slot_types[slot_idx]
+        'hunt_id': hunt_dict["id"],
+        'slot1_id': slot_dict["ids"][slot_idx],
+        'slot1_type': slot_dict["types"][slot_idx]
     }
     db.add_row("groupings", new_dict)
 
@@ -488,6 +623,10 @@ def remove_specific_slot(user, group_id, slot):
         'slot' + slot + '_type': "open"
     }
     db.update_row("groupings", group_id, update_dict)
+    cache.delete("bravo")
+    cache.delete(f"hotel:{group_id}")
+    cache.delete(f"kilo:{group_id}")
+    cache.delete(f"romeo:{group_id}")
 
     return jsonify({"message": f"Successfully removed slot {slot} from group {group_id}"})
 
@@ -497,35 +636,30 @@ def remove_specific_slot(user, group_id, slot):
 def leave_group(user, group_id):
     # Error checking
     # Groups can only be modified in certain hunt statuses
-    result = db.read_custom(
-        f"SELECT h.status, h.id FROM hunts h INNER JOIN groupings g ON (g.hunt_id = h.id AND g.id = {group_id})")
-    if len(result) > 0:
-        hunt_status = result[0][0]
-        hunt_id = result[0][1]
-    else:
-        return jsonify({"error": f"Could not find a hunt associated with group {group_id}"})
-    if not hunt_status == 'signup_open':
-        return jsonify(
-            {"error": f"Cannot leave group {group_id} in hunt {hunt_id} because hunt status is {hunt_status}"})
+    hunt_dict = get_hunt_dict(group_id)
+    if not hunt_dict:
+        return jsonify({"message": "Internal error in breakup_group(), invalid read of hunt dictionary"}), 500
+
+    if hunt_dict["status"] != 'signup_open':
+        return jsonify({"error": f"Cannot breakup group {group_id} in hunt {hunt_dict['id']} because hunt status is {hunt_dict['status']}"})
+
     # User must be in the group
-    result = db.read_custom(
-        f"SELECT slot1_id, slot2_id, slot3_id, slot4_id, slot1_type, slot2_type, slot3_type, slot4_type FROM groupings WHERE id = {group_id}")[
-        0]
-    slot_ids = result[:4]
-    slot_types = result[4:]
-    total_hunters = sum(map(lambda x: x != "open", slot_types))
+    slot_dict = get_slots_dict(group_id)
+    if not slot_dict:
+        return jsonify({"message": f"Unable to update id {group_id} of table {table_name}"}), 400
+    total_hunters = sum(map(lambda x: x != "open", slot_dict["types"]))
     if total_hunters == 1:
         return jsonify({"message": f"User {user['id']} can't leave group {group_id} because they are the only person in the group"}), 400
 
     try:
-        idx_match = slot_ids.index(user['id'])
+        idx_match = slot_dict["ids"].index(user['id'])
     except ValueError as e:
         return jsonify(
             {"error": f"User {user['id']} can't leave group {group_id} because they aren't part of that group"})
 
     # create a new group for this user
     new_dict = {
-        'hunt_id': hunt_id,
+        'hunt_id': hunt_dict["id"],
         'slot1_id': user['id'],
         'slot1_type': "member"
     }
@@ -537,6 +671,10 @@ def leave_group(user, group_id):
         'slot' + str(idx_match + 1) + '_type': "open"
         }
     db.update_row("groupings", group_id, update_dict)
+    cache.delete("bravo")
+    cache.delete(f"hotel:{group_id}")
+    cache.delete(f"kilo:{group_id}")
+    cache.delete(f"romeo:{group_id}")
 
     return jsonify({"message": f"User {user['id']} successfully left group {group_id}"})
 
@@ -549,28 +687,27 @@ def withdraw(user, group_id):
 
     # Error checking
     # Groups can only be modified in certain hunt statuses
-    result = db.read_custom(f"SELECT h.status, h.id FROM hunts h INNER JOIN groupings g ON (g.hunt_id = h.id AND g.id = {group_id})")
-    if len(result) > 0:
-        hunt_status = result[0][0]
-        hunt_id = result[0][1]
-    else:
-        return jsonify({"error": f"Could not find a hunt associated with group {group_id}"})
-    if not hunt_status == 'signup_open':
-        return jsonify({"error": f"Cannot leave group {group_id} in hunt {hunt_id} because hunt status is {hunt_status}"})
+    hunt_dict = get_hunt_dict(group_id)
+    if not hunt_dict:
+        return jsonify({"message": "Internal error in breakup_group(), invalid read of hunt dictionary"}), 500
+
+    if hunt_dict["status"] != 'signup_open':
+        return jsonify({"error": f"Cannot breakup group {group_id} in hunt {hunt_dict['id']} because hunt status is {hunt_dict['status']}"})
+
     # User must be in the group
-    result = db.read_custom(f"SELECT slot1_id, slot2_id, slot3_id, slot4_id, slot1_type, slot2_type, slot3_type, slot4_type FROM groupings WHERE id = {group_id}")[0]
-    slot_ids = result[:4]
-    slot_types = result[4:]
-    total_hunters = sum(map(lambda x: x != "open", slot_types))
+    slot_dict = get_slots_dict(group_id)
+    if not slot_dict:
+        return jsonify({"message": f"Unable to update id {group_id} of table {table_name}"}), 400
+    total_hunters = sum(map(lambda x: x != "open", slot_dict["types"]))
 
     try:
-        idx_match = slot_ids.index(user['id'])
+        idx_match = slot_dict["ids"].index(user['id'])
     except ValueError as e:
         return jsonify({"error": f"User {user['id']} can't leave group {group_id} because they aren't part of that group"})
 
     # create a new group for this user
     new_dict = {
-        'hunt_id': hunt_id,
+        'hunt_id': hunt_dict["id"],
         'slot1_id': user['id'],
         'slot1_type': "member"
     }
@@ -588,4 +725,46 @@ def withdraw(user, group_id):
         # this was the only user in the group, so delete the whole group
         db.del_row(table_name, group_id)
 
+    cache.delete("bravo")
+    cache.delete(f"hotel:{group_id}")
+    cache.delete(f"kilo:{group_id}")
+    cache.delete(f"romeo:{group_id}")
+
     return jsonify({"message": f"User {user['id']} successfully left group {group_id}"})
+
+
+def get_slots_dict(grouping_id):
+    slot_dict = cache.get(f"hotel:{grouping_id}")
+    if not slot_dict:
+        # cache miss; go to db
+        results = db.read_custom(
+            f"SELECT slot1_type, slot2_type, slot3_type, slot4_type, slot1_id, slot2_id, slot3_id, slot4_id "
+            f"FROM groupings "
+            f"WHERE id = {grouping_id}")
+        if results is None or len(results) != 1:
+            return False
+        slot_dict = {
+            "types": results[0][:4],
+            "ids": results[0][4:]
+        }
+        # update cache
+        cache.add(f"hotel:{grouping_id}", slot_dict, 60 * 60)
+    return slot_dict
+
+
+def get_hunt_dict(grouping_id):
+    hunt_dict = cache.get(f"nov:{grouping_id}")
+    if not hunt_dict:
+        # cache miss, go to db
+        result = db.read_custom(
+            f"SELECT h.id, h.status "
+            f"FROM hunts h "
+            f"INNER JOIN groupings g ON g.hunt_id=h.id "
+            f"WHERE g.id={grouping_id}")
+        if result is None or len(result) != 1:
+            return False
+        names = ["id", "status"]
+        hunt_dict = db.format_dict(names, result)[0]
+        # cache update
+        cache.add(f"nov:{grouping_id}", hunt_dict, 10 * 60)
+    return hunt_dict

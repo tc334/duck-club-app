@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .. import db
+from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 import math
 
@@ -35,6 +35,9 @@ def add_row(user):
 
     # database interaction #2 - write
     db.add_row(table_name, data_in)
+    cache.delete("alpha")
+    cache.delete("echo")
+
     return jsonify({"message": "New hunt started"}), 201
 
 
@@ -195,7 +198,15 @@ def update_row(user, hunt_id):
             else:
                 return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}. Could not verify all groups had a pond."}), 500
 
+        # cache data now invalid for all groups in this hunt
+        results = db.read_custom(f"SELECT id FROM groupings WHERE hunt_id={hunt_id}")
+        if results is not None and results:
+            for gid in results[0]:
+                cache.delete(f"nov:{gid}")
+
     if db.update_row(table_name, hunt_id, data_in):
+        cache.delete("alpha")
+        cache.delete("echo")
         return jsonify({'message': f'Successful update of id {hunt_id} in {table_name}'}), 200
     else:
         return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}"}), 400
@@ -205,6 +216,8 @@ def update_row(user, hunt_id):
 @token_required(admin_only)
 def del_row(user, hunt_id):
     if db.del_row(table_name, hunt_id):
+        cache.delete("alpha")
+        cache.delete("echo")
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {hunt_id} from table {table_name}"}), 400

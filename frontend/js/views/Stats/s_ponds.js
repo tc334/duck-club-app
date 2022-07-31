@@ -8,7 +8,7 @@ import {
   round,
   removeAllChildNodes,
   sortTable,
-  dateConverter,
+  dateConverter_http,
 } from "../../common_funcs.js";
 
 const subroute = "ponds";
@@ -251,7 +251,7 @@ function populateTable2(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = dateConverter(db_data[i]["date"]);
+    tabCell.innerHTML = dateConverter_http(db_data[i]["date"]);
 
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = db_data[i]["date"].split(",")[0];

@@ -8,7 +8,7 @@ import {
   round,
   removeAllChildNodes,
   sortTable,
-  dateConverter,
+  dateConverter_http,
 } from "../../common_funcs.js";
 
 const subroute = "club";
@@ -156,7 +156,7 @@ export default class extends AbstractView {
         "GET",
         null,
         (data) => {
-          console.log(data["stats"]);
+          //console.log(data["stats"]);
           populateTable(data["stats"]);
         },
         displayMessageToUser
@@ -181,7 +181,7 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = dateConverter(db_data[i]["date"]);
+    tabCell.innerHTML = dateConverter_http(db_data[i]["date"]);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");

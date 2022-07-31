@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime
 import math
 import time
-from .. import db
+from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 
 stats_bp = Blueprint('stats', __name__)
@@ -15,7 +15,6 @@ def get_stats_hunters(users):
     # convert query selector string in URL to dictionary
     data_in = request.args.to_dict()
 
-    # TODO: make this a background function that runs every X min. For now doing it every time
     update_group_harvest()
 
     # date range for query
@@ -112,6 +111,10 @@ def merge_slots(slot_1, slot_2):
 def update_group_harvest():
     # compute the average number of ducks and non-ducks per hunter for each grouping
 
+    # this is designed to save unnecessary computations
+    if cache.get("stats_clean"):
+        return
+
     id_ducks = db.read_custom(f"SELECT groupings.id, SUM(harvest.count) "
                               f"FROM groupings "
                               f"JOIN harvest ON harvest.group_id=groupings.id "
@@ -161,6 +164,8 @@ def update_group_harvest():
         if b_write:
             db.update_row("groupings", group[0], update_dict)
 
+    cache.add("stats_clean", 1, 24*60*60)
+
 
 @stats_bp.route('/stats/club', methods=['GET'])
 @token_required(all_members)
@@ -169,7 +174,6 @@ def get_stats_club(users):
     # convert query selector string in URL to dictionary
     data_in = request.args.to_dict()
 
-    # TODO: make this a background function that runs every X min. For now doing it every time
     update_group_harvest()
 
     # date range for query
@@ -236,7 +240,6 @@ def get_stats_birds(users):
     # convert query selector string in URL to dictionary
     data_in = request.args.to_dict()
 
-    # TODO: make this a background function that runs every X min. For now doing it every time
     update_group_harvest()
 
     # date range for query
@@ -320,7 +323,6 @@ def get_stats_ponds(users):
     # convert query selector string in URL to dictionary
     data_in = request.args.to_dict()
 
-    # TODO: make this a background function that runs every X min. For now doing it every time
     update_group_harvest()
 
     # date range for query

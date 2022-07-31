@@ -5,7 +5,7 @@ import {
   reloadMessage,
   displayMessageToUser,
   formatDate,
-  dateConverter,
+  dateConverter_http,
   populate_aside,
   decode_jwt,
 } from "../../../common_funcs.js";
@@ -260,7 +260,7 @@ function populateHuntListBox(idxSelected) {
   for (var i = db_data.length - 1; i >= 0; i--) {
     var option_new = document.createElement("option");
     option_new.value = i;
-    option_new.innerHTML = dateConverter(db_data[i]["hunt_date"], true);
+    option_new.innerHTML = dateConverter_http(db_data[i]["hunt_date"], true);
     select.appendChild(option_new);
   }
   if (idxSelected >= 0) {
@@ -277,7 +277,7 @@ function populateEdit(i) {
 
     document.getElementById(singular + "-id").value = db_data[i]["id"];
     // lots more to add here
-    document.getElementById("inp-hunt-date").value = dateConverter(
+    document.getElementById("inp-hunt-date").value = dateConverter_http(
       db_data[i]["hunt_date"]
     );
     document.getElementById("select-status").value = db_data[i]["status"];

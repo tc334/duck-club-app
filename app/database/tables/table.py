@@ -11,6 +11,8 @@ class Table:
     def get_schema_string(self):
         # this function returns the string representation of the variable names used in SQL table creation
         s = ""
+        f = ""  # foreign key constraints get added at the end
+        i = ""  # secondary indices get added at the end
         for item in self.table_cols:
             s = s + item['name'] + ' ' + item['type']
             if item['enum'] is not None:
@@ -20,8 +22,14 @@ class Table:
                 s = s[:-1] + ") "
             else:
                 s = s + ' '
+            if 'foreign' in item:
+                f = f + 'FOREIGN KEY (' + item['name'] + ') REFERENCES ' + item['foreign'] + ', '
+            if 'secondary_index' in item:
+                i = i + 'INDEX '
             s = s + item['extra'] + ', '
-        return s[:-2]
+        full_str = s + f
+        # print(f"get_schema_string:{full_str[:-2]}")
+        return full_str[:-2]
 
     def get_add_row(self, dict_in):
         names_all = [a_dict["name"] for a_dict in self.table_cols]

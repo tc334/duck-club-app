@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .. import db
+from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members
 
 birds_bp = Blueprint('birds', __name__)
@@ -29,6 +29,8 @@ def add_row(user):
 
     # database interaction #2 - write
     db.add_row(table_name, data_in)
+    cache.delete("foxtrot")
+    cache.delete("papa")
 
     return jsonify({"message": data_in["name"] + " successfully added to " + table_name}), 201
 
@@ -36,7 +38,12 @@ def add_row(user):
 @birds_bp.route('/birds', methods=['GET'])
 @token_required(all_members)
 def get_all_rows(user):
-    results = db.read_all(table_name)
+    results = cache.get("papa")
+    if not results:
+        # cache miss, go to db
+        results = db.read_all(table_name)
+        # update cache
+        cache.add("papa", results, 24*60*60)
     return jsonify({"birds": results}), 200
 
 
@@ -59,6 +66,8 @@ def get_one_row(user, bird_id):
 def update_row(user, bird_id):
     data_in = request.get_json()
     if db.update_row(table_name, bird_id, data_in):
+        cache.delete("foxtrot")
+        cache.delete("papa")
         return jsonify({'message': f'Successful update of id {bird_id} in {table_name}'}), 200
     else:
         return jsonify({"error": f"Unable to update id {bird_id} of table {table_name}"}), 400
@@ -68,6 +77,8 @@ def update_row(user, bird_id):
 @token_required(admin_only)
 def del_row(user, bird_id):
     if db.del_row(table_name, bird_id):
+        cache.delete("foxtrot")
+        cache.delete("papa")
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {bird_id} from table {table_name}"}), 400

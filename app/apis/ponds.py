@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from .. import db
+from .. import db, cache
 from .auth_wraps import token_required, manager_and_above, owner_and_above, all_members, admin_only
 
 ponds_bp = Blueprint('ponds', __name__)
@@ -29,6 +29,7 @@ def add_row(user):
 
     # database interaction #2 - write
     db.add_row(table_name, data_in)
+    cache.delete("delta")
 
     return jsonify({"message": data_in["name"] + " successfully added to " + table_name}), 201
 
@@ -73,6 +74,7 @@ def get_pond_status(users):
 def update_row(user, pond_id):
     data_in = request.get_json()
     if db.update_row(table_name, pond_id, data_in):
+        cache.delete("delta")
         return jsonify({'message': f'Successful update of id {pond_id} in {table_name}'}), 200
     else:
         return jsonify({"error": f"Unable to update id {pond_id} of table {table_name}"}), 400
@@ -90,6 +92,7 @@ def update_many_rows(user):
                 return jsonify({"error": f"Unable to update id {pond_id} of table {table_name}"}), 400
 
     # if you made it here, the operation was a success
+    cache.delete("delta")
     return jsonify({'message': f'Successful update of {table_name}'}), 200
 
 
@@ -97,6 +100,7 @@ def update_many_rows(user):
 @token_required(admin_only)
 def del_row(user, pond_id):
     if db.del_row(table_name, pond_id):
+        cache.delete("delta")
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {pond_id} from table {table_name}"}), 400

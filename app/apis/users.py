@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
-from .. import db
+from .. import db, cache
 import uuid
 import jwt
 import datetime
@@ -69,6 +69,7 @@ def signup():
     data_in['password_hash'] = generate_password_hash(data_in['password'], method='sha256')
 
     db.add_row(table_name, data_in)
+    cache.delete("charlie")
 
     db.release_conn()
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
@@ -101,6 +102,7 @@ def manual_add(user):
     data_in['password_hash'] = generate_password_hash('password', method='sha256')
 
     db.add_row(table_name, data_in)
+    cache.delete("charlie")
 
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
 
@@ -174,6 +176,8 @@ def update_row(user, public_id):
             return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
 
     if db.update_row(table_name, public_id, data_in, "public_id"):
+        cache.delete("charlie")
+        cache.delete(f"qubec:{public_id}")
         return jsonify({'message': f'Successful update of {table_name}'}), 200
     else:
         return jsonify({"error": f"Unable to update table {table_name}"}), 400
@@ -183,6 +187,8 @@ def update_row(user, public_id):
 @token_required(admin_only)
 def del_row(user, public_id):
     if db.del_row(table_name, public_id, "public_id"):
+        cache.delete("charlie")
+        cache.delete(f"qubec:{public_id}")
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {public_id} from table {table_name}"}), 400
