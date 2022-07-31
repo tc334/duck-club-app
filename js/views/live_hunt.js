@@ -4,7 +4,7 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  dateConverter,
+  dateConverter_iso,
   sortIndexes,
   removeAllChildNodes,
   round,
@@ -152,7 +152,7 @@ export default class extends AbstractView {
 }
 
 function populateSummaryTable(db_data) {
-  document.getElementById("hunt-summary-date").innerHTML = dateConverter(
+  document.getElementById("hunt-summary-date").innerHTML = dateConverter_iso(
     db_data["hunt_date"],
     true
   );

@@ -8,7 +8,7 @@ import {
   round,
   removeAllChildNodes,
   sortTable,
-  dateConverter,
+  dateConverter_http,
 } from "../../common_funcs.js";
 
 // table sorting functions
@@ -182,7 +182,7 @@ function populateDateList_aux(db_data) {
   const select_dates = document.getElementById("select-date");
   for (var i = 0; i < db_data.length; i++) {
     var new_opt = document.createElement("option");
-    new_opt.innerHTML = dateConverter(db_data[i]["hunt_date"]);
+    new_opt.innerHTML = dateConverter_http(db_data[i]["hunt_date"]);
     new_opt.value = db_data[i]["id"];
     select_dates.appendChild(new_opt);
   }

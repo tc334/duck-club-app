@@ -4,7 +4,8 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  dateConverter,
+  dateConverter_http,
+  dateConverter_iso,
   decode_jwt,
   populate_aside,
 } from "../../../common_funcs.js";
@@ -90,7 +91,7 @@ function populateStatusTable(hunt_date, hunt_status, my_group_id) {
   tabCell.innerHTML = "hunt date:";
   tabCell = tr.insertCell(-1);
   tabCell.classList.add("prehunt-summary-cell");
-  tabCell.innerHTML = dateConverter(hunt_date, true);
+  tabCell.innerHTML = dateConverter_iso(hunt_date, true);
 
   // hunt status
   tr = table.insertRow(-1);
@@ -170,7 +171,7 @@ function populateStatusTable(hunt_date, hunt_status, my_group_id) {
 
 function populateTables() {
   var container = document.getElementById("tables-container");
-  const column_headings = ["#", "id", "hunters", "pond"];
+  const column_headings = ["#", "hunters", "pond"];
   var select = document.getElementById("groupings-modal-select");
 
   for (var iGroup = 0; iGroup < db_data_groupings.length; iGroup++) {
@@ -194,10 +195,6 @@ function populateTables() {
     // grouping label 1:N that makes sense to managers
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = iGroup + 1;
-
-    // ID
-    var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data_groupings[iGroup]["id"];
 
     // Hunters
     var tabCell = tr.insertCell(-1);

@@ -5,7 +5,7 @@ import {
   reloadMessage,
   displayMessageToUser,
   populate_aside,
-  dateConverter,
+  dateConverter_http,
   decode_jwt,
 } from "../../../common_funcs.js";
 
@@ -67,7 +67,7 @@ export default class extends AbstractView {
                 if (db_data_hunt.length > 0) {
                   document.getElementById("hunt-identifier").innerHTML =
                     "The hunt on " +
-                    dateConverter(db_data_hunt[0]["hunt_date"], true) +
+                    dateConverter_http(db_data_hunt[0]["hunt_date"], true) +
                     " can have members added to it";
                 } else {
                   document.getElementById("hunt-identifier").innerHTML =

@@ -4,7 +4,7 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  dateConverter,
+  dateConverter_iso,
   decode_jwt,
   populate_aside,
 } from "../../../common_funcs.js";
@@ -320,7 +320,10 @@ function writeTopMessage(hunt_date, hunt_status) {
   else if (hunt_status == "draw_complete")
     postMessage = "Draw has been completed.";
   document.getElementById("hunt-identifier").innerHTML =
-    "Groups for " + dateConverter(hunt_date, true) + " hunt. " + postMessage;
+    "Groups for " +
+    dateConverter_iso(hunt_date, true) +
+    " hunt. " +
+    postMessage;
 }
 
 function populatePondList(select) {

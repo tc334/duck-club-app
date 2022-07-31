@@ -74,6 +74,8 @@ let signup = form_signup.submit.addEventListener("click", (e) => {
       form_signup.combo[2].value +
       form_signup.combo[3].value,
   });
+  // disable the user from pressing the sign-up button again until the server responds to this click
+  document.getElementById("btn-signup-submit").disabled = true;
   callAPI(
     null,
     route,
@@ -83,9 +85,11 @@ let signup = form_signup.submit.addEventListener("click", (e) => {
       //form_signup.reset.click();
       document.getElementById("frm-signup").reset();
       reportFail("div-signup-response", data["message"]);
+      document.getElementById("btn-signup-submit").disabled = false;
     },
     (data) => {
       reportFail("div-signup-response", data);
+      document.getElementById("btn-signup-submit").disabled = false;
     }
   );
 });

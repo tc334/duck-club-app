@@ -244,7 +244,7 @@ export const formatDate = (date) => {
   return [year, month, day].join("-");
 };
 
-export function dateConverter(from_db, month_first = false) {
+export function dateConverter_http(from_db, month_first = false) {
   // converts HTTP date to year, month, day w/o regard to timezone
   const myArray = from_db.split(" ");
   const year = myArray[3];
@@ -254,6 +254,19 @@ export function dateConverter(from_db, month_first = false) {
     return monthConverter(month_long) + "/" + day + "/" + year;
   } else {
     return year + "-" + monthConverter(month_long) + "-" + day;
+  }
+}
+
+export function dateConverter_iso(from_db, month_first = false) {
+  // converts HTTP date to year, month, day w/o regard to timezone
+  const myArray = from_db.split("-");
+  const year = myArray[0];
+  const day = myArray[2];
+  const month = myArray[1];
+  if (month_first) {
+    return month + "/" + day + "/" + year;
+  } else {
+    return year + "-" + month_long + "-" + day;
   }
 }
 

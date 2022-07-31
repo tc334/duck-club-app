@@ -6,7 +6,7 @@ import {
   displayMessageToUser,
   decode_jwt,
   populate_aside,
-  dateConverter,
+  dateConverter_http,
   removeAllChildNodes,
 } from "../../../common_funcs.js";
 
@@ -284,7 +284,7 @@ function populateTable(db_data) {
 
     // date
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = dateConverter(db_data[i]["hunt_date"]);
+    tabCell.innerHTML = dateConverter_http(db_data[i]["hunt_date"]);
 
     // pond
     var tabCell = tr.insertCell(-1);
@@ -386,7 +386,7 @@ function populateDateList_aux(db_data) {
   const select_dates = document.getElementById("select-date");
   for (var i = 0; i < db_data.length; i++) {
     var new_opt = document.createElement("option");
-    new_opt.innerHTML = dateConverter(db_data[i]["hunt_date"]);
+    new_opt.innerHTML = dateConverter_http(db_data[i]["hunt_date"]);
     new_opt.value = db_data[i]["id"];
     select_dates.appendChild(new_opt);
   }
