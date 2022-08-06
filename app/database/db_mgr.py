@@ -64,8 +64,8 @@ class DbManager:
             print("Just got new connection from pool")
 
             if self.connection_object.is_connected():
-                db_Info = self.connection_object.get_server_info()
-                print("Connected to MySQL database using connection pool ... MySQL Server version on ", db_Info)
+                db_info = self.connection_object.get_server_info()
+                print("Connected to MySQL database using connection pool ... MySQL Server version on ", db_info)
 
                 self.my_cursor = self.connection_object.cursor()
                 self.databases_in_server = self.list_databases(True)
@@ -149,7 +149,6 @@ class DbManager:
 
         try:
             self.execute(f"USE {db_name}")
-            tables = self.list_tables()
             if b_build:
                 # newly created DB needs to be built out too
                 return self.build()
@@ -159,12 +158,12 @@ class DbManager:
             print(f"Unable to select database {db_name}")
             return False
 
-    def compare_db(self, db_name):
+    def compare_db(self):
         # check to see if the currently selected database matches the schema loaded from local file
         tables_db = self.list_tables()
         # if the db has no tables, build it
         if len(tables_db) == 0:
-            if not self.build(db_name):
+            if not self.build():
                 # stop execution of this function if the build fails. Continue otherwise
                 return False
         tables_local = [key for key in self.tables]
@@ -222,7 +221,7 @@ class DbManager:
         print("Create Complete")
         self.select_db(db_name)
         print("Select Complete")
-        self.build(db_name)
+        self.build()
 
     def build(self):
         for key in self.tables:
@@ -247,7 +246,7 @@ class DbManager:
     def connect_to_existing(self, db_name):
         if self.select_db(db_name):
             print(f"Selected database {db_name}")
-            if self.compare_db(db_name):
+            if self.compare_db():
                 print(f"{db_name} matches the local schema file")
 
     def add_row(self, table_name, row_data_dict):
