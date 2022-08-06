@@ -12,7 +12,8 @@ table_name = 'users'
 
 @users_bp.route('/login')
 def login():
-    db.get_conn()  # grabs a connection from the pool
+    if not db.get_conn():  # grabs a connection from the pool
+        return jsonify({"message": "Couldn't get connection from DB pool"}), 500
     auth = request.authorization
     if auth and auth.username and auth.password:
         results = db.read_custom(f"SELECT public_id, password_hash, level FROM {table_name} WHERE email = '{auth.username}' LIMIT 1")
@@ -53,7 +54,8 @@ def signup():
     if 'combo' not in data_in or data_in['combo'] != current_app.config["SIGNUP_CODE"]:
         return jsonify({'message': 'Wrong access code'}), 400
 
-    db.get_conn()  # grabs a connection from the pool
+    if not db.get_conn():  # grabs a connection from the pool
+        return jsonify({"message": "Couldn't get connection from DB pool"}), 500
 
     # check for duplicates
     existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")

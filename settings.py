@@ -16,3 +16,5 @@ CLEARDB_DATABASE_URL = environ.get('CLEARDB_DATABASE_URL')
 
 REDIS_IPADDR = environ.get('REDIS_IPADDR')
 REDIS_PORT = environ.get('REDIS_PORT')
+
+REDIS_URL = environ.get('REDIS_URL')

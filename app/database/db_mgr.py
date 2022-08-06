@@ -141,8 +141,7 @@ class DbManager:
     def delete_db(self, db_name):
         self.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
-    def select_db(self, db_name):
-        b_build = False
+    def select_db(self, db_name, b_build=False):
         if db_name not in self.databases_in_server:
             # the requested DB doesn't exist, so create it
             self.create_db(db_name)
@@ -150,9 +149,10 @@ class DbManager:
 
         try:
             self.execute(f"USE {db_name}")
+            tables = self.list_tables()
             if b_build:
                 # newly created DB needs to be built out too
-                return self.build(db_name)
+                return self.build()
             else:
                 return True
         except mysql.connector.Error:
@@ -224,12 +224,12 @@ class DbManager:
         print("Select Complete")
         self.build(db_name)
 
-    def build(self, db_name):
+    def build(self):
         for key in self.tables:
             self.create_table(key)
         for item in secondary_indices:
             self.execute(get_index_str(item))
-        print(f"Built database {db_name}")
+        print(f"Just built-out table schema in database")
         self.list_tables(print_on=True)
         # populate one administrator in the DB
         admin = {

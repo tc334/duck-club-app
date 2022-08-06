@@ -27,6 +27,8 @@ def create_app():
 
         redis_ipaddr = app.config["REDIS_IPADDR"]
         redis_port = app.config["REDIS_PORT"]
+        redis_user = None
+        redis_password = None
     else:
         url = urlparse(app.config["CLEARDB_DATABASE_URL"])
         sql_ipaddr = url.hostname
@@ -44,8 +46,8 @@ def create_app():
     cache.init_app(
         redis_ipaddr,
         redis_port,
-        "tbd",
-        "tbd"
+        redis_user,
+        redis_password
     )
 
     db.init_app(

@@ -22,21 +22,19 @@ class RedisManager:
         self.password = password
 
         if not DISABLE_REDIS:
-            self.connect()
+            if self.connect():
 
-            self.wipe_cache()
+                self.wipe_cache()
 
-            # initialize counter for # times database is hit
-            self.r.set("db_count", 0)
-
-    def increment(self):
-        if not DISABLE_REDIS:
-            self.r.incr("db_count")
+                # initialize counter for # times database is hit
+                self.r.set("db_count", 0)
 
     def connect(self):
         try:
             self.r = redis.Redis(host=self.host,
-                                 port=self.port)
+                                 port=self.port,
+                                 username=self.username,
+                                 password=self.password)
             self.r.ping()
             print(f"RedisManager connected to {self.host}:{self.port}")
             return True
@@ -81,11 +79,16 @@ class RedisManager:
             except redis.RedisError as e:
                 print(f"Error in RedisManager method {func}: {e}")
                 return []  # this mimics the return value when there wasn't a key in the redis DB
-            #except:
-            #    e = sys.exc_info()[0]
-            #    print(f"Non-redis error during execution of RedisManager method {func}, with args {args}: {e}")
-            #    return []  # this mimics the return value when there wasn't a key in the redis DB
+            except:
+                e = sys.exc_info()[0]
+                print(f"Non-redis error during execution of RedisManager method {func}, with args {args}: {e}")
+                return []  # this mimics the return value when there wasn't a key in the redis DB
         return wrapper
+
+    @transaction_wrapper
+    def increment(self):
+        if not DISABLE_REDIS:
+            self.r.incr("db_count")
 
     @transaction_wrapper
     def wipe_cache(self):
@@ -94,7 +97,6 @@ class RedisManager:
 
     @transaction_wrapper
     def add(self, prefix, data_in, expiration_sec):
-        expiration_sec = 30
         if type(data_in) is dict:
             # special case where there isn't a list; there is just one dictionary
             self.r.setex(f"{prefix}:count", expiration_sec, -1)
@@ -129,9 +131,16 @@ class RedisManager:
             return self.r.get(prefix)
         # nominal
         list_of_dicts = []
-        print(f"debug. count={count}. prefix={prefix}")
+        print(f"Redis debug. count={count}. prefix={prefix}")
         for i in range(count):
-            list_of_dicts.append(json.loads(self.r.get(f"{prefix}:{i}")))
+            temp = self.r.get(f"{prefix}:{i}")
+            if temp:
+                list_of_dicts.append(json.loads(temp))
+            else:
+                # getting here means that one of the expected entries is missing. Perhaps evicted.
+                # Distrust this whole prefix now. Purge it.
+                self.delete(prefix)
+                return []
         print(f"Cache hit! Prefix={prefix}")
         return list_of_dicts
 
@@ -139,5 +148,5 @@ class RedisManager:
     def delete(self, prefix):
         keys = self.r.keys(f"{prefix}:*")
         if keys:
-            print(f"debug. keys={keys}")
+            print(f"Redis debug. Deleting keys={keys}")
             self.r.delete(*keys)

@@ -13,7 +13,9 @@ def token_required(member_level_test):
                 if token:
                     try:
                         # print("Alpha")
-                        db.get_conn()
+                        if not db.get_conn():  # grabs a connection from the pool
+                            return jsonify({"message": "Couldn't get connection from DB pool"}), 500
+
                         jwt_data = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])
                         current_user = cache.get(f"qubec:{jwt_data['user']}")
                         if not current_user:
