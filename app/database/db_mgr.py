@@ -168,6 +168,9 @@ class DbManager:
                 return False
         tables_local = [key for key in self.tables]
         tables_local.sort()
+        print(f"tables_db:{tables_db}")
+        print(f"tables_local:{tables_local}")
+        print(f"lengths:{len(tables_db)}:{len(tables_local)}")
         if len(tables_db) == len(tables_local):
             for idx in range(len(tables_local)):
                 if tables_db[idx][0] != tables_local[idx]:
