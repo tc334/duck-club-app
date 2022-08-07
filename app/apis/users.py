@@ -12,8 +12,6 @@ table_name = 'users'
 
 @users_bp.route('/login')
 def login():
-    if not db.get_conn():  # grabs a connection from the pool
-        return jsonify({"message": "Couldn't get connection from DB pool"}), 500
     auth = request.authorization
     if auth and auth.username and auth.password:
         results = db.read_custom(f"SELECT public_id, password_hash, level FROM {table_name} WHERE email = '{auth.username}' LIMIT 1")
@@ -29,10 +27,8 @@ def login():
                     "token_id": str(uuid.uuid4())
                 }, current_app.config["SECRET_KEY"])
 
-                db.release_conn()
                 return jsonify({'token': token})
 
-    db.release_conn()
     return make_response("Could not verify password", 401, {"WWW-Authenticate": "Basic realm='Login Required'"})
 
 
@@ -54,16 +50,11 @@ def signup():
     if 'combo' not in data_in or data_in['combo'] != current_app.config["SIGNUP_CODE"]:
         return jsonify({'message': 'Wrong access code'}), 400
 
-    if not db.get_conn():  # grabs a connection from the pool
-        return jsonify({"message": "Couldn't get connection from DB pool"}), 500
-
     # check for duplicates
     existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
     if existing is None:
-        db.release_conn()
         return jsonify({"message": "Internal error"}), 500
     if existing:
-        db.release_conn()
         return jsonify({"message": "Entry " + data_in["email"] + " already exists in " + table_name}), 400
 
     # append this information to what the user put in
@@ -73,7 +64,6 @@ def signup():
     db.add_row(table_name, data_in)
     cache.delete("charlie")
 
-    db.release_conn()
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
 
 

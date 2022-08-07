@@ -1,18 +1,9 @@
 from flask import Blueprint, request, jsonify
 from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
-import math
 
 groupings_bp = Blueprint('groupings', __name__)
 table_name = 'groupings'
-
-
-def convert_time(time_of_day_sec):
-    sec_in_min = 60
-    sec_in_hr = sec_in_min * 60
-    hours = math.floor(time_of_day_sec / sec_in_hr)
-    minutes = math.floor((time_of_day_sec - hours*sec_in_hr) / sec_in_min)
-    return f"{hours:02d}:{minutes:02d}"
 
 
 @groupings_bp.route('/groupings', methods=['POST'])
@@ -75,7 +66,7 @@ def get_all_rows(user):
     # time has to be cleaned up before it can be jsonified
     for item in results:
         if item["harvest_update_time"] is not None:
-            item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
+            item["harvest_update_time"] = item["harvest_update_time"].isoformat(timespec='minutes')
         else:
             item["harvest_update_time"] = "00:00"
     return jsonify({"groupings": results}), 200
@@ -150,7 +141,7 @@ def harvest_summary_helper(hunt_id, user_id):
         # time has to be cleaned up before it can be jsonified
         for item in groups_dict:
             if item["harvest_update_time"] is not None:
-                item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
+                item["harvest_update_time"] = item["harvest_update_time"].isoformat(timespec='minutes')
             else:
                 item["harvest_update_time"] = "00:00"
         # update cache
@@ -332,7 +323,7 @@ def get_groups_in_current_hunt(user):
         # time has to be cleaned up before it can be jsonified
         for item in groupings_dict:
             if item["harvest_update_time"] is not None:
-                item["harvest_update_time"] = convert_time(item["harvest_update_time"].seconds)
+                item["harvest_update_time"] = item["harvest_update_time"].isoformat(timespec='minutes')
             else:
                 item["harvest_update_time"] = "00:00"
         # push response to cache
@@ -431,7 +422,7 @@ def update_row(user, grouping_id):
         result = db.read_custom(f"SELECT pond_id FROM groupings WHERE id={grouping_id}")
         pond_id_last = result[0][0]
         if pond_id_last is not None and pond_id_last != data_in['pond_id']:
-            db.update_custom(f"UPDATE ponds SET selected=0 WHERE id={pond_id_last}")
+            db.update_custom(f"UPDATE ponds SET selected=FALSE WHERE id={pond_id_last}")
 
     # count the number of hunters
     slot_dict = get_slots_dict(grouping_id)

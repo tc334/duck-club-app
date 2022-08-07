@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
-import math
 
 
 hunts_bp = Blueprint('hunts', __name__)
@@ -50,7 +49,7 @@ def get_all_rows(user):
     time_keys = ["signup_closed_time", "hunt_open_time", "hunt_close_time"]
     for item in results_dict:
         for key in time_keys:
-            item[key] = convert_time(item[key].seconds)
+            item[key] = item[key].isoformat(timespec='minutes')
 
     return jsonify({"hunts": results_dict}), 200
 
@@ -67,7 +66,7 @@ def get_all_active(user):
         time_keys = ["signup_closed_time", "hunt_open_time", "hunt_close_time"]
         for item in results_dict:
             for key in time_keys:
-                item[key] = convert_time(item[key].seconds)
+                item[key] = item[key].isoformat(timespec='minutes')
         return jsonify({"hunts": results_dict}), 200
     else:
         return jsonify({"error": f"unknown error trying to read hunts"}), 400
@@ -99,14 +98,6 @@ def get_signup_open(user):
         return jsonify({"hunts": results_dict}), 200
     else:
         return jsonify({"error": f"unknown error trying to read hunts"}), 400
-
-
-def convert_time(time_of_day_sec):
-    sec_in_min = 60
-    sec_in_hr = sec_in_min * 60
-    hours = math.floor(time_of_day_sec / sec_in_hr)
-    minutes = math.floor((time_of_day_sec - hours*sec_in_hr) / sec_in_min)
-    return f"{hours:02d}:{minutes:02d}"
 
 
 @hunts_bp.route('/hunts/dates', methods=['GET'])
@@ -181,7 +172,7 @@ def update_row(user, hunt_id):
         # if changing status from signup_open to signup_closed, reset pond availability
         if last_status == 'signup_open' and data_in['status'] == 'signup_closed':
             # reset all pond availability
-            if not db.update_custom(f"UPDATE ponds SET selected=0"):
+            if not db.update_custom(f"UPDATE ponds SET selected=FALSE"):
                 return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}. Reset ponds selected failed."}), 500
             # reset ponds only for groups in this hunt
             if not db.update_custom(f"UPDATE groupings SET pond_id=NULL WHERE id={hunt_id}"):

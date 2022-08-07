@@ -1,21 +1,59 @@
+sequences = [
+    'seq_birds_id',
+    'seq_hunts_id',
+    'seq_users_id',
+    'seq_properties_id',
+    'seq_ponds_id',
+    'seq_groupings_id',
+    'seq_harvest_id'
+]
+
+enums = [
+    {
+        "name": "bird_type",
+        "values": ('duck', 'goose', 'crane', 'other')
+    },
+    {
+        "name": "hunt_status",
+        "values": ('signup_open', 'signup_closed', 'draw_complete', 'hunt_open', 'hunt_closed')
+    },
+    {
+        "name": "user_level",
+        "values": ('administrator', 'owner', 'manager', 'member')
+    },
+    {
+        "name": "user_status",
+        "values": ('active', 'inactive')
+    },
+    {
+        "name": "property_region",
+        "values": ('Northern', 'Southern')
+    },
+    {
+        "name": "pond_status",
+        "values": ('open', 'closed')
+    },
+    {
+        "name": "group_slot_type",
+        "values": ('open', 'member', 'guest', 'invitation')
+    }
+]
+
 schema = {
     "birds": [
         {
             'name': 'id',
             'type': 'INT',
-            'enum': None,
-            'extra': 'AUTO_INCREMENT PRIMARY KEY'
+            'extra': "DEFAULT nextval('seq_birds_id') PRIMARY KEY"
         },
         {
             'name': 'name',
             'type': 'VARCHAR(30)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'type',
-            'type': 'ENUM',
-            'enum': ('duck', 'goose', 'crane', 'other'),
+            'type': 'enum_bird_type',
             'extra': ''
         },
     ],
@@ -24,73 +62,56 @@ schema = {
         {
             'name': 'id',
             'type': 'INT',
-            'enum': None,
-            'extra': 'AUTO_INCREMENT PRIMARY KEY'
+            'extra': "DEFAULT nextval('seq_hunts_id') PRIMARY KEY"
         },
         {
             'name': 'status',
-            'type': 'ENUM',
-            'enum': ('signup_open', 'signup_closed', 'draw_complete', 'hunt_open', 'hunt_closed'),
+            'type': 'enum_hunt_status',
             'extra': "NOT NULL DEFAULT 'signup_open'"
         },
         {
             'name': 'hunt_date',
             'type': 'DATE',
-            'enum': None,
             'extra': 'NOT NULL'
-        },
-        {
-            'name': 'default_pond_pref',
-            'type': 'VARCHAR(255)',
-            'enum': None,
-            'extra': ''
         },
         {
             'name': 'harvest_average',
             'type': 'FLOAT',
-            'enum': None,
             'extra': ''
         },
         {
             'name': 'signup_closed_auto',
             'type': 'BOOLEAN',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'signup_closed_time',
             'type': 'TIME(0)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'draw_method_auto',
             'type': 'BOOLEAN',
-            'enum': None,
-            'extra': 'DEFAULT 0'
+            'extra': 'DEFAULT FALSE'
         },
         {
             'name': 'hunt_open_auto',
             'type': 'BOOLEAN',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'hunt_open_time',
             'type': 'TIME(0)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'hunt_close_auto',
             'type': 'BOOLEAN',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'hunt_close_time',
             'type': 'TIME(0)',
-            'enum': None,
             'extra': 'NOT NULL'
         }
     ],
@@ -99,55 +120,46 @@ schema = {
         {
             'name': 'id',
             'type': 'INT',
-            'enum': None,
-            'extra': 'AUTO_INCREMENT PRIMARY KEY'
+            'extra': "DEFAULT nextval('seq_users_id') PRIMARY KEY"
         },
         {
             'name': 'public_id',
             'type': 'CHAR(36)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'first_name',
             'type': 'VARCHAR(30)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'last_name',
             'type': 'VARCHAR(30)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'email',
             'type': 'VARCHAR(30)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'password_hash',
             'type': 'CHAR(88)',
-            'enum': None,
             'extra': "NOT NULL"
         },
         {
             'name': 'level',
-            'type': 'ENUM',
-            'enum': ('administrator', 'owner', 'manager', 'member'),
+            'type': 'enum_user_level',
             'extra': "DEFAULT 'member'"
         },
         {
             'name': 'status',
-            'type': 'ENUM',
-            'enum': ('active', 'inactive'),
+            'type': 'enum_user_status',
             'extra': "DEFAULT 'active'"
         },
         {
             'name': 'outstanding_balance',
-            'type': 'DECIMAL(10,2)',
-            'enum': None,
+            'type': 'NUMERIC(8,2)',
             'extra': 'DEFAULT 0.00'
         }
     ],
@@ -156,19 +168,16 @@ schema = {
         {
             'name': 'id',
             'type': 'INT',
-            'enum': None,
-            'extra': 'AUTO_INCREMENT PRIMARY KEY'
+            'extra': "DEFAULT nextval('seq_properties_id') PRIMARY KEY"
         },
         {
             'name': 'name',
             'type': 'VARCHAR(30)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'region',
-            'type': 'ENUM',
-            'enum': ('Northern', 'Southern'),
+            'type': 'enum_property_region',
             'extra': ''
         }
     ],
@@ -177,33 +186,28 @@ schema = {
         {
             'name': 'id',
             'type': 'INT',
-            'enum': None,
-            'extra': 'AUTO_INCREMENT PRIMARY KEY'
+            'extra': "DEFAULT nextval('seq_ponds_id') PRIMARY KEY"
         },
         {
             'name': 'property_id',
             'type': 'INT',
-            'enum': None,
             'extra': '',
             'foreign': 'properties(id)'
         },
         {
             'name': 'name',
             'type': 'VARCHAR(30)',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'status',
-            'type': 'ENUM',
-            'enum': ('open', 'closed'),
+            'type': 'enum_pond_status',
             'extra': "DEFAULT 'open'"
         },
         {
             'name': 'selected',
             'type': 'BOOLEAN',
-            'enum': None,
-            'extra': 'DEFAULT 0'
+            'extra': 'DEFAULT FALSE'
         }
     ],
 
@@ -211,99 +215,78 @@ schema = {
         {
             'name': 'id',
             'type': 'INT',
-            'enum': None,
-            'extra': 'AUTO_INCREMENT PRIMARY KEY'
+            'extra': "DEFAULT nextval('seq_groupings_id') PRIMARY KEY"
         },
         {
             'name': 'hunt_id',
             'type': 'INT',
-            'enum': None,
             'extra': 'NOT NULL',
             'foreign': 'hunts(id)'
         },
         {
             'name': 'pond_id',
             'type': 'INT',
-            'enum': None,
             'extra': '',
             'foreign': 'ponds(id)'
         },
         {
             'name': 'slot1_type',
-            'type': 'ENUM',
-            'enum': ('open', 'member', 'guest', 'invitation'),
+            'type': 'enum_group_slot_type',
             'extra': "DEFAULT 'open'"
         },
         {
             'name': 'slot2_type',
-            'type': 'ENUM',
-            'enum': ('open', 'member', 'guest', 'invitation'),
+            'type': 'enum_group_slot_type',
             'extra': "DEFAULT 'open'"
         },
         {
             'name': 'slot3_type',
-            'type': 'ENUM',
-            'enum': ('open', 'member', 'guest', 'invitation'),
+            'type': 'enum_group_slot_type',
             'extra': "DEFAULT 'open'"
         },
         {
             'name': 'slot4_type',
-            'type': 'ENUM',
-            'enum': ('open', 'member', 'guest', 'invitation'),
+            'type': 'enum_group_slot_type',
             'extra': "DEFAULT 'open'"
         },
         {
             'name': 'slot1_id',
             'type': 'INT',
-            'enum': None,
             'extra': ''
         },
         {
             'name': 'slot2_id',
             'type': 'INT',
-            'enum': None,
             'extra': ''
         },
         {
             'name': 'slot3_id',
             'type': 'INT',
-            'enum': None,
             'extra': ''
         },
         {
             'name': 'slot4_id',
             'type': 'INT',
-            'enum': None,
-            'extra': ''
-        },
-        {
-            'name': 'pond_pref',
-            'type': 'VARCHAR(255)',
-            'enum': None,
             'extra': ''
         },
         {
             'name': 'harvest_update_time',
             'type': 'TIME(0)',
-            'enum': None,
-            'extra': 'DEFAULT 0'
+            'extra': "DEFAULT '00:00:00'"
         },
         {
             'name': 'num_hunters',
             'type': 'INT',
-            'enum': None,
             'extra': 'DEFAULT 0'
         },
         {
             'name': 'harvest_ave_ducks',
             'type': 'FLOAT',
-            'enum': None,
             'extra': 'DEFAULT 0'
         },
         {
             'name': 'harvest_ave_non',
             'type': 'FLOAT',
-            'enum': None,
             'extra': 'DEFAULT 0'
         }
     ],
@@ -312,26 +295,22 @@ schema = {
         {
             'name': 'id',
             'type': 'INT',
-            'enum': None,
-            'extra': 'AUTO_INCREMENT PRIMARY KEY'
+            'extra': "DEFAULT nextval('seq_harvest_id') PRIMARY KEY"
         },
         {
             'name': 'group_id',
             'type': 'INT',
-            'enum': None,
             'extra': 'NOT NULL',
             'foreign': 'groupings(id)'
         },
         {
             'name': 'count',
             'type': 'INT',
-            'enum': None,
             'extra': 'NOT NULL'
         },
         {
             'name': 'bird_id',
             'type': 'INT',
-            'enum': None,
             'extra': 'NOT NULL',
             'foreign': 'birds(id)'
         }
@@ -368,5 +347,35 @@ secondary_indices = (
         'name': 'sec_idx_bird_type',
         'table': 'birds',
         'columns': ('type',)
+    },
+    {
+        'name': 'sec_idx_user_email',
+        'table': 'users',
+        'columns': ('email',)
+    },
+    {
+        'name': 'sec_idx_ponds_property',
+        'table': 'ponds',
+        'columns': ('property_id',)
+    },
+    {
+        'name': 'sec_idx_groupings_hunt',
+        'table': 'groupings',
+        'columns': ('hunt_id',)
+    },
+    {
+        'name': 'sec_idx_groupings_pond',
+        'table': 'groupings',
+        'columns': ('pond_id',)
+    },
+    {
+        'name': 'sec_idx_harvest_group',
+        'table': 'harvest',
+        'columns': ('group_id',)
+    },
+    {
+        'name': 'sec_idx_harvest_bird',
+        'table': 'harvest',
+        'columns': ('bird_id',)
     },
 )

@@ -14,14 +14,7 @@ class Table:
         f = ""  # foreign key constraints get added at the end
         i = ""  # secondary indices get added at the end
         for item in self.table_cols:
-            s = s + item['name'] + ' ' + item['type']
-            if item['enum'] is not None:
-                s = s + "("
-                for e in item['enum']:
-                    s = s + "'" + e + "',"
-                s = s[:-1] + ") "
-            else:
-                s = s + ' '
+            s = s + item['name'] + ' ' + item['type'] + ' '
             if 'foreign' in item:
                 f = f + 'FOREIGN KEY (' + item['name'] + ') REFERENCES ' + item['foreign'] + ', '
             if 'secondary_index' in item:
@@ -36,8 +29,8 @@ class Table:
         names_in = [key for key in dict_in]
         # This takes only the intersection of the full list and the input list
         names = list(set(names_all) & set(names_in))
-        insert_string = "id," + ",".join(names)
+        insert_string = ",".join(names)
         insert_list = [dict_in[key] for key in names]
-        insert_list.insert(0, None)
+        # insert_list.insert(0, None)
         insert_tuple = tuple(insert_list)
         return insert_string, insert_tuple

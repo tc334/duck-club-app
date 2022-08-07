@@ -1,13 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
-from .database.db_mgr import DbManager
+from .database.db_mgr_cockroach import DbManagerCockroach
 from .cache.redis_manager import RedisManager
 from urllib.parse import urlparse
 import os
 
 
 # instance of databases
-db = DbManager()
+db = DbManagerCockroach()
 cache = RedisManager()
 
 
@@ -18,25 +18,11 @@ def create_app():
     app.config.from_pyfile(os.path.join('..', 'settings.py'))
 
     if app.config['ENV'] == "development":
-        # environment specifies each connection param separately
-        sql_ipaddr = app.config["SQL_IPADDR"]
-        sql_port = app.config["SQL_PORT"]
-        sql_user = app.config["SQL_UNAME"]
-        sql_password = app.config["SQL_PASSWORD"]
-        sql_db_name = app.config["SQL_DB_NAME"]
-
         redis_ipaddr = app.config["REDIS_IPADDR"]
         redis_port = app.config["REDIS_PORT"]
         redis_user = None
         redis_password = None
     else:
-        url = urlparse(app.config["CLEARDB_DATABASE_URL"])
-        sql_ipaddr = url.hostname
-        sql_port = url.port
-        sql_user = url.username
-        sql_password = url.password
-        sql_db_name = url.path.lstrip('/')
-
         url = urlparse(app.config["REDIS_URL"])
         redis_ipaddr = url.hostname
         redis_port = url.port
@@ -51,14 +37,12 @@ def create_app():
     )
 
     db.init_app(
-        sql_ipaddr,
-        sql_port,
-        sql_user,
-        sql_password,
-        app.config["SQL_ADMIN_EMAIL"],
-        db_name=sql_db_name,
+        app.config["COCKROACH_URL"],
+        app.config["ADMIN_EMAIL"],
         cache=cache
     )
+
+    db.select_db(db_name=app.config["DB_NAME"])
 
     from .views import main
     from . import apis
