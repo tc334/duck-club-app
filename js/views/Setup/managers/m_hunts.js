@@ -201,9 +201,9 @@ export default class extends AbstractView {
       ];
       for (var i = 0; i < checkbox_names.length; i++) {
         if (object[checkbox_names[i]] && object[checkbox_names[i]] == "on") {
-          object[checkbox_names[i]] = 1;
+          object[checkbox_names[i]] = true;
         } else {
-          object[checkbox_names[i]] = 0;
+          object[checkbox_names[i]] = false;
         }
       }
       var json = JSON.stringify(object);
