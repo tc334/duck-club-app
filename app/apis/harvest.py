@@ -36,7 +36,7 @@ def update_harvest(user):
     # get the hunt_id associated with this group
     hunts_dict = get_hunt_dict(data_in["group_id"])
     if not hunts_dict:
-        return jsonify({"message": "Internal error in breakup_group(), invalid read of hunt dictionary"}), 500
+        return jsonify({"message": "Internal error in update_harvest(), invalid read of hunt dictionary"}), 500
 
     # member attempting to post/put harvest must be in this group and hunt must be active
     # manager and above can modify any harvest at any time

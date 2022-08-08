@@ -762,4 +762,18 @@ def get_hunt_dict(grouping_id):
         print(f"get_hunt_dict:{hunt_dict}")
         # cache update
         cache.add(f"nov:{grouping_id}", hunt_dict, 10 * 60)
+    else:
+        # debug, compare cache against DB
+        print(f"get_hunt_dict, cache: {hunt_dict}")
+
+        result = db.read_custom(
+            f"SELECT h.id, h.status "
+            f"FROM hunts h "
+            f"INNER JOIN groupings g ON g.hunt_id=h.id "
+            f"WHERE g.id={grouping_id}")
+        if result is None or len(result) != 1:
+            return False
+        names = ["id", "status"]
+        hunt_dict_db = db.format_dict(names, result)[0]
+        print(f"get_hunt_dict, db:{hunt_dict_db}")
     return hunt_dict
