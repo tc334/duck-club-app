@@ -413,7 +413,7 @@ def get_stats_ponds(users):
             return jsonify({"message": f"Unable to get pond stats because of unrecognized filter-member"}), 400
 
         # if no results found, stop here
-        if len(results) > 0:
+        if results and len(results) > 0:
             # now get the dates associated with the above results
             list_of_ids = "("
             for elem in results:
