@@ -211,20 +211,20 @@ function populateTable(db_data) {
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["num_ducks"], 1).toFixed(0);
+    tabCell.innerHTML = round(db_data[i]["num_ducks"], 1).toFixed(1);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(0);
+    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(1);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
     tabCell.style.textAlign = "right";
     tabCell.innerHTML = round(
       db_data[i]["num_ducks"] + db_data[i]["non_ducks"],
-      0
-    ).toFixed(0);
+      1
+    ).toFixed(1);
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");
