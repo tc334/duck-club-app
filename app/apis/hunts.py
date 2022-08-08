@@ -192,8 +192,8 @@ def update_row(user, hunt_id):
         # cache data now invalid for all groups in this hunt
         results = db.read_custom(f"SELECT id FROM groupings WHERE hunt_id={hunt_id}")
         if results is not None and results:
-            for gid in results[0]:
-                cache.delete(f"nov:{gid}")
+            for gid in results:
+                cache.delete(f"nov:{gid[0]}")
 
     if db.update_row(table_name, hunt_id, data_in):
         cache.delete("alpha")
@@ -209,6 +209,7 @@ def del_row(user, hunt_id):
     if db.del_row(table_name, hunt_id):
         cache.delete("alpha")
         cache.delete("echo")
+        cache.delete("nov")
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {hunt_id} from table {table_name}"}), 400

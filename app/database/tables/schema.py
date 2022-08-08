@@ -276,7 +276,7 @@ schema = {
         },
         {
             'name': 'num_hunters',
-            'type': 'INT',
+            'type': 'FLOAT',
             'extra': 'DEFAULT 0'
         },
         {

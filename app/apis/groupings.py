@@ -55,6 +55,7 @@ def add_row(user):
     data_in["num_hunters"] = num_hunters
     db.add_row(table_name, data_in)
     cache.delete("bravo")
+    cache.delete(f"golf:{data_in['hunt_id']}")
 
     return jsonify({"message": "New group successfully added to hunt " + str(data_in['hunt_id'])}), 201
 
@@ -135,6 +136,8 @@ def harvest_summary_helper(hunt_id, user_id):
                              f"JOIN ponds ON groupings.pond_id=ponds.id "
                              f"WHERE groupings.hunt_id={hunt_id} "
                              f"ORDER BY groupings.id")
+        print(f"Alpha:foo:{foo}")
+        print(f"Alpha:hunt_id:{hunt_id}")
         # now convert to list of dictionaries
         names = ["group_id", "harvest_update_time", "pond_name"]
         groups_dict = db.format_dict(names, foo)
@@ -146,6 +149,7 @@ def harvest_summary_helper(hunt_id, user_id):
                 item["harvest_update_time"] = "00:00"
         # update cache
         cache.add(f"golf:{hunt_id}", groups_dict, 24*60*60)
+    print(f"Alpha:groups_dict:{groups_dict}")
 
     group_id_of_current_user = None
     for group in groups_dict:
@@ -393,12 +397,13 @@ def get_one_row(users, grouping_id):
 def update_row(user, grouping_id):
     data_in = request.get_json()
 
+    hunt_dict = get_hunt_dict(grouping_id)
+    if not hunt_dict:
+        return jsonify({"message": "Internal error, invalid read of hunt dictionary"}), 500
+
     if 'pond_id' in data_in and data_in['pond_id'] is not None:
 
         # ponds can only be changed when the hunt state is signup_closed
-        hunt_dict = get_hunt_dict(grouping_id)
-        if not hunt_dict:
-            return jsonify({"message": "Internal error, invalid read of hunt dictionary"}), 500
         if hunt_dict["status"] != 'signup_closed':
             print(f"Bravo:hunt_dict:{hunt_dict}")
             print(f"Bravo:status:{hunt_dict['status']}")
@@ -445,6 +450,7 @@ def update_row(user, grouping_id):
 
     if db.update_row(table_name, grouping_id, data_in):
         cache.delete("bravo")
+        cache.delete(f"golf:{hunt_dict['id']}")
         cache.delete(f"hotel:{grouping_id}")
         cache.delete(f"kilo:{grouping_id}")
         cache.delete(f"romeo:{grouping_id}")
@@ -456,8 +462,11 @@ def update_row(user, grouping_id):
 @groupings_bp.route('/groupings/<grouping_id>', methods=['DELETE'])
 @token_required(admin_only)
 def del_row(user, grouping_id):
-    if db.del_row(table_name, grouping_id):
+    result = db.read_custom(f"DELETE FROM {table_name} WHERE id={grouping_id} RETURNING hunt_id")
+    if result and len(result) == 1:
+        hunt_id = result[0][0]
         cache.delete("bravo")
+        cache.delete(f"golf:{hunt_id}")
         cache.delete(f"hotel:{grouping_id}")
         cache.delete(f"kilo:{grouping_id}")
         cache.delete(f"lima:{grouping_id}")
@@ -520,6 +529,8 @@ def merge_groups(user, group1_id, group2_id):
     # delete the second group
     db.del_row("groupings", group2_id)
     cache.delete("bravo")
+    cache.delete(f"golf:{hunt_dict1['id']}")
+    cache.delete(f"golf:{hunt_dict2['id']}")
     cache.delete(f"hotel:{group1_id}")
     cache.delete(f"hotel:{group2_id}")
     cache.delete(f"kilo:{group1_id}")
@@ -570,6 +581,7 @@ def breakup_group(user, group_id):
     # clear out the slots where you just moved users to new group
     db.update_row("groupings", group_id, update_dict)
     cache.delete("bravo")
+    cache.delete(f"golf:{hunt_dict['id']}")
     cache.delete(f"hotel:{group_id}")
     cache.delete(f"kilo:{group_id}")
     cache.delete(f"romeo:{group_id}")
@@ -665,6 +677,7 @@ def leave_group(user, group_id):
         }
     db.update_row("groupings", group_id, update_dict)
     cache.delete("bravo")
+    cache.delete(f"golf:{new_dict['hunt_id']}")
     cache.delete(f"hotel:{group_id}")
     cache.delete(f"kilo:{group_id}")
     cache.delete(f"romeo:{group_id}")
@@ -699,11 +712,11 @@ def withdraw(user, group_id):
         return jsonify({"error": f"User {user['id']} can't leave group {group_id} because they aren't part of that group"})
 
     # create a new group for this user
-    new_dict = {
-        'hunt_id': hunt_dict["id"],
-        'slot1_id': user['id'],
-        'slot1_type': "member"
-    }
+    # new_dict = {
+    #     'hunt_id': hunt_dict["id"],
+    #     'slot1_id': user['id'],
+    #     'slot1_type': "member"
+    # }
     # db.add_row("groupings", new_dict)
     # commenting out this line is the only difference between this and leave_group
 
@@ -717,6 +730,7 @@ def withdraw(user, group_id):
     else:
         # this was the only user in the group, so delete the whole group
         db.del_row(table_name, group_id)
+        cache.delete(f"golf:{hunt_dict['id']}")
 
     cache.delete("bravo")
     cache.delete(f"hotel:{group_id}")

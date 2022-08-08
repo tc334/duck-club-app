@@ -95,13 +95,13 @@ def update_harvest(user):
             harvest_id = "new"  # this is to indicate that we just did a POST not a PUT. I don't want to waste a call back to the DB just to get the new row that was just added
 
     # the successful update in this function invalidates the value in cache
-    cache.delete(f"golf:{hunts_dict['id']}")
     cache.delete(f"india:{data_in['group_id']}")
     cache.delete(f"juliett:{data_in['group_id']}")
     cache.delete(f"mike:{data_in['group_id']}")
 
     # set the group's last update time to now
     if db.update_row("groupings", data_in["group_id"], {"harvest_update_time": central_time_now()}):
+        cache.delete(f"golf:{hunts_dict['id']}")
         cache.delete("stats_clean")
         return jsonify({'message': f"Successful update of id {harvest_id} in {table_name}"}), 200
     else:
@@ -179,7 +179,9 @@ def get_stats_birds(users):
     if b_filter_pond:
         sql_qry_str += f"WHERE ponds.id={data_in['pond_id']} "
 
-    if b_filter_hunt:
+    if b_filter_pond and b_filter_hunt:
+        sql_qry_str += f"AND hunts.id={data_in['hunt_id']} "
+    elif b_filter_hunt:
         sql_qry_str += f"WHERE hunts.id={data_in['hunt_id']} "
 
     sql_qry_str += f"ORDER BY hunts.hunt_date, ponds.name, birds.type"
@@ -189,6 +191,7 @@ def get_stats_birds(users):
     if results is not None:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
         names_all = ["harvest_id", "pond_name", "hunt_date", "group_id", "bird_name", "count"]
+        print(f"Bravo:results:{results}")
         results_dict = db.format_dict(names_all, results)
         return jsonify({"harvests": results_dict}), 200
     else:

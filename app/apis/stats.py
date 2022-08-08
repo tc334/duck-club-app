@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+from datetime import datetime, date
 import math
 import time
 from .. import db, cache
@@ -18,40 +18,26 @@ def get_stats_hunters(users):
     update_group_harvest()
 
     # date range for query
-    if data_in["filter-date"] == "all-records":
-        date_start = "1900-01-01"
-        date_end = "3000-01-01"
-    elif data_in["filter-date"] == "custom-range":
-        date_start = data_in["date-start"]
-        date_end = data_in["date-end"]
-    elif data_in["filter-date"] == "current-season":
-        current_month = datetime.now().month
-        current_year = datetime.now().year
-        if current_month >= 9:
-            date_start = str(current_year) + "-09-01"
-            date_end = str(current_year + 1) + "-09-01"
-        else:
-            date_start = str(current_year - 1) + "-09-01"
-            date_end = str(current_year) + "-09-01"
-    else:
+    date_start, date_end = date_helper(data_in)
+    if not date_start:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
     results = []
     for slot_num in range(1, 5):
         if data_in["filter-member"] == "whole-club":
-            this_slot = db.read_custom(f"SELECT users.id, "
+            this_slot = db.read_custom(f"SELECT users.id, users.first_name, users.last_name, "
                                        f"SUM(groupings.harvest_ave_ducks), COUNT(groupings.harvest_ave_ducks), "
                                        f"SUM(groupings.harvest_ave_non) "
                                        f"FROM groupings "
                                        f"JOIN users ON groupings.slot{slot_num}_id=users.id "
                                        f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                        f"WHERE groupings.slot{slot_num}_type='member' "
-                                       f"AND hunts.hunt_date>'{date_start}' "
-                                       f"AND hunts.hunt_date<'{date_end}' "
+                                       f"AND hunts.hunt_date>='{date_start}' "
+                                       f"AND hunts.hunt_date<='{date_end}' "
                                        f"GROUP BY users.id "
                                        f"ORDER BY users.id")
         elif data_in["filter-member"] == "just-me":
-            this_slot = db.read_custom(f"SELECT users.id, "
+            this_slot = db.read_custom(f"SELECT users.id, users.first_name, users.last_name, "
                                        f"SUM(groupings.harvest_ave_ducks), COUNT(groupings.harvest_ave_ducks), "
                                        f"SUM(groupings.harvest_ave_non) "
                                        f"FROM groupings "
@@ -59,40 +45,40 @@ def get_stats_hunters(users):
                                        f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                        f"WHERE groupings.slot{slot_num}_type='member' "
                                        f"AND users.id={users['id']} "
-                                       f"AND hunts.hunt_date>'{date_start}' "
-                                       f"AND hunts.hunt_date<'{date_end}' "
+                                       f"AND hunts.hunt_date>='{date_start}' "
+                                       f"AND hunts.hunt_date<='{date_end}' "
                                        f"GROUP BY users.id "
                                        f"ORDER BY users.id")
         else:
             return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
-        results = merge_slots(results, this_slot)
+        results = merge_slots(results, this_slot, start=3)
 
     # if no results found, stop here
     if len(results) == 0:
         return jsonify({"message": "no results found within filter bounds"}), 404
 
     # now get the names associated with the above results
-    list_of_ids = "("
-    for elem in results:
-        list_of_ids += str(elem[0]) + ", "
-    list_of_ids = list_of_ids[:-2] + ")"
-    names = db.read_custom(f"SELECT first_name, last_name FROM users WHERE id IN {list_of_ids} ORDER BY id")
+    # list_of_ids = "("
+    # for elem in results:
+    #     list_of_ids += str(elem[0]) + ", "
+    # list_of_ids = list_of_ids[:-2] + ")"
+    # names = db.read_custom(f"SELECT first_name, last_name FROM users WHERE id IN {list_of_ids} ORDER BY id")
 
     # now stitch the names and the counts together
     list_of_dicts = []
-    for i in range(len(names)):
+    for i in range(len(results)):
         list_of_dicts.append({
-            'first_name': names[i][0],
-            'last_name': names[i][1],
-            'hunts': results[i][2],
-            'ducks': results[i][1],
-            'non_ducks': results[i][3]
+            'first_name': results[i][1],
+            'last_name': results[i][2],
+            'hunts': results[i][4],
+            'ducks': results[i][3],
+            'non_ducks': results[i][5]
         })
 
     return jsonify({"stats": list_of_dicts}), 200
 
 
-def merge_slots(slot_1, slot_2):
+def merge_slots(slot_1, slot_2, start=1):
     # input is a list of tuples; if first element matches, add the rest together
     merged = slot_1 + [list(elem) for elem in slot_2]
     i = 0
@@ -100,7 +86,7 @@ def merge_slots(slot_1, slot_2):
         j = i+1
         while j < len(merged):
             if merged[i][0] == merged[j][0]:
-                merged[i][1:] = [merged[i][x] + merged[j][x] for x in range(1, len(merged[j]))]
+                merged[i][start:] = [merged[i][x] + merged[j][x] for x in range(start, len(merged[j]))]
                 merged.pop(j)
             else:
                 j += 1
@@ -177,39 +163,28 @@ def get_stats_club(users):
     update_group_harvest()
 
     # date range for query
-    if data_in["filter-date"] == "all-records":
-        date_start = "1900-01-01"
-        date_end = "3000-01-01"
-    elif data_in["filter-date"] == "custom-range":
-        date_start = data_in["date-start"]
-        date_end = data_in["date-end"]
-    elif data_in["filter-date"] == "current-season":
-        current_month = datetime.now().month
-        current_year = datetime.now().year
-        if current_month >= 9:
-            date_start = str(current_year) + "-09-01"
-            date_end = str(current_year+1) + "-09-01"
-        else:
-            date_start = str(current_year-1) + "-09-01"
-            date_end = str(current_year) + "-09-01"
-    else:
+    date_start, date_end = date_helper(data_in)
+    if not date_start:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
+
+    # f"SUM(groupings.harvest_ave_ducks*groupings.num_hunters), "
+    # f"SUM(groupings.harvest_ave_non*groupings.num_hunters), "
 
     results = db.read_custom(f"SELECT hunts.id, "
                              f"COUNT(groupings.harvest_ave_ducks), "
                              f"SUM(groupings.num_hunters), "
-                             f"SUM(groupings.harvest_ave_ducks*groupings.num_hunters), "
-                             f"SUM(groupings.harvest_ave_non*groupings.num_hunters), "
+                             f"SUM(groupings.harvest_ave_ducks), "
+                             f"SUM(groupings.harvest_ave_non), "
                              f"SUM(IF(groupings.harvest_ave_ducks>5.9, 1, 0)) "
                              f"FROM hunts "
                              f"JOIN groupings ON groupings.hunt_id=hunts.id "
-                             f"WHERE hunts.hunt_date>'{date_start}' "
-                             f"AND hunts.hunt_date<'{date_end}' "
+                             f"WHERE hunts.hunt_date>='{date_start}' "
+                             f"AND hunts.hunt_date<='{date_end}' "
                              f"GROUP BY hunts.id "
                              f"ORDER BY hunts.id")
 
     # if no results found, stop here
-    if len(results) == 0:
+    if not results or len(results) == 0:
         return jsonify({"message": "no results found within filter bounds"}), 404
 
     # now get the static associated with the above results
@@ -243,39 +218,25 @@ def get_stats_birds(users):
     update_group_harvest()
 
     # date range for query
-    if data_in["filter-date"] == "all-records":
-        date_start = "1900-01-01"
-        date_end = "3000-01-01"
-    elif data_in["filter-date"] == "custom-range":
-        date_start = data_in["date-start"]
-        date_end = data_in["date-end"]
-    elif data_in["filter-date"] == "current-season":
-        current_month = datetime.now().month
-        current_year = datetime.now().year
-        if current_month >= 9:
-            date_start = str(current_year) + "-09-01"
-            date_end = str(current_year + 1) + "-09-01"
-        else:
-            date_start = str(current_year - 1) + "-09-01"
-            date_end = str(current_year) + "-09-01"
-    else:
+    date_start, date_end = date_helper(data_in)
+    if not date_start:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
     if data_in["filter-member"] == "whole-club":
-        results = db.read_custom(f"SELECT birds.id, "
+        results = db.read_custom(f"SELECT birds.id, birds.name, "
                                  f"SUM(harvest.count) "
                                  f"FROM birds "
                                  f"JOIN harvest ON harvest.bird_id=birds.id "
                                  f"JOIN groupings ON harvest.group_id=groupings.id "
                                  f"JOIN hunts ON groupings.hunt_id=hunts.id "
-                                 f"WHERE hunts.hunt_date>'{date_start}' "
-                                 f"AND hunts.hunt_date<'{date_end}' "
+                                 f"WHERE hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.hunt_date<='{date_end}' "
                                  f"GROUP BY birds.id "
                                  f"ORDER BY birds.id")
     elif data_in["filter-member"] == "just-me":
         results = []
         for slot_num in range(1, 5):
-            this_slot = db.read_custom(f"SELECT birds.id, "
+            this_slot = db.read_custom(f"SELECT birds.id, birds.name, "
                                        f"SUM(harvest.count/groupings.num_hunters) "
                                        f"FROM birds "
                                        f"JOIN harvest ON harvest.bird_id=birds.id "
@@ -284,11 +245,11 @@ def get_stats_birds(users):
                                        f"JOIN users ON groupings.slot{slot_num}_id=users.id "
                                        f"WHERE groupings.slot{slot_num}_type='member' "
                                        f"AND users.id={users['id']} "
-                                       f"AND hunts.hunt_date>'{date_start}' "
-                                       f"AND hunts.hunt_date<'{date_end}' "
+                                       f"AND hunts.hunt_date>='{date_start}' "
+                                       f"AND hunts.hunt_date<='{date_end}' "
                                        f"GROUP BY birds.id "
                                        f"ORDER BY birds.id")
-            results = merge_slots(results, this_slot)
+            results = merge_slots(results, this_slot, start=2)
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
 
@@ -296,22 +257,18 @@ def get_stats_birds(users):
     if len(results) == 0:
         return jsonify({"message": "no results found within filter bounds"}), 404
 
-    # now get the names associated with the above results
+    # now compute the total count
     total_count = 0
-    list_of_ids = "("
     for elem in results:
-        list_of_ids += str(elem[0]) + ", "
-        total_count += float(elem[1])
-    list_of_ids = list_of_ids[:-2] + ")"
-    names = db.read_custom(f"SELECT name FROM birds WHERE id IN {list_of_ids} ORDER BY id")
+        total_count += float(elem[2])
 
     # now stitch the names and the counts together
     list_of_dicts = []
-    for i in range(len(names)):
+    for i in range(len(results)):
         list_of_dicts.append({
-            'name': names[i][0],
-            'count': float(results[i][1]),
-            'pct': float(results[i][1]) / total_count,
+            'name': results[i][1],
+            'count': float(results[i][2]),
+            'pct': float(results[i][2]) / total_count,
         })
 
     return jsonify({"stats": list_of_dicts}), 200
@@ -326,26 +283,12 @@ def get_stats_ponds(users):
     update_group_harvest()
 
     # date range for query
-    if data_in["filter-date"] == "all-records":
-        date_start = "1900-01-01"
-        date_end = "3000-01-01"
-    elif data_in["filter-date"] == "custom-range":
-        date_start = data_in["date-start"]
-        date_end = data_in["date-end"]
-    elif data_in["filter-date"] == "current-season":
-        current_month = datetime.now().month
-        current_year = datetime.now().year
-        if current_month >= 9:
-            date_start = str(current_year) + "-09-01"
-            date_end = str(current_year + 1) + "-09-01"
-        else:
-            date_start = str(current_year - 1) + "-09-01"
-            date_end = str(current_year) + "-09-01"
-    else:
+    date_start, date_end = date_helper(data_in)
+    if not date_start:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
     if data_in["filter-member"] == "whole-club":
-        results = db.read_custom(f"SELECT ponds.id, "
+        results = db.read_custom(f"SELECT ponds.id, ponds.name, "
                                  f"SUM(harvest.count), COUNT( DISTINCT harvest.group_id ), "
                                  f"AVG(groupings.harvest_ave_ducks) "
                                  f"FROM ponds "
@@ -353,20 +296,20 @@ def get_stats_ponds(users):
                                  f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                  f"JOIN harvest ON harvest.group_id=groupings.id "
                                  f"JOIN birds ON harvest.bird_id=birds.id "
-                                 f"WHERE hunts.hunt_date>'{date_start}' "
-                                 f"AND hunts.hunt_date<'{date_end}' "
+                                 f"WHERE hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.hunt_date<='{date_end}' "
                                  f"AND birds.type='duck' "
                                  f"GROUP BY ponds.id "
                                  f"ORDER BY ponds.id")
-        nonduck = db.read_custom(f"SELECT ponds.id, "
+        nonduck = db.read_custom(f"SELECT ponds.id, ponds.name, "
                                  f"SUM(harvest.count) "
                                  f"FROM ponds "
                                  f"JOIN groupings ON groupings.pond_id=ponds.id "
                                  f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                  f"JOIN harvest ON harvest.group_id=groupings.id "
                                  f"JOIN birds ON harvest.bird_id=birds.id "
-                                 f"WHERE hunts.hunt_date>'{date_start}' "
-                                 f"AND hunts.hunt_date<'{date_end}' "
+                                 f"WHERE hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.hunt_date<='{date_end}' "
                                  f"AND birds.type<>'duck' "
                                  f"GROUP BY ponds.id "
                                  f"ORDER BY ponds.id")
@@ -374,7 +317,7 @@ def get_stats_ponds(users):
         results = []
         nonduck = []
         for slot_num in range(1, 5):
-            this_slot = db.read_custom(f"SELECT ponds.id, "
+            this_slot = db.read_custom(f"SELECT ponds.id, ponds.name, "
                                        f"SUM(harvest.count/groupings.num_hunters), COUNT( DISTINCT harvest.group_id ), "
                                        f"AVG(groupings.harvest_ave_ducks) "
                                        f"FROM ponds "
@@ -384,14 +327,14 @@ def get_stats_ponds(users):
                                        f"JOIN birds ON harvest.bird_id=birds.id "
                                        f"JOIN users ON groupings.slot{slot_num}_id=users.id "
                                        f"WHERE groupings.slot{slot_num}_type='member' "
-                                       f"AND hunts.hunt_date>'{date_start}' "
-                                       f"AND hunts.hunt_date<'{date_end}' "
+                                       f"AND hunts.hunt_date>='{date_start}' "
+                                       f"AND hunts.hunt_date<='{date_end}' "
                                        f"AND users.id={users['id']} "
                                        f"AND birds.type='duck' "
                                        f"GROUP BY ponds.id "
                                        f"ORDER BY ponds.id")
-            results = merge_slots(results, this_slot)
-            this_slot = db.read_custom(f"SELECT ponds.id, "
+            results = merge_slots(results, this_slot, start=2)
+            this_slot = db.read_custom(f"SELECT ponds.id, ponds.name, "
                                        f"SUM(harvest.count/groupings.num_hunters) "
                                        f"FROM ponds "
                                        f"JOIN groupings ON groupings.pond_id=ponds.id "
@@ -400,13 +343,13 @@ def get_stats_ponds(users):
                                        f"JOIN birds ON harvest.bird_id=birds.id "
                                        f"JOIN users ON groupings.slot{slot_num}_id=users.id "
                                        f"WHERE groupings.slot{slot_num}_type='member' "
-                                       f"AND hunts.hunt_date>'{date_start}' "
-                                       f"AND hunts.hunt_date<'{date_end}' "
+                                       f"AND hunts.hunt_date>='{date_start}' "
+                                       f"AND hunts.hunt_date<='{date_end}' "
                                        f"AND users.id={users['id']} "
                                        f"AND birds.type<>'duck' "
                                        f"GROUP BY ponds.id "
                                        f"ORDER BY ponds.id")
-            nonduck = merge_slots(nonduck, this_slot)
+            nonduck = merge_slots(nonduck, this_slot, start=2)
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
 
@@ -414,30 +357,26 @@ def get_stats_ponds(users):
     if len(results) == 0:
         return jsonify({"message": "no results found within filter bounds"}), 404
 
-    # now get the names associated with the above results
+    # now compute total count
     total_count = 0
-    list_of_ids = "("
     for elem in results:
-        list_of_ids += str(elem[0]) + ", "
-        total_count += float(elem[1])
-    list_of_ids = list_of_ids[:-2] + ")"
-    names = db.read_custom(f"SELECT name FROM ponds WHERE id IN {list_of_ids} ORDER BY id")
+        total_count += float(elem[2])
 
     # now stitch the names and the counts together
     list_of_dicts = []
-    for i in range(len(names)):
+    for i in range(len(results)):
         # check to see if this pond has any non-duck results
         idx_non = [count for count, value in enumerate(nonduck) if value[0] == results[i][0]]
         if len(idx_non) == 1:
-            num_non_ducks = nonduck[idx_non[0]][1]
+            num_non_ducks = nonduck[idx_non[0]][2]
         else:
             num_non_ducks = 0
         list_of_dicts.append({
-            'pond_name': names[i][0],
-            'num_hunts': float(results[i][2]),
-            'num_ducks': float(results[i][1]),
+            'pond_name': results[i][1],
+            'num_hunts': float(results[i][3]),
+            'num_ducks': float(results[i][2]),
             'non_ducks': float(num_non_ducks),
-            'ave_ducks': float(results[i][3])
+            'ave_ducks': float(results[i][4])
         })
 
     # if a pond-id is included in the query, get hunt history on that pond
@@ -448,8 +387,8 @@ def get_stats_ponds(users):
                                      f"JOIN groupings ON groupings.hunt_id=hunts.id "
                                      f"JOIN harvest ON harvest.group_id=groupings.id "
                                      f"JOIN ponds ON groupings.pond_id=ponds.id "
-                                     f"WHERE hunts.hunt_date>'{date_start}' "
-                                     f"AND hunts.hunt_date<'{date_end}' "
+                                     f"WHERE hunts.hunt_date>='{date_start}' "
+                                     f"AND hunts.hunt_date<='{date_end}' "
                                      f"AND ponds.id={data_in['pond_id']} "
                                      f"GROUP BY hunts.id "
                                      f"ORDER BY hunts.id")
@@ -464,8 +403,8 @@ def get_stats_ponds(users):
                                            f"JOIN users ON groupings.slot{slot_num}_id=users.id "
                                            f"WHERE groupings.slot{slot_num}_type='member' "
                                            f"AND users.id={users['id']} "
-                                           f"AND hunts.hunt_date>'{date_start}' "
-                                           f"AND hunts.hunt_date<'{date_end}' "
+                                           f"AND hunts.hunt_date>='{date_start}' "
+                                           f"AND hunts.hunt_date<='{date_end}' "
                                            f"AND ponds.id={data_in['pond_id']} "
                                            f"GROUP BY hunts.id "
                                            f"ORDER BY hunts.id")
@@ -496,3 +435,27 @@ def get_stats_ponds(users):
         return jsonify({"stats": list_of_dicts, "hunt_history": list_of_dicts_2}), 200
     else:
         return jsonify({"stats": list_of_dicts}), 200
+
+
+def date_helper(data_in):
+    if data_in["filter-date"] == "all-records":
+        date_start = date(1900, 1, 1)
+        date_end = date(3000, 1, 1)
+    elif data_in["filter-date"] == "custom-range":
+        temp = data_in["date-start"].split("-")
+        date_start = date(int(temp[0]), int(temp[1]), int(temp[2]))
+        temp = data_in["date-end"].split("-")
+        date_end = date(int(temp[0]), int(temp[1]), int(temp[2]))
+    elif data_in["filter-date"] == "current-season":
+        current_month = datetime.now().month
+        current_year = datetime.now().year
+        if current_month >= 9:
+            date_start = date(current_year, 9, 1)
+            date_end = date(current_year + 1, 9, 1)
+        else:
+            date_start = date(current_year - 1, 9, 1)
+            date_end = date(current_year, 9, 1)
+    else:
+        return False, False
+
+    return date_start, date_end
