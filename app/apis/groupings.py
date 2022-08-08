@@ -399,7 +399,7 @@ def update_row(user, grouping_id):
         hunt_dict = get_hunt_dict(grouping_id)
         if not hunt_dict:
             return jsonify({"message": "Internal error, invalid read of hunt dictionary"}), 500
-        if not hunt_dict["status"] == 'signup_closed':
+        if hunt_dict["status"] != 'signup_closed':
             print(f"Bravo:hunt_dict:{hunt_dict}")
             print(f"Bravo:status:{hunt_dict['status']}")
             return jsonify({'message': f"Cannot assign new pond {data_in['pond_id']} because hunt is not in the signup_closed state"}), 400
