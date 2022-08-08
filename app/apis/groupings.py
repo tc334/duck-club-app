@@ -412,7 +412,7 @@ def update_row(user, grouping_id):
         ponds_dict = db.format_dict(names, result)[0]
         if ponds_dict["status"] == 'open' and ponds_dict["selected"] == 0:
             # pond is open and available. now mark pond as selected
-            db.update_custom(f"UPDATE ponds SET selected=1 WHERE id={data_in['pond_id']}")
+            db.update_custom(f"UPDATE ponds SET selected=TRUE WHERE id={data_in['pond_id']}")
             # invalidate cache
             cache.delete(f"lima:{grouping_id}")  # cached value is now stale
         else:
@@ -755,7 +755,9 @@ def get_hunt_dict(grouping_id):
         if result is None or len(result) != 1:
             return False
         names = ["id", "status"]
+        print(f"Alpha:{result}")
         hunt_dict = db.format_dict(names, result)[0]
+        print(f"get_hunt_dict:{hunt_dict}")
         # cache update
         cache.add(f"nov:{grouping_id}", hunt_dict, 10 * 60)
     return hunt_dict
