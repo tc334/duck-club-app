@@ -54,7 +54,7 @@ def update_harvest(user):
             pid_dict = db.format_dict(names, results)
             # update cache
             cache.add(f"romeo:{data_in['group_id']}", pid_dict, 60*60)
-        slot_ids = [elem["public_id"] for elem in range(len(pid_dict))]
+        slot_ids = [elem["public_id"] for elem in pid_dict]
         if not user["public_id"] in slot_ids:
             return jsonify({"error": "Members can only post harvest results to their own hunts"}), 400
         # 2. check to make sure hunt is active
