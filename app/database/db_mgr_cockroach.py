@@ -1,10 +1,15 @@
+import time
+
 import psycopg2
-from .tables.schema import schema, secondary_indices, sequences, enums
-from .tables.table import Table
 import uuid
+from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
 from werkzeug.security import generate_password_hash
 from typing import Callable
-from tenacity import retry, wait_exponential, stop_after_attempt, retry_if_exception_type
+
+from .tables.schema import schema, secondary_indices, sequences, enums
+from .tables.table import Table
+
+STARTUP_KEY = "starting"
 
 
 def get_index_str(d):
@@ -156,6 +161,15 @@ class DbManagerCockroach:
         return self.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
     def select_db(self, db_name, b_build=False):
+        # this is to prevent multiple wsgi workers from trying to create a DB
+        if self.cache:
+            if not self.cache.get_plain(STARTUP_KEY):
+                # nobody else has started up, so this worker will do it & try to suspend others
+                self.cache.add_plain(STARTUP_KEY, True)
+            else:
+                # another worker has already started the process. Wait 60 seconds
+                time.sleep(60)
+
         if db_name not in self.list_databases():
             # the requested DB doesn't exist, so create it
             self.create_db(db_name)

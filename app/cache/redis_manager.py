@@ -150,3 +150,20 @@ class RedisManager:
         if keys:
             print(f"Redis debug. Deleting keys={keys}")
             self.r.delete(*keys)
+
+    @transaction_wrapper
+    def set_add(self, set_name, value):
+        self.r.sadd(set_name, value)
+
+    @transaction_wrapper
+    def set_pop(self, set_name):
+        return self.r.spop(set_name)
+
+    @transaction_wrapper
+    def get_plain(self, key):
+        return self.r.get(key)
+
+    @transaction_wrapper
+    def add_plain(self, key, value):
+        self.r.set(key, value)
+        return True

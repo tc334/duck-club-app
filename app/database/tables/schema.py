@@ -49,7 +49,7 @@ schema = {
         {
             'name': 'name',
             'type': 'VARCHAR(30)',
-            'extra': 'NOT NULL'
+            'extra': 'UNIQUE NOT NULL'
         },
         {
             'name': 'type',
@@ -72,12 +72,7 @@ schema = {
         {
             'name': 'hunt_date',
             'type': 'DATE',
-            'extra': 'NOT NULL'
-        },
-        {
-            'name': 'harvest_average',
-            'type': 'FLOAT',
-            'extra': ''
+            'extra': 'UNIQUE NOT NULL'
         },
         {
             'name': 'signup_closed_auto',
@@ -197,7 +192,7 @@ schema = {
         {
             'name': 'name',
             'type': 'VARCHAR(30)',
-            'extra': 'NOT NULL'
+            'extra': 'UNIQUE NOT NULL'
         },
         {
             'name': 'status',
@@ -276,17 +271,17 @@ schema = {
         },
         {
             'name': 'num_hunters',
-            'type': 'FLOAT',
+            'type': 'INT',
             'extra': 'DEFAULT 0'
         },
         {
-            'name': 'harvest_ave_ducks',
-            'type': 'FLOAT',
+            'name': 'num_ducks',
+            'type': 'INT',
             'extra': 'DEFAULT 0'
         },
         {
-            'name': 'harvest_ave_non',
-            'type': 'FLOAT',
+            'name': 'num_non',
+            'type': 'INT',
             'extra': 'DEFAULT 0'
         }
     ],
@@ -342,6 +337,11 @@ secondary_indices = (
         'name': 'sec_idx_hunt_status',
         'table': 'hunts',
         'columns': ('status',)
+    },
+    {
+        'name': 'sec_idx_hunt_date',
+        'table': 'hunts',
+        'columns': ('hunt_date',)
     },
     {
         'name': 'sec_idx_bird_type',
