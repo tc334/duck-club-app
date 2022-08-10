@@ -85,7 +85,7 @@ def get_harvest_summary(user):
         if hunts is None:
             return jsonify({"message": "internal error"}), 500
         if len(hunts) == 0:
-            return jsonify({"message": "Couldn't find a hunt in a pre-hunt state"}), 400
+            return jsonify({"message": "Couldn't find a hunt in a hunt-open state"}), 400
         names = ["id", "hunt_date"]
         hunts_dict = db.format_dict(names, hunts)[0]
         # datetime requires special handling
@@ -129,6 +129,7 @@ def harvest_summary_helper(hunt_id, user_id):
 
     # now pull all groupings that match this hunt_id
     groups_dict = cache.get(f"golf:{hunt_id}")
+    print(f"Zulu:{groups_dict}")
     if len(groups_dict) < 1:
         # no cache hit, go to db
         foo = db.read_custom(f"SELECT "
@@ -405,8 +406,6 @@ def update_row(user, grouping_id):
 
         # ponds can only be changed when the hunt state is signup_closed
         if hunt_dict["status"] != 'signup_closed':
-            print(f"Bravo:hunt_dict:{hunt_dict}")
-            print(f"Bravo:status:{hunt_dict['status']}")
             return jsonify({'message': f"Cannot assign new pond {data_in['pond_id']} because hunt is not in the signup_closed state"}), 400
 
         # if a pond is being assigned to a group, check to see if it is already selected. If not, mark the pond as

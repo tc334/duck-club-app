@@ -35,7 +35,7 @@ class RedisManager:
                                  port=self.port,
                                  username=self.username,
                                  password=self.password)
-            self.r.ping()
+            print(f"RedisManager ping response: {self.r.ping()}")
             print(f"RedisManager connected to {self.host}:{self.port}")
             return True
 
@@ -117,6 +117,7 @@ class RedisManager:
         # no data in redis for this prefix yet
         count = self.r.get(f"{prefix}:count")
         if count is None:
+            print(f"Cache miss on prefix: {prefix}")
             return []
         count = int(count)
         # special case for just a single dictionary, not a list of dictionaries

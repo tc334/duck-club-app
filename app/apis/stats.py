@@ -25,21 +25,21 @@ def get_stats_hunters(users):
     results = []
     for slot_num in range(1, 5):
         if data_in["filter-member"] == "whole-club":
-            this_slot = db.read_custom(f"SELECT users.id, FIRST(users.first_name), FIRST(users.last_name), "
-                                       f"SUM(groupings.num_ducks), COUNT(groupings.num_ducks), "
-                                       f"SUM(groupings.num_non) "
+            this_slot = db.read_custom(f"SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS name, "
+                                       f"SUM(groupings.num_ducks/groupings.num_hunters), COUNT(groupings.num_ducks), "
+                                       f"SUM(groupings.num_non/groupings.num_hunters) "
                                        f"FROM groupings "
                                        f"JOIN users ON groupings.slot{slot_num}_id=users.id "
                                        f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                        f"WHERE groupings.slot{slot_num}_type='member' "
                                        f"AND hunts.hunt_date>='{date_start}' "
                                        f"AND hunts.hunt_date<='{date_end}' "
-                                       f"GROUP BY users.id "
+                                       f"GROUP BY users.id, name "
                                        f"ORDER BY users.id")
         elif data_in["filter-member"] == "just-me":
-            this_slot = db.read_custom(f"SELECT users.id, FIRST(users.first_name), FIRST(users.last_name), "
-                                       f"SUM(groupings.num_ducks), COUNT(groupings.num_ducks), "
-                                       f"SUM(groupings.num_non) "
+            this_slot = db.read_custom(f"SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS name, "
+                                       f"SUM(groupings.num_ducks/groupings.num_hunters), COUNT(groupings.num_ducks), "
+                                       f"SUM(groupings.num_non/groupings.num_hunters) "
                                        f"FROM groupings "
                                        f"JOIN users ON groupings.slot{slot_num}_id=users.id "
                                        f"JOIN hunts ON groupings.hunt_id=hunts.id "
@@ -47,11 +47,14 @@ def get_stats_hunters(users):
                                        f"AND users.id={users['id']} "
                                        f"AND hunts.hunt_date>='{date_start}' "
                                        f"AND hunts.hunt_date<='{date_end}' "
-                                       f"GROUP BY users.id "
+                                       f"GROUP BY users.id, name "
                                        f"ORDER BY users.id")
         else:
             return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
-        results = merge_slots(results, this_slot, start=3)
+        if this_slot is not False:
+            results = merge_slots(results, this_slot, start=2)
+        else:
+            return jsonify({"message": f"Unable to get hunter stats because of internal error"}), 500
 
     # if no results found, stop here
     if len(results) == 0:
@@ -60,11 +63,10 @@ def get_stats_hunters(users):
     list_of_dicts = []
     for user in results:
         list_of_dicts.append({
-            'first_name': user[1],
-            'last_name': user[2],
-            'hunts': user[4],
-            'ducks': user[3],
-            'non_ducks': user[5]
+            'name': user[1],
+            'hunts': user[3],
+            'ducks': float(user[2]),
+            'non_ducks': float(user[4])
         })
 
     return jsonify({"stats": list_of_dicts}), 200
@@ -92,7 +94,7 @@ def update_group_harvest():
     # only force a recount once after a server reset
     if not cache.get_plain(RESET_KEY):
         # add this key so that no other wsgi workers waste time going through the forced recount
-        cache.add_plain(RESET_KEY, True)
+        cache.add_plain(RESET_KEY, "True")
 
         # have to do this once because there could be a server reboot after the cache key (indicating a recount for a
         # group is required) is added but before a stats query came along to trigger action on it
@@ -165,9 +167,11 @@ def force_recount():
     # loop through all of the duck results
     for item in result_ducks:
         num_non = 0  # default
-        idx_non = group_ids_non.index(item[0])
-        if idx_non:
+        try:
+            idx_non = group_ids_non.index(item[0])
             num_non = result_non[idx_non][1]
+        except ValueError:
+            pass
 
         update_dict = {
             'num_ducks': item[1],
@@ -232,10 +236,10 @@ def get_stats_club(users):
         list_of_dicts.append({
             'date': hunt[0],
             'num_groups': hunt[1],
-            'num_hunters': hunt[2],
-            'num_ducks': hunt[3],
-            'non_ducks': hunt[4],
-            'limits': hunt[5]
+            'num_hunters': float(hunt[2]),
+            'num_ducks': float(hunt[3]),
+            'non_ducks': float(hunt[4]),
+            'limits': float(hunt[5])
         })
 
     return jsonify({"stats": list_of_dicts}), 200
@@ -291,15 +295,15 @@ def get_stats_birds(users):
     # now compute the total count
     total_count = 0
     for bird in results:
-        total_count += float(bird[2])
+        total_count += float(bird[1])
 
     # now stitch the names and the counts together
     list_of_dicts = []
     for bird in results:
         list_of_dicts.append({
-            'name': bird[1],
-            'count': float(bird[2]),
-            'pct': float(bird[2]) / total_count,
+            'name': bird[0],
+            'count': float(bird[1]),
+            'pct': float(bird[1]) / total_count,
         })
 
     return jsonify({"stats": list_of_dicts}), 200

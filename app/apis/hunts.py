@@ -175,7 +175,7 @@ def update_row(user, hunt_id):
             if not db.update_custom(f"UPDATE ponds SET selected=FALSE"):
                 return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}. Reset ponds selected failed."}), 500
             # reset ponds only for groups in this hunt
-            if not db.update_custom(f"UPDATE groupings SET pond_id=NULL WHERE id={hunt_id}"):
+            if not db.update_custom(f"UPDATE groupings SET pond_id=NULL WHERE hunt_id={hunt_id}"):
                 return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}. Reset group ponds failed"}), 500
 
         # if changing status from signup_closed to draw_complete, make sure all groups have a pond assigned

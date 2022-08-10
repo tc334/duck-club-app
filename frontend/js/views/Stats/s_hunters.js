@@ -170,8 +170,7 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["first_name"] + " " + db_data[i]["last_name"];
+    tabCell.innerHTML = db_data[i]["name"];
 
     var tabCell = tr.insertCell(-1);
     tabCell.classList.add("cell-fixed-width");

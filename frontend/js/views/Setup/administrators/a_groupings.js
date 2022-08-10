@@ -296,11 +296,11 @@ function populateTable(db_data) {
 
     // duck average
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["harvest_ave_ducks"];
+    tabCell.innerHTML = db_data[i]["num_ducks"];
 
     // duck average
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["harvest_ave_non"];
+    tabCell.innerHTML = db_data[i]["num_non"];
 
     var tabCell = tr.insertCell(-1);
 

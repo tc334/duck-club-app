@@ -165,7 +165,7 @@ class DbManagerCockroach:
         if self.cache:
             if not self.cache.get_plain(STARTUP_KEY):
                 # nobody else has started up, so this worker will do it & try to suspend others
-                self.cache.add_plain(STARTUP_KEY, True)
+                self.cache.add_plain(STARTUP_KEY, "True")
             else:
                 # another worker has already started the process. Wait 60 seconds
                 time.sleep(60)
