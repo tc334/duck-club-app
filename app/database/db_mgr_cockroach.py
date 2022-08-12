@@ -27,7 +27,6 @@ def get_sequence_str(d):
 
 def get_enum_str(d):
     ret_val = f"CREATE TYPE enum_{d['name']} AS ENUM{d['values']}"
-    print(f"Alpha:{ret_val}")
     return ret_val
 
 

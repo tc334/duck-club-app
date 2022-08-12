@@ -129,7 +129,6 @@ def harvest_summary_helper(hunt_id, user_id):
 
     # now pull all groupings that match this hunt_id
     groups_dict = cache.get(f"golf:{hunt_id}")
-    print(f"Zulu:{groups_dict}")
     if len(groups_dict) < 1:
         # no cache hit, go to db
         foo = db.read_custom(f"SELECT "
@@ -137,8 +136,6 @@ def harvest_summary_helper(hunt_id, user_id):
                              f"JOIN ponds ON groupings.pond_id=ponds.id "
                              f"WHERE groupings.hunt_id={hunt_id} "
                              f"ORDER BY groupings.id")
-        print(f"Alpha:foo:{foo}")
-        print(f"Alpha:hunt_id:{hunt_id}")
         # now convert to list of dictionaries
         names = ["group_id", "harvest_update_time", "pond_name"]
         groups_dict = db.format_dict(names, foo)
@@ -150,7 +147,6 @@ def harvest_summary_helper(hunt_id, user_id):
                 item["harvest_update_time"] = "00:00"
         # update cache
         cache.add(f"golf:{hunt_id}", groups_dict, 24*60*60)
-    print(f"Alpha:groups_dict:{groups_dict}")
 
     group_id_of_current_user = None
     for group in groups_dict:
@@ -199,6 +195,8 @@ def harvest_summary_helper(hunt_id, user_id):
                 return jsonify({"message": "unknown internal error"}), 500
             group["num_nonducks"] = sum([elem[0] for elem in harvest_nonducks])
             # update cache
+            if group["num_nonducks"] is None:
+                print(f"Echo:Caught num_nonducks as None. harvest_nonducks:{harvest_nonducks}")
             cache.add(f"juliett:{group['group_id']}", group["num_nonducks"], 60*60)
         else:
             group["num_nonducks"] = int(cache_reply)
@@ -770,23 +768,8 @@ def get_hunt_dict(grouping_id):
         if result is None or len(result) != 1:
             return False
         names = ["id", "status"]
-        print(f"Alpha:{result}")
         hunt_dict = db.format_dict(names, result)[0]
-        print(f"get_hunt_dict:{hunt_dict}")
         # cache update
         cache.add(f"nov:{grouping_id}", hunt_dict, 10 * 60)
-    else:
-        # debug, compare cache against DB
-        print(f"get_hunt_dict, cache: {hunt_dict}")
 
-        result = db.read_custom(
-            f"SELECT h.id, h.status "
-            f"FROM hunts h "
-            f"INNER JOIN groupings g ON g.hunt_id=h.id "
-            f"WHERE g.id={grouping_id}")
-        if result is None or len(result) != 1:
-            return False
-        names = ["id", "status"]
-        hunt_dict_db = db.format_dict(names, result)[0]
-        print(f"get_hunt_dict, db:{hunt_dict_db}")
     return hunt_dict

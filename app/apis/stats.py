@@ -128,6 +128,10 @@ def update_group_harvest():
         else:
             num_non = 0
 
+        if num_non is None:
+            print(f"Echo:Just caught num_non as None. result_non:{result_non}")
+            print(f"group_id:{group_id}")
+
         update_dict = {
             'num_ducks': num_ducks,
             'num_non': num_non
