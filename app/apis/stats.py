@@ -129,6 +129,7 @@ def update_group_harvest():
             num_non = 0
 
         if num_non is None:
+            num_non = 0
             print(f"Echo:Just caught num_non as None. result_non:{result_non}")
             print(f"group_id:{group_id}")
 
