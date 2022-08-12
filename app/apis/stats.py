@@ -358,6 +358,8 @@ def get_stats_ponds(users):
     if len(results) == 0:
         return jsonify({"message": "no results found within filter bounds"}), 404
 
+    print(f"Echo:{results}")
+
     # now stitch the names and the counts together
     list_of_dicts = []
     for pond in results:
