@@ -135,7 +135,7 @@ def harvest_summary_helper(hunt_id, user_id):
                              f"groupings.id, groupings.harvest_update_time, ponds.name FROM groupings "
                              f"JOIN ponds ON groupings.pond_id=ponds.id "
                              f"WHERE groupings.hunt_id={hunt_id} "
-                             f"ORDER BY groupings.id")
+                             f"ORDER BY groupings.harvest_update_time")
         # now convert to list of dictionaries
         names = ["group_id", "harvest_update_time", "pond_name"]
         groups_dict = db.format_dict(names, foo)

@@ -367,6 +367,12 @@ def get_stats_ponds(users):
     # now stitch the names and the counts together
     list_of_dicts = []
     for pond in results:
+        # *****************************
+        # temporary hack to stop crashing
+        if pond[3] is None:
+            pond[3] = 0
+        # end hack
+        # *****************************
         list_of_dicts.append({
             'pond_name': pond[0],
             'num_hunts': float(pond[1]),
