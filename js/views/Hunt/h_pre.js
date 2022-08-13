@@ -1,5 +1,5 @@
-import AbstractView from "../../AbstractView.js";
-import { base_uri } from "../../../constants.js";
+import AbstractView from "../AbstractView.js";
+import { base_uri } from "../../constants.js";
 import {
   callAPI,
   reloadMessage,
@@ -7,7 +7,7 @@ import {
   dateConverter_iso,
   decode_jwt,
   populate_aside,
-} from "../../../common_funcs.js";
+} from "../../common_funcs.js";
 
 var jwt_global;
 var db_data_groupings;
@@ -39,8 +39,9 @@ export default class extends AbstractView {
     // check for reload message; if exists, display
     reloadMessage();
 
-    //const user_level = decode_jwt(jwt);
-    //populate_aside(user_level);
+    // clear the aside
+    var aside = document.getElementById("aside-content");
+    aside.innerHTML = "";
 
     // First step is to pull data from DB
     const route = base_uri + "/groupings/current";

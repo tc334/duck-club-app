@@ -58,6 +58,34 @@ let button = form_login.submit.addEventListener("click", (e) => {
     });
 });
 
+document.getElementById("btn-passwordreset").addEventListener("click", (e) => {
+  let email = prompt(
+    "Enter the email address associated with your account, and a password reset link will be sent to you."
+  );
+  if (email == null || email == "") {
+    return;
+  }
+
+  const route = base_uri + "/password_reset_request";
+  const method = "POST";
+  const body = JSON.stringify({
+    email: email,
+  });
+
+  callAPI(
+    null,
+    route,
+    method,
+    body,
+    (data) => {
+      console.log("Submit appears to have succeeded");
+    },
+    (data) => {
+      reportFail("div-signup-response", data);
+    }
+  );
+});
+
 let signup = form_signup.submit.addEventListener("click", (e) => {
   e.preventDefault();
 

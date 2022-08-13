@@ -410,13 +410,20 @@ footer {
   color: #2f2504;
 }
 
-#a-passwordreset {
+#btn-passwordreset {
   display: block;
   text-decoration: none;
   color: #2f2504;
   text-align: center;
-  font-size: 1.4rem;
+  font-size: 1.6rem;
   margin: 3.2rem auto;
+  font-family: inherit;
+  border: none;
+}
+
+#btn-passwordreset:hover,
+#btn-passwordreset:focus {
+  cursor: pointer;
 }
 
 .server-message {
