@@ -79,10 +79,10 @@ class RedisManager:
             except redis.RedisError as e:
                 print(f"Error in RedisManager method {func}: {e}")
                 return []  # this mimics the return value when there wasn't a key in the redis DB
-            except:
-                e = sys.exc_info()[0]
-                print(f"Non-redis error during execution of RedisManager method {func}, with args {args}: {e}")
-                return []  # this mimics the return value when there wasn't a key in the redis DB
+            # except:
+            #     e = sys.exc_info()[0]
+            #     print(f"Non-redis error during execution of RedisManager method {func}, with args {args}: {e}")
+            #     return []  # this mimics the return value when there wasn't a key in the redis DB
         return wrapper
 
     @transaction_wrapper
@@ -100,7 +100,7 @@ class RedisManager:
         if type(data_in) is dict:
             # special case where there isn't a list; there is just one dictionary
             self.r.setex(f"{prefix}:count", expiration_sec, -1)
-            self.r.setex(f"{prefix}", expiration_sec, json.dumps(data_in))
+            self.r.setex(f"{prefix}", expiration_sec, json.dumps(data_in, default=str))
             return
         if type(data_in) in (int, str, float):
             # special case where there isn't a list; there is just one value
@@ -110,7 +110,7 @@ class RedisManager:
         # nominal case: input is a list of dictionaries
         self.r.setex(f"{prefix}:count", expiration_sec, len(data_in))
         for i, e in enumerate(data_in):
-            self.r.setex(f"{prefix}:{i}", expiration_sec, json.dumps(e))
+            self.r.setex(f"{prefix}:{i}", expiration_sec, json.dumps(e, default=str))
 
     @transaction_wrapper
     def get(self, prefix):

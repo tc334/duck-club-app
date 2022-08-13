@@ -1,3 +1,4 @@
+import datetime
 import time
 
 import psycopg2
@@ -56,7 +57,6 @@ class DbManagerCockroach:
         self.conn = None
 
     def init_app(self, db_url, admin_email, cache=None):
-
         # capture inputs in member variables
         self.db_url = db_url
         self.admin_email = admin_email
@@ -79,6 +79,8 @@ class DbManagerCockroach:
         return self.conn and self.conn.closed == 0
 
     def connect(self):
+        print(f"Zulu:connect")
+
         try:
             self.close()
             self.conn = psycopg2.connect(self.db_url)
@@ -204,7 +206,10 @@ class DbManagerCockroach:
             'email': self.admin_email,
             'public_id': str(uuid.uuid4()),
             'password_hash': generate_password_hash('password', method='sha256'),
-            'level': 'administrator'
+            'level': 'administrator',
+            'status': 'active',
+            'confirmed': 'true',
+            'confirmed_on': datetime.datetime.now()
         }
         self.add_row('users', admin)
         self.populate_basic_tables()

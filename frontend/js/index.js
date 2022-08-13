@@ -1,7 +1,7 @@
 // functions, constants imported from other javascript files
-//import { decode_jwt, populate_aside } from "./common_funcs.js";
+import { base_uri } from "./constants.js";
+import { callAPI, displayMessageToUser } from "./common_funcs.js";
 import setup_landing from "./views/Setup/setup_landing.js";
-import u_pre from "./views/Setup/members/u_pre.js";
 import u_profile from "./views/Setup/members/u_profile.js";
 import m_hunts from "./views/Setup/managers/m_hunts.js";
 import m_add from "./views/Setup/managers/m_add.js";
@@ -14,6 +14,9 @@ import o_birds from "./views/Setup/owners/o_birds.js";
 import o_ponds from "./views/Setup/owners/o_ponds.js";
 import a_hunts from "./views/Setup/administrators/a_hunts.js";
 import a_groupings from "./views/Setup/administrators/a_groupings.js";
+import h_pre from "./views/Hunt/h_pre.js";
+import h_no from "./views/Hunt/h_no.js";
+import h_live from "./views/Hunt/h_live.js";
 import live_hunt from "./views/live_hunt.js";
 import s_dates from "./views/Stats/s_dates.js";
 import s_hunters from "./views/Stats/s_hunters.js";
@@ -28,6 +31,11 @@ if (!jwt) {
   location.href = "login.html";
 }
 
+const goto_route = async (view, jwt) => {
+  document.querySelector("#div-main").innerHTML = await view.getHtml();
+  view.js(jwt);
+};
+
 const router = async () => {
   const routes = [
     {
@@ -39,16 +47,12 @@ const router = async () => {
       view: setup_landing,
     },
     {
-      path: "#nav_live",
-      view: live_hunt,
+      path: "#nav_hunt",
+      view: live_hunt, // default only; branch below
     },
     {
       path: "#nav_stats",
       view: s_dates,
-    },
-    {
-      path: "#u_pre",
-      view: u_pre,
     },
     {
       path: "#u_profile",
@@ -138,10 +142,17 @@ const router = async () => {
     };
   }
 
+  // for Hunts only, we have a branching view
+  if (match.route.path == "#nav_hunt") {
+    hunt_branch(jwt);
+  } else {
+    goto_route(new match.route.view(), jwt);
+  }
+
   // This updates the view
-  const view = new match.route.view();
-  document.querySelector("#div-main").innerHTML = await view.getHtml();
-  view.js(jwt);
+  //const view = new match.route.view();
+  //document.querySelector("#div-main").innerHTML = await view.getHtml();
+  //view.js(jwt);
 };
 
 // call to router for initial page load
@@ -151,3 +162,44 @@ router();
 window.addEventListener("hashchange", function (e) {
   router();
 });
+
+// this is a special test used for the "Hunt" screen to route
+// the page to either:
+// signup-open, signup-closed, draw-complete: pre-hunt
+// hunt-open: live-hunt
+// else: no-hunt
+function hunt_branch(jwt) {
+  const route = base_uri + "/hunts/active";
+  callAPI(
+    jwt,
+    route,
+    "GET",
+    null,
+    (response_full_json) => {
+      if (response_full_json["hunts"]) {
+        const hunts_dict = response_full_json["hunts"];
+        //console.log(hunts_dict);
+        // logic
+        if (hunts_dict.length == 1) {
+          if (
+            hunts_dict[0]["status"] == "signup_open" ||
+            hunts_dict[0]["status"] == "signup_closed" ||
+            hunts_dict[0]["status"] == "draw_complete"
+          ) {
+            goto_route(new h_pre(), jwt);
+          } else if (hunts_dict[0]["status"] == "hunt_open") {
+            goto_route(new h_live(), jwt);
+          } else {
+            goto_route(new h_no(), jwt);
+          }
+        } else {
+          // this is an error condition. there should never be more than 1 hunt active
+          goto_route(new h_no(), jwt);
+        }
+      } else {
+        //console.log(data);
+      }
+    },
+    displayMessageToUser
+  );
+}

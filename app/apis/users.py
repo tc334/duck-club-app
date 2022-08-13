@@ -1,10 +1,14 @@
-from flask import Blueprint, request, jsonify, current_app, make_response
+import datetime
+
+from flask import Blueprint, request, jsonify, current_app, make_response, url_for, render_template
 from werkzeug.security import generate_password_hash, check_password_hash
-from .. import db, cache
 import uuid
 import jwt
-import datetime
+
+from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
+from app.user_aux.token import generate_confirmation_token
+from app.user_aux.email import send_email
 
 users_bp = Blueprint('users', __name__)
 table_name = 'users'
@@ -60,11 +64,67 @@ def signup():
     # append this information to what the user put in
     data_in['public_id'] = str(uuid.uuid4())
     data_in['password_hash'] = generate_password_hash(data_in['password'], method='sha256')
+    data_in['registered_on'] = datetime.datetime.now()
 
     db.add_row(table_name, data_in)
     cache.delete("charlie")
 
+    # send email to user for them to verify their email address
+    token = generate_confirmation_token(data_in["email"])
+    confirm_url = url_for('main.confirm_email', token=token, _external=True)
+    html = render_template('activate.html', confirm_url=confirm_url)
+    subject = "Please confirm your email to the Duck Club App"
+    send_email(data_in["email"], subject, html)
+
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
+
+
+@users_bp.route('/password_reset_request', methods=['POST'])
+def password_reset_request():
+    data_in = request.get_json()  # expecting keys: email
+    # Error checking
+    if data_in is None:
+        return jsonify({'message': 'No data received'}), 400
+    if 'email' not in data_in:
+        return jsonify({'message': 'Email missing'}), 400
+    email = data_in["email"]
+
+    # first check to see if this email address exists
+    results = db.read_custom(
+        f"SELECT id "
+        f"FROM users "
+        f"WHERE email = '{email}'")
+    if not results or len(results) != 1:
+        # email not found in users table. perhaps fraud? take no further action
+        print(f"Password reset request failed. Didn't find {email} in DB")
+    else:
+        # send email to user for them to reset their password
+        token = generate_confirmation_token(email)
+        reset_url = url_for('main.reset_password', token=token, _external=True)
+        html = render_template('password_reset_email.html', reset_url=reset_url)
+        subject = "Password reset to the Duck Club App"
+        send_email(email, subject, html)
+
+    # don't want to indicate to malicious user if email is in our list or not, so same reply for all
+    return jsonify({"message": "Request received"}), 200
+
+
+@users_bp.route('/password_reset', methods=['POST'])
+def password_reset():
+    public_id = request.form['public_id']
+    password = request.form['password']
+
+    if public_id is None or password is None:
+        return jsonify({'message': 'No data received'}), 400
+
+    new_dict = {
+        'password_hash': generate_password_hash(password, method='sha256')
+    }
+
+    if db.update_row(table_name, public_id, new_dict, "public_id"):
+        return render_template('password_reset_success.html'), 200
+    else:
+        return "Password update failed", 400
 
 
 @users_bp.route('/users', methods=['POST'])
@@ -92,6 +152,7 @@ def manual_add(user):
     data_in['public_id'] = str(uuid.uuid4())
     # here a user has been created manually, so no password is provided. Just make one up
     data_in['password_hash'] = generate_password_hash('password', method='sha256')
+    data_in['registered_on'] = datetime.datetime.now()
 
     db.add_row(table_name, data_in)
     cache.delete("charlie")

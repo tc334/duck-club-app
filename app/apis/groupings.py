@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+import datetime
 from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 
@@ -761,15 +762,19 @@ def get_hunt_dict(grouping_id):
     if not hunt_dict:
         # cache miss, go to db
         result = db.read_custom(
-            f"SELECT h.id, h.status "
+            f"SELECT h.id, h.status, h.hunt_date "
             f"FROM hunts h "
             f"INNER JOIN groupings g ON g.hunt_id=h.id "
             f"WHERE g.id={grouping_id}")
         if result is None or len(result) != 1:
             return False
-        names = ["id", "status"]
+        names = ["id", "status", "hunt_date"]
         hunt_dict = db.format_dict(names, result)[0]
         # cache update
         cache.add(f"nov:{grouping_id}", hunt_dict, 10 * 60)
+    else:
+        # cache hit, need to fix datetime fields
+        for hunt in hunt_dict:
+            hunt["hunt_date"] = datetime.datetime.strptime(hunt["hunt_date"], '%Y-%m-%d').date()
 
     return hunt_dict

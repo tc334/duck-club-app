@@ -18,164 +18,168 @@
       }
     </script>
   </head>
-  <main class="container" id="login-container">
-    <section class="eye-candy" id="section-candy">
-      <div id="top-row">
-        <div id="app-name">Welcome Home</div>
-        <img class="header-logo" src="img/Logo_lightGray.jpg" width=100%/>
-      </div>
-      <div class="frame">
-        <picture>
-          <source media="(min-width: 30em)" srcset="img/panoramic_hunt.jpg">
-          <img src="img/panoramic_hunt_small.jpg" id="panorama"/>
-        </picture>
-        
-      </div>
-    </section>
+  <body>
+    <main class="container" id="login-container">
+      <section class="eye-candy" id="section-candy">
+        <div id="top-row">
+          <div id="app-name">Welcome Home</div>
+          <img class="header-logo" src="img/Logo_lightGray.jpg" width="100%" />
+        </div>
+        <div class="frame">
+          <picture>
+            <source media="(min-width: 30em)" srcset="img/panoramic_hunt.jpg" />
+            <img src="img/panoramic_hunt_small.jpg" id="panorama" />
+          </picture>
+        </div>
+      </section>
 
-    <section id="section-action">
-      <article class="login-section">
-        <h1 class="heading-secondary">Existing User Login</h1>
-        <form class="login-form" netlify>
-          <div>
-            <label for="inp-login-email">Email</label>
-            <input id="inp-login-email" type="email" name="username" required />
-          </div>
-
-          <div>
-            <label for="inp-login-password">Password</label>
-            <input
-              id="inp-login-password"
-              type="password"
-              name="password"
-              required
-            />
-          </div>
-
-          <span class="button-holder login-buttons">
-            <button id="btn-login-submit" class="btn--form" type="submit">
-              Login
-            </button>
-            <input
-              id="inp-login-reset"
-              class="btn--form"
-              type="reset"
-              value="Clear"
-            />
-          </span>
-        </form>
-        <a href="#" id="a-passwordreset">Forgot password?</a>
-        <div id="div-login-response" class="server-message"></div>
-      </article>
-
-      <article class="login-section">
-        <h1 class="heading-secondary">New User Sign Up</h1>
-        <form class="login-form" id="frm-signup" netlify>
-          <div>
-            <label for="inp-signup-firstname">First Name</label>
-            <input
-              id="inp-signup-firstname"
-              type="text"
-              placeholder="John"
-              name="first_name"
-              required
-            />
-          </div> 
-
-          <div>
-            <label for="inp-signup-lastname">Last Name</label>
-            <input
-              id="inp-signup-lastname"
-              type="text"
-              placeholder="Doe"
-              name="last_name"
-              required
-            />
-          </div>
-
-          <div>
-            <label for="inp-signup-email">Email address</label>
-            <input
-              id="inp-signup-email"
-              type="email"
-              placeholder="john.doe@domain.com"
-              name="email"
-              required
-            />
-          </div>
-
-          <div>
-            <label for="inp-signup-password">Password</label>
-            <input
-              id="inp-signup-password"
-              type="password"
-              name="password"
-              required
-            />
-          </div>
-
-          <div>
-            <label for="inp-combo-1">Combination</label>
+      <section id="section-action">
+        <article class="login-section">
+          <h1 class="heading-secondary">Existing User Login</h1>
+          <form class="login-form" netlify>
             <div>
+              <label for="inp-login-email">Email</label>
               <input
-                class="inp-combo"
-                id="inp-combo-1"
-                type="password"
-                placeholder=""
-                name="combo-1"
-                maxlength="1"
-                onkeyup="moveOnMax(this,'inp-combo-2')"
-                required
-              />
-              <input
-                class="inp-combo"
-                id="inp-combo-2"
-                type="password"
-                placeholder=""
-                name="combo-1"
-                maxlength="1"
-                onkeyup="moveOnMax(this,'inp-combo-3')"
-                required
-              />
-              <input
-                class="inp-combo"
-                id="inp-combo-3"
-                type="password"
-                placeholder=""
-                name="combo-3"
-                maxlength="1"
-                onkeyup="moveOnMax(this,'inp-combo-4')"
-                required
-              />
-              <input
-                class="inp-combo"
-                id="inp-combo-4"
-                type="password"
-                placeholder=""
-                name="combo-4"
-                maxlength="1"
+                id="inp-login-email"
+                type="email"
+                name="username"
                 required
               />
             </div>
-          </div>
+
+            <div>
+              <label for="inp-login-password">Password</label>
+              <input
+                id="inp-login-password"
+                type="password"
+                name="password"
+                required
+              />
+            </div>
+
+            <span class="button-holder login-buttons">
+              <button id="btn-login-submit" class="btn--form" type="submit">
+                Login
+              </button>
+              <input
+                id="inp-login-reset"
+                class="btn--form"
+                type="reset"
+                value="Clear"
+              />
+            </span>
+          </form>
+          <button id="btn-passwordreset">Forgot password?</button>
+          <div id="div-login-response" class="server-message"></div>
+        </article>
+
+        <article class="login-section">
+          <h1 class="heading-secondary">New User Sign Up</h1>
+          <form class="login-form" id="frm-signup" netlify>
+            <div>
+              <label for="inp-signup-firstname">First Name</label>
+              <input
+                id="inp-signup-firstname"
+                type="text"
+                placeholder="John"
+                name="first_name"
+                required
+              />
+            </div>
+
+            <div>
+              <label for="inp-signup-lastname">Last Name</label>
+              <input
+                id="inp-signup-lastname"
+                type="text"
+                placeholder="Doe"
+                name="last_name"
+                required
+              />
+            </div>
+
+            <div>
+              <label for="inp-signup-email">Email address</label>
+              <input
+                id="inp-signup-email"
+                type="email"
+                placeholder="john.doe@domain.com"
+                name="email"
+                required
+              />
+            </div>
+
+            <div>
+              <label for="inp-signup-password">Password</label>
+              <input
+                id="inp-signup-password"
+                type="password"
+                name="password"
+                required
+              />
+            </div>
+
+            <div>
+              <label for="inp-combo-1">Combination</label>
+              <div>
+                <input
+                  class="inp-combo"
+                  id="inp-combo-1"
+                  type="password"
+                  placeholder=""
+                  name="combo-1"
+                  maxlength="1"
+                  onkeyup="moveOnMax(this,'inp-combo-2')"
+                  required
+                />
+                <input
+                  class="inp-combo"
+                  id="inp-combo-2"
+                  type="password"
+                  placeholder=""
+                  name="combo-1"
+                  maxlength="1"
+                  onkeyup="moveOnMax(this,'inp-combo-3')"
+                  required
+                />
+                <input
+                  class="inp-combo"
+                  id="inp-combo-3"
+                  type="password"
+                  placeholder=""
+                  name="combo-3"
+                  maxlength="1"
+                  onkeyup="moveOnMax(this,'inp-combo-4')"
+                  required
+                />
+                <input
+                  class="inp-combo"
+                  id="inp-combo-4"
+                  type="password"
+                  placeholder=""
+                  name="combo-4"
+                  maxlength="1"
+                  required
+                />
+              </div>
+            </div>
 
             <span class="button-holder login-buttons">
               <button id="btn-signup-submit" class="btn--form" type="submit">
                 Sign Up
               </button>
-              <input  
+              <input
                 id="inp-signup-reset"
                 class="btn--form"
                 type="reset"
                 value="Clear"
               />
             </span>
-          </div>
-        </form>
-        <div id="div-signup-response" class="server-message"></div>
-      </article>
-    </section>
-  </main>
+          </form>
+          <div id="div-signup-response" class="server-message"></div>
+        </article>
+      </section>
+    </main>
   </body>
   <script type="module" src="js/common_funcs.js"></script>
   <script type="module" src="js/constants.js"></script>

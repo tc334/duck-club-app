@@ -150,12 +150,27 @@ schema = {
         {
             'name': 'status',
             'type': 'enum_user_status',
-            'extra': "DEFAULT 'active'"
+            'extra': "DEFAULT 'inactive'"
+        },
+        {
+            'name': 'confirmed',
+            'type': 'BOOLEAN',
+            'extra': "NOT NULL DEFAULT false"
         },
         {
             'name': 'outstanding_balance',
             'type': 'NUMERIC(8,2)',
             'extra': 'DEFAULT 0.00'
+        },
+        {
+            'name': 'registered_on',
+            'type': 'TIMESTAMP',
+            'extra': ''
+        },
+        {
+            'name': 'confirmed_on',
+            'type': 'TIMESTAMP',
+            'extra': ''
         }
     ],
 

@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
+from flask_mail import Mail
 from .database.db_mgr_cockroach import DbManagerCockroach
 from .cache.redis_manager import RedisManager
 from urllib.parse import urlparse
@@ -9,6 +10,7 @@ import os
 # instance of databases
 db = DbManagerCockroach()
 cache = RedisManager()
+mail = None
 
 
 def create_app():
@@ -43,6 +45,11 @@ def create_app():
     )
 
     db.select_db(db_name=app.config["DB_NAME"])
+
+    global mail
+    mail = Mail(app)
+    app.config['MAIL_USE_TLS'] = False
+    app.config['MAIL_USE_SSL'] = True
 
     from .views import main
     from . import apis

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from datetime import datetime
+import datetime
 import pytz
 from .. import db, cache
 from .groupings import get_hunt_dict
@@ -12,7 +12,7 @@ table_name = 'harvest'
 
 def central_time_now():
     IST = pytz.timezone('US/Central')
-    datetime_ist = datetime.now(IST)
+    datetime_ist = datetime.datetime.now(IST)
     result = datetime_ist.strftime('%H:%M')
     return result
 
@@ -39,7 +39,7 @@ def update_harvest(user):
     if not hunts_dict:
         return jsonify({"message": "Internal error in update_harvest(), invalid read of hunt dictionary"}), 500
 
-    # member attempting to post/put harvest must be in this group and hunt must be active
+    # member attempting to post/put harvest must be in this group and (hunt must be open or closed and within 1 day)
     # manager and above can modify any harvest at any time
     if user["level"] == "member":
         # 1. check to make sure user is in group
@@ -58,8 +58,9 @@ def update_harvest(user):
         slot_ids = [elem["public_id"] for elem in pid_dict]
         if not user["public_id"] in slot_ids:
             return jsonify({"error": "Members can only post harvest results to their own hunts"}), 400
-        # 2. check to make sure hunt is active
-        if hunts_dict['status'] != 'hunt_open':
+        # 2. check if hunt is open or within 1 day of being closed
+        delta_days = round((datetime.date.today() - hunts_dict["hunt_date"]).total_seconds() / (60*60*24))
+        if not (hunts_dict['status'] == 'hunt_open' or hunts_dict['status'] == 'hunt_closed' and delta_days <= 1):
             return jsonify({"message": f"Member cannot modify harvest for hunt {hunts_dict['id']} because hunt status is {hunts_dict['status']}"}), 400
 
     # make constants into length 1 arrays
@@ -158,7 +159,7 @@ def del_row(user, harvest_id):
 
 @harvests_bp.route('/harvests/filtered', methods=['GET'])
 @token_required(all_members)
-def get_stats_birds(users):
+def get_stats_birds(user):
     # convert query selector string in URL to dictionary
     data_in = request.args.to_dict()
     if 'hunt_id' in data_in and int(data_in['hunt_id']) > -1:
@@ -171,6 +172,11 @@ def get_stats_birds(users):
     else:
         b_filter_pond = False
 
+    if user["level"] == 'member':
+        b_filter_user = True
+    else:
+        b_filter_user = False
+
     sql_qry_str = f"SELECT harvest.id, ponds.name, hunts.hunt_date, groupings.id, birds.name, harvest.count "\
                   f"FROM {table_name} "\
                   f"JOIN groupings ON harvest.group_id=groupings.id "\
@@ -178,22 +184,35 @@ def get_stats_birds(users):
                   f"JOIN hunts ON groupings.hunt_id=hunts.id "\
                   f"JOIN ponds ON groupings.pond_id=ponds.id "
 
+    if b_filter_pond or b_filter_hunt or b_filter_user:
+        sql_qry_str += "WHERE "
+
     if b_filter_pond:
-        sql_qry_str += f"WHERE ponds.id={data_in['pond_id']} "
+        sql_qry_str += f"ponds.id={data_in['pond_id']} "
 
     if b_filter_pond and b_filter_hunt:
-        sql_qry_str += f"AND hunts.id={data_in['hunt_id']} "
-    elif b_filter_hunt:
-        sql_qry_str += f"WHERE hunts.id={data_in['hunt_id']} "
+        sql_qry_str += f"AND "
 
-    sql_qry_str += f"ORDER BY hunts.hunt_date, ponds.name, birds.type"
+    if b_filter_hunt:
+        sql_qry_str += f"hunts.id={data_in['hunt_id']} "
+
+    if (b_filter_pond or b_filter_hunt) and b_filter_user:
+        sql_qry_str += f"AND "
+
+    if b_filter_user:
+        sql_qry_str += f"(" \
+                       f"groupings.slot1_type='member' AND groupings.slot1_id={user['id']} OR " \
+                       f"groupings.slot2_type='member' AND groupings.slot2_id={user['id']} OR " \
+                       f"groupings.slot3_type='member' AND groupings.slot3_id={user['id']} OR " \
+                       f"groupings.slot4_type='member' AND groupings.slot4_id={user['id']}) "
+
+    sql_qry_str += f"ORDER BY hunts.hunt_date, ponds.name, birds.type LIMIT 100"
 
     results = db.read_custom(sql_qry_str)
 
     if results is not None:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
         names_all = ["harvest_id", "pond_name", "hunt_date", "group_id", "bird_name", "count"]
-        print(f"Bravo:results:{results}")
         results_dict = db.format_dict(names_all, results)
         return jsonify({"harvests": results_dict}), 200
     else:
