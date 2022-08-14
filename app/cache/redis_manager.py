@@ -2,6 +2,8 @@ import redis
 import sys
 import json
 import functools
+import random
+import time
 
 DISABLE_REDIS = False
 
@@ -22,12 +24,19 @@ class RedisManager:
         self.password = password
 
         if not DISABLE_REDIS:
+
+            # each worker waits a random time before connecting (between 0 and X seconds)
+            wait_time_s = random.uniform(0, 5)
+            time.sleep(wait_time_s)
+
             if self.connect():
 
-                self.wipe_cache()
+                if not self.r.get("freshly_wiped"):
+                    self.wipe_cache()
+                    self.r.setex("freshly_wiped", 60, 1)
 
-                # initialize counter for # times database is hit
-                self.r.set("db_count", 0)
+                    # initialize counter for # times database is hit
+                    self.r.set("db_count", 0)
 
     def connect(self):
         try:

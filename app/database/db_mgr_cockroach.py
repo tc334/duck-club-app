@@ -168,8 +168,8 @@ class DbManagerCockroach:
                 # nobody else has started up, so this worker will do it & try to suspend others
                 self.cache.add_plain(STARTUP_KEY, "True")
             else:
-                # another worker has already started the process. Wait 60 seconds
-                time.sleep(60)
+                # another worker has already started the process. Wait X seconds
+                time.sleep(30)
 
         if db_name not in self.list_databases():
             # the requested DB doesn't exist, so create it
@@ -181,7 +181,7 @@ class DbManagerCockroach:
                 # newly created DB needs to be built out too
                 return self.build()
             else:
-                self.list_tables(print_on=True)
+                # self.list_tables(print_on=True)
                 self.compare_db()
                 return True
         else:
