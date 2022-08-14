@@ -18,22 +18,35 @@ table_name = 'users'
 def login():
     auth = request.authorization
     if auth and auth.username and auth.password:
-        results = db.read_custom(f"SELECT public_id, password_hash, level FROM {table_name} WHERE email = '{auth.username}' LIMIT 1")
+        results = db.read_custom(f"SELECT public_id, password_hash, level, confirmed, status FROM {table_name} WHERE email = '{auth.username}' LIMIT 1")
         if results and len(results) == 1:
-            user = db.sql_to_dict(results, names=["public_id", "password_hash", "level"])
+            user = db.sql_to_dict(results, names=["public_id", "password_hash", "level", "confirmed", "status"])
             if check_password_hash(user["password_hash"], auth.password):
+                if user["confirmed"]:
+                    if user["status"] == "active":
 
-                # login successful, send back a JWT
-                token = jwt.encode({
-                    "user": user["public_id"],
-                    "level": user["level"],
-                    "exp": datetime.datetime.utcnow() + datetime.timedelta(days=3),
-                    "token_id": str(uuid.uuid4())
-                }, current_app.config["SECRET_KEY"])
+                        # login successful, send back a JWT
+                        token = jwt.encode({
+                            "user": user["public_id"],
+                            "level": user["level"],
+                            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=3),
+                            "token_id": str(uuid.uuid4())
+                        }, current_app.config["SECRET_KEY"])
 
-                return jsonify({'token': token})
+                        return jsonify({'token': token})
 
-    return make_response("Could not verify password", 401, {"WWW-Authenticate": "Basic realm='Login Required'"})
+                    else:
+                        return make_response("Your account has been deactivated", 401,
+                                             {"WWW-Authenticate": "Basic realm='Login Required'"})
+                else:
+                    return make_response("Email address not verified. If you just signed up, check your inbox", 401,
+                                         {"WWW-Authenticate": "Basic realm='Login Required'"})
+            else:
+                return make_response("Could not verify password", 401, {"WWW-Authenticate": "Basic realm='Login Required'"})
+        else:
+            return make_response("Could not find user with that email", 401, {"WWW-Authenticate": "Basic realm='Login Required'"})
+    else:
+        return make_response("Login information missing", 401, {"WWW-Authenticate": "Basic realm='Login Required'"})
 
 
 @users_bp.route('/signup', methods=['POST'])
