@@ -3,17 +3,19 @@ import { base_uri } from "./constants.js";
 import { callAPI, displayMessageToUser } from "./common_funcs.js";
 import setup_landing from "./views/Setup/setup_landing.js";
 import u_profile from "./views/Setup/members/u_profile.js";
+import u_harvest from "./views/Setup/members/u_harvest.js";
 import m_hunts from "./views/Setup/managers/m_hunts.js";
 import m_add from "./views/Setup/managers/m_add.js";
 import m_groupings from "./views/Setup/managers/m_groupings.js";
 import m_availability from "./views/Setup/managers/m_availability.js";
-import m_harvest from "./views/Setup/managers/m_harvest.js";
 import o_properties from "./views/Setup/owners/o_properties.js";
 import o_members from "./views/Setup/owners/o_members.js";
 import o_birds from "./views/Setup/owners/o_birds.js";
 import o_ponds from "./views/Setup/owners/o_ponds.js";
 import a_hunts from "./views/Setup/administrators/a_hunts.js";
 import a_groupings from "./views/Setup/administrators/a_groupings.js";
+import a_harvests from "./views/Setup/administrators/a_harvests.js";
+import a_misc from "./views/Setup/administrators/a_misc.js";
 import h_pre from "./views/Hunt/h_pre.js";
 import h_no from "./views/Hunt/h_no.js";
 import h_live from "./views/Hunt/h_live.js";
@@ -75,8 +77,8 @@ const router = async () => {
       view: m_availability,
     },
     {
-      path: "#m_harvest",
-      view: m_harvest,
+      path: "#u_harvest",
+      view: u_harvest,
     },
     {
       path: "#o_members",
@@ -101,6 +103,14 @@ const router = async () => {
     {
       path: "#a_groupings",
       view: a_groupings,
+    },
+    {
+      path: "#a_harvests",
+      view: a_harvests,
+    },
+    {
+      path: "#a_misc",
+      view: a_misc,
     },
     {
       path: "#s_dates",
