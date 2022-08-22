@@ -110,6 +110,19 @@ export default class extends AbstractView {
           <button class="btn--form" id="btn-update" disabled>Update</button>
           <input class="btn--form" type="reset" />
         </span>
+        <p class="side-note">Note: Members can only add/edit harvest information up to one day after a hunt.
+        If you see something outside that range that needs to be corrected, please notify a manager, owner, or administrator.
+        The date(s) and group id(s) for harvests you can modify are listed below</p>
+        <table>
+          <thead>
+            <tr>
+              <th>date</th>
+              <th>group id</th>
+            </tr>
+          </thead>
+          <tbody id="tbl-editable">
+          </tbody>
+        </table>
       </div>
     </form>`
     );
@@ -156,10 +169,25 @@ export default class extends AbstractView {
                     if (response_full_json["birds"]) {
                       db_data_birds = response_full_json["birds"];
                       //console.log(db_data);
-                      // now, only once harvests, ponds, & birds are successfully loaded, can we call the action
-                      populatePondListBox();
-                      populateBirdListBox();
-                      populateDateList_aux(db_data_dates);
+                      const route_4 = base_uri + "/groupings/editable";
+                      callAPI(
+                        jwt,
+                        route_4,
+                        "GET",
+                        null,
+                        (response_full_json) => {
+                          if (response_full_json["message"]) {
+                            const db_editable = response_full_json["message"];
+                            //console.log(db_editable);
+                            // now, only once harvests, ponds, & birds are successfully loaded, can we call the action
+                            populatePondListBox();
+                            populateBirdListBox();
+                            populateDateList_aux(db_data_dates);
+                            populateEditable(db_editable);
+                          }
+                        },
+                        displayMessageToUser
+                      );
                     } else {
                       //console.log(data);
                     }
@@ -280,7 +308,7 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["harvest_id"];
+    tabCell.innerHTML = db_data[i]["harvest_id"].slice(0, 3);
 
     // date
     var tabCell = tr.insertCell(-1);
@@ -389,5 +417,22 @@ function populateDateList_aux(db_data) {
     new_opt.innerHTML = dateConverter_http(db_data[i]["hunt_date"]);
     new_opt.value = db_data[i]["id"];
     select_dates.appendChild(new_opt);
+  }
+}
+
+function populateEditable(db_data) {
+  var table = document.getElementById("tbl-editable");
+  removeAllChildNodes(table);
+
+  for (var i = 0; i < db_data.length; i++) {
+    var tr = table.insertRow(-1);
+
+    // date
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = dateConverter_http(db_data[i]["hunt_date"]);
+
+    // group id
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data[i]["group_id"];
   }
 }

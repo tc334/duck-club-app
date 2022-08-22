@@ -4,8 +4,7 @@ sequences = [
     'seq_users_id',
     'seq_properties_id',
     'seq_ponds_id',
-    'seq_groupings_id',
-    'seq_harvest_id'
+    'seq_groupings_id'
 ]
 
 enums = [
@@ -304,8 +303,8 @@ schema = {
     "harvest": [
         {
             'name': 'id',
-            'type': 'INT',
-            'extra': "DEFAULT nextval('seq_harvest_id') PRIMARY KEY"
+            'type': 'UUID',
+            'extra': "DEFAULT gen_random_uuid() PRIMARY KEY"
         },
         {
             'name': 'group_id',

@@ -5,12 +5,11 @@ from flask import current_app
 
 def send_email(to, subject, template):
     message = Mail(
-        from_email='tegan.counts@gmail.com',
+        from_email='tegan@duckclub.app',
         to_emails=to,
         subject=subject,
         html_content=template)
     try:
-        print(f"Alpha:{current_app.config['SENDGRID_API_KEY']}")
         sg = SendGridAPIClient(current_app.config["SENDGRID_API_KEY"])
         response = sg.send(message)
         print(response.status_code)

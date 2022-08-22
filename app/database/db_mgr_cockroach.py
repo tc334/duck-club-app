@@ -1,4 +1,5 @@
 import datetime
+import random
 import time
 
 import psycopg2
@@ -67,6 +68,9 @@ class DbManagerCockroach:
         self.tables = {}
         for key in schema:
             self.tables[key] = Table(schema[key])
+
+        # trying to stagger wsgi workers
+        time.sleep(round(random.random()*5))
 
         # initial server connection
         if self.connect():
@@ -162,15 +166,6 @@ class DbManagerCockroach:
         return self.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
     def select_db(self, db_name, b_build=False):
-        # this is to prevent multiple wsgi workers from trying to create a DB
-        if self.cache:
-            if not self.cache.get_plain(STARTUP_KEY):
-                # nobody else has started up, so this worker will do it & try to suspend others
-                self.cache.add_plain(STARTUP_KEY, "True")
-            else:
-                # another worker has already started the process. Wait X seconds
-                time.sleep(30)
-
         if db_name not in self.list_databases():
             # the requested DB doesn't exist, so create it
             self.create_db(db_name)
@@ -179,7 +174,17 @@ class DbManagerCockroach:
         if self.execute(f"USE {db_name}"):
             if b_build:
                 # newly created DB needs to be built out too
-                return self.build()
+                # this is to prevent multiple wsgi workers from trying to create a DB
+                if self.cache:
+                    if not self.cache.get_plain(STARTUP_KEY):
+                        # nobody else has started up, so this worker will do it & try to suspend others
+                        self.cache.add_plain(STARTUP_KEY, "True", expiration_sec=30)
+                        return self.build()
+                    else:
+                        # another node appears to be building this DB now, so skip
+                        pass
+                else:
+                    return self.build()
             else:
                 # self.list_tables(print_on=True)
                 self.compare_db()
@@ -273,6 +278,9 @@ class DbManagerCockroach:
         print("Comparing current DB to schema")
         # check to see if the currently selected database matches the schema loaded from local file
         tables_db = self.list_tables()
+        # error check. empty list and None/False are different.
+        if not tables_db:
+            return False
         # if the db has no tables, build it
         if len(tables_db) == 0:
             if not self.build():

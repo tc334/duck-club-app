@@ -144,6 +144,14 @@ def update_group_harvest():
         cache_result = cache.set_pop(SET_NAME)
 
 
+@stats_bp.route('/stats/force_recount')
+@token_required(admin_only)
+def external_force_recount(users):
+    print("Recount forced externally")
+    force_recount()
+    return jsonify({"message": "Forced recount complete"}), 200
+
+
 def force_recount():
     # compute the total number of ducks and non-ducks per hunter for each grouping
     print("Running force_recount()")

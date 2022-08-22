@@ -778,3 +778,27 @@ def get_hunt_dict(grouping_id):
             hunt["hunt_date"] = datetime.datetime.strptime(hunt["hunt_date"], '%Y-%m-%d').date()
 
     return hunt_dict
+
+
+@groupings_bp.route('/groupings/editable', methods=['GET'])
+@token_required(all_members)
+def get_editable_hunts(user):
+    # return the dates and group ids for hunts that the user can still edit harvests for
+    results = db.read_custom(
+        f"SELECT groupings.id, hunts.hunt_date FROM groupings "
+        f"JOIN hunts ON groupings.hunt_id=hunts.id "
+        f"WHERE hunts.status='hunt_closed' "
+        f"AND current_date()-hunts.hunt_date <= 1 "
+        f"AND ("
+        f"groupings.slot1_type='member' AND groupings.slot1_id={user['id']} OR "
+        f"groupings.slot2_type='member' AND groupings.slot2_id={user['id']} OR "
+        f"groupings.slot3_type='member' AND groupings.slot3_id={user['id']} OR "
+        f"groupings.slot4_type='member' AND groupings.slot4_id={user['id']}) "
+        f"ORDER BY hunts.hunt_date"
+    )
+    if results:
+        names = ["group_id", "hunt_date"]
+        results_dict = db.format_dict(names, results)
+        return jsonify({"message": results_dict}), 200
+    else:
+        return jsonify({"message": "Error looking up editable hunts"}), 500
