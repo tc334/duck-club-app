@@ -89,7 +89,9 @@ def signup():
     subject = "Please confirm your email to the Duck Club App"
     send_email(data_in["email"], subject, html)
 
-    return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
+    return jsonify({'message': data_in['first_name'] + ' successfully added. Your email needs to be verified before'
+                                                       'you can log in. Check your inbox for a '
+                                                       'verification link'}), 201
 
 
 @users_bp.route('/password_reset_request', methods=['POST'])
