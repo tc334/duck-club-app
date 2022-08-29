@@ -773,6 +773,10 @@ def get_hunt_dict(grouping_id):
         # cache update
         cache.add(f"nov:{grouping_id}", hunt_dict, 10 * 60)
     else:
+        print(f"Alpha:{hunt_dict}")
+        print(f"Bravo:{type(hunt_dict)}")
+        print(f"Charlie:{hunt_dict[0]}")
+        print(f"Delta:{type(hunt_dict[0])}")
         # cache hit, need to fix datetime fields
         for hunt in hunt_dict:
             hunt["hunt_date"] = datetime.datetime.strptime(hunt["hunt_date"], '%Y-%m-%d').date()
