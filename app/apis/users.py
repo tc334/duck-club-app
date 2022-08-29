@@ -18,7 +18,11 @@ table_name = 'users'
 def login():
     auth = request.authorization
     if auth and auth.username and auth.password:
-        results = db.read_custom(f"SELECT public_id, password_hash, level, confirmed, status FROM {table_name} WHERE email = '{auth.username}' LIMIT 1")
+        results = db.read_custom(
+            f"SELECT public_id, password_hash, level, confirmed, status "
+            f"FROM {table_name} "
+            f"WHERE email = '{auth.username.lower()}' "
+            f"LIMIT 1")
         if results and len(results) == 1:
             user = db.sql_to_dict(results, names=["public_id", "password_hash", "level", "confirmed", "status"])
             if check_password_hash(user["password_hash"], auth.password):
@@ -68,7 +72,7 @@ def signup():
         return jsonify({'message': 'Wrong access code'}), 400
 
     # check for duplicates
-    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
+    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email'].lower()}'")
     if existing is None:
         return jsonify({"message": "Internal error"}), 500
     if existing:
@@ -78,6 +82,9 @@ def signup():
     data_in['public_id'] = str(uuid.uuid4())
     data_in['password_hash'] = generate_password_hash(data_in['password'], method='sha256')
     data_in['registered_on'] = datetime.datetime.now()
+
+    # make email all lower case since they aren't case sensitive
+    data_in['email'] = data_in['email'].lower()
 
     db.add_row(table_name, data_in)
     cache.delete("charlie")
@@ -89,7 +96,7 @@ def signup():
     subject = "Please confirm your email to the Duck Club App"
     send_email(data_in["email"], subject, html)
 
-    return jsonify({'message': data_in['first_name'] + ' successfully added. Your email needs to be verified before'
+    return jsonify({'message': data_in['first_name'] + ' successfully added. Your email needs to be verified before '
                                                        'you can log in. Check your inbox for a '
                                                        'verification link'}), 201
 
@@ -102,7 +109,7 @@ def password_reset_request():
         return jsonify({'message': 'No data received'}), 400
     if 'email' not in data_in:
         return jsonify({'message': 'Email missing'}), 400
-    email = data_in["email"]
+    email = data_in["email"].lower()
 
     # first check to see if this email address exists
     results = db.read_custom(
@@ -156,8 +163,9 @@ def manual_add(user):
         return jsonify({'message': 'Last name missing'}), 400
     if 'email' not in data_in or len(data_in['email']) < 2:
         return jsonify({'message': 'Email missing'}), 400
+
     # check for duplicates
-    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}'")
+    existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email'].lower()}'")
     if existing is None:
         return jsonify({"error": "Internal error"}), 400
     if existing:
@@ -168,6 +176,9 @@ def manual_add(user):
     # here a user has been created manually, so no password is provided. Just make one up
     data_in['password_hash'] = generate_password_hash('password', method='sha256')
     data_in['registered_on'] = datetime.datetime.now()
+
+    # email not case sensitive
+    data_in['email'] = data_in['email'].lower()
 
     db.add_row(table_name, data_in)
     cache.delete("charlie")
@@ -194,7 +205,11 @@ def get_all_rows(user):
 @users_bp.route('/users/active', methods=['GET'])
 @token_required(manager_and_above)
 def get_all_active(user):
-    results = db.read_custom(f"SELECT id, first_name, last_name FROM {table_name} WHERE status = 'active' ORDER BY last_name")
+    results = db.read_custom(
+        f"SELECT id, first_name, last_name "
+        f"FROM {table_name} "
+        f"WHERE status = 'active' "
+        f"ORDER BY last_name")
 
     if results:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
@@ -237,11 +252,13 @@ def update_row(user, public_id):
 
     # check for duplicate email if attempting to change email
     if 'email' in data_in:
+        # email not case sensitive
+        data_in['email'] = data_in['email'].lower()
         existing = db.read_custom(f"SELECT id FROM {table_name} WHERE email = '{data_in['email']}' AND public_id != '{public_id}'")
         if existing is None:
             return jsonify({"error": f"Internal error in {__name__}:update_row()"}), 500
         if existing:
-            return jsonify({"error": "Entry " + data_in["email"] + " already exists in " + table_name})
+            return jsonify({"error": "Entry " + data_in["email"].lower() + " already exists in " + table_name})
 
     if db.update_row(table_name, public_id, data_in, "public_id"):
         cache.delete("charlie")
