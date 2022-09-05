@@ -144,6 +144,14 @@ def update_group_harvest():
         cache_result = cache.set_pop(SET_NAME)
 
 
+@stats_bp.route('/stats/flush_cache')
+@token_required(admin_only)
+def external_flush_cache(users):
+    print("Cache flush forced externally")
+    cache.wipe_cache()
+    return jsonify({"message": "Cache flush complete"}), 200
+
+
 @stats_bp.route('/stats/force_recount')
 @token_required(admin_only)
 def external_force_recount(users):

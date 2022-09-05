@@ -377,49 +377,59 @@ class DbManagerCockroach:
     def populate_basic_tables(self):
         self.add_row("properties", {'name': 'Oak Meadows', 'region': 'Southern'})
         property_id = self.read_custom("SELECT id FROM properties WHERE name='Oak Meadows'")[0][0]
-        self.add_row("ponds", {'name': 'Remington', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Winchester', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Appelt', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Benelli', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Castle', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Middle', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Swale', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Appelt', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Lodge', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Middle', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Remington', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Road', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Swale', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Winchester', 'property_id': property_id})
 
         self.add_row("properties", {'name': 'Harrison', 'region': 'Southern'})
         property_id = self.read_custom("SELECT id FROM properties WHERE name='Harrison'")[0][0]
-        self.add_row("ponds", {'name': 'Green Wing', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Blue Wing', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Green Wing', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Shoveler', 'property_id': property_id})
 
         self.add_row("properties", {'name': 'Hughson Lakes', 'region': 'Southern'})
         property_id = self.read_custom("SELECT id FROM properties WHERE name='Hughson Lakes'")[0][0]
-        self.add_row("ponds", {'name': 'Thunder', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Andi', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Herlin', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Stu', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Thunder', 'property_id': property_id})
 
         self.add_row("properties", {'name': 'Radley', 'region': 'Northern'})
         property_id = self.read_custom("SELECT id FROM properties WHERE name='Radley'")[0][0]
+        self.add_row("ponds", {'name': 'Gadwall', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Mallard', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Pintail', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Gadwall', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Wigeon', 'property_id': property_id})
 
         self.add_row("properties", {'name': 'Blue Creek', 'region': 'Northern'})
         property_id = self.read_custom("SELECT id FROM properties WHERE name='Blue Creek'")[0][0]
+        self.add_row("ponds", {'name': 'Brooks', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Crawfish North', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Crawfish East', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Crawfish West', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Forrest West', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Forrest Middle', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Forrest East', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Brooks', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Hunter NW', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Hunter NE', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Hunter M', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Hunter SE', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Hunter SW', 'property_id': property_id})
 
         self.add_row("properties", {'name': 'Northern', 'region': 'Northern'})
         property_id = self.read_custom("SELECT id FROM properties WHERE name='Northern'")[0][0]
-        self.add_row("ponds", {'name': 'Bo', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Toby', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Nelly', 'property_id': property_id})
-        self.add_row("ponds", {'name': 'Cali', 'property_id': property_id})
         self.add_row("ponds", {'name': 'Bree', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Bo', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Nelly', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Northern Roost', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Southern Roost', 'property_id': property_id})
+        self.add_row("ponds", {'name': 'Toby', 'property_id': property_id})
 
         self.add_row("birds", {'name': 'Blue Winged Teal', 'type': 'duck'})
         self.add_row("birds", {'name': 'Green Winged Teal', 'type': 'duck'})

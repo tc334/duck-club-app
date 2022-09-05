@@ -144,12 +144,12 @@ schema = {
         {
             'name': 'level',
             'type': 'enum_user_level',
-            'extra': "DEFAULT 'member'"
+            'extra': "NOT NULL DEFAULT 'member'"
         },
         {
             'name': 'status',
             'type': 'enum_user_status',
-            'extra': "DEFAULT 'inactive'"
+            'extra': "NOT NULL DEFAULT 'active'"
         },
         {
             'name': 'confirmed',
