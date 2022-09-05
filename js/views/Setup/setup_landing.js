@@ -14,7 +14,7 @@ export default class extends AbstractView {
   async getHtml() {
     return `<div class="reload-message"></div>
     <p class="welcome-message">
-      Welcome to the setup side of the <strong>Duck Club App</strong>
+      Welcome to the <strong>Duck Club App</strong>
     </p>
     <h1 class="heading-primary">How it Works</h1>
     <section class="instructions">
@@ -23,12 +23,12 @@ export default class extends AbstractView {
           <p class="step-num">01</p>
           <h3 class="heading-tertiary">Pre-Hunt Setup</h3>
           <p class="step-description">
-            Using the navigation menu on the left, members and managers setup the hunt.
+            Access the current hunt by using the "Hunt" button on the top. This is where members and managers setup the hunt.
             This includes hunter sign up, group formation, and pond assignments.
           </p>
         </div>
       </article>
-      <img src="img/left-arrow.png" class="step-img">
+      <img src="img/left-arrow.png" class="step-img" id="img-arrow">
       <img src="img/Masters-leaderboard.jpg" class="step-img">
       <article class="instruction">
         <div class="step-text-box">

@@ -24,6 +24,8 @@ export default class extends AbstractView {
     return `<div class="reload-message"></div>
     <h1 class="heading-primary">Miscellaneous</h1>
     <button class="btn--form" id="btn-force-recount">Force Recount</button>
+    <br>
+    <button class="btn--form" id="btn-cache-flush">Flush Cache</button>
     `;
   }
 
@@ -58,5 +60,24 @@ export default class extends AbstractView {
           displayMessageToUser
         );
       });
+
+    const route2 = base_uri + "/stats/flush_cache";
+
+    document.getElementById("btn-cache-flush").addEventListener("click", () => {
+      callAPI(
+        jwt,
+        route2,
+        "GET",
+        null,
+        (response_full_json) => {
+          if (response_full_json["message"]) {
+            displayMessageToUser(response_full_json["message"]);
+          } else {
+            //console.log(data);
+          }
+        },
+        displayMessageToUser
+      );
+    });
   }
 }

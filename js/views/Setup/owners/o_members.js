@@ -29,6 +29,7 @@ export default class extends AbstractView {
           <th>email</th>
           <th>level</th>
           <th>status</th>
+          <th>confirmed</th>
           <th>balance</th>
           <th>actions</th>
         </tr>
@@ -94,6 +95,15 @@ export default class extends AbstractView {
             <option value="">Select one</option>
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
+          </select>
+        </div>
+    
+        <div class="form-row">
+          <label for="select-confirmed">Account Confirmed</label>
+          <select id="select-confirmed" name="confirmed" required>
+            <option value="">Select one</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
           </select>
         </div>
     
@@ -215,6 +225,9 @@ function populateTable(users) {
     tabCell.innerHTML = users[i]["status"];
 
     var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = users[i]["confirmed"];
+
+    var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = "$" + users[i]["outstanding_balance"];
 
     var tabCell = tr.insertCell(-1);
@@ -275,6 +288,7 @@ function populateEdit(e) {
   document.getElementById("email").value = db_data[i]["email"];
   document.getElementById("select-level").value = db_data[i]["level"];
   document.getElementById("select-status").value = db_data[i]["status"];
+  document.getElementById("select-confirmed").value = db_data[i]["confirmed"];
 
   document.getElementById("add-edit-form").scrollIntoView();
 }

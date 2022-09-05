@@ -1148,3 +1148,7 @@ Stats
   text-align: center;
   line-height: 1.2;
 }
+
+#img-arrow {
+  transform: rotate(90deg);
+}
