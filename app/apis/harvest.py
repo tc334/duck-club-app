@@ -214,6 +214,24 @@ def get_stats_birds(user):
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
         names_all = ["harvest_id", "pond_name", "hunt_date", "group_id", "bird_name", "count"]
         results_dict = db.format_dict(names_all, results)
-        return jsonify({"harvests": results_dict}), 200
+
+        # check for special case: group exists w/ matching date & pond, but they don't have any harvest data entered yet
+        group_id = None  # default. Will get overridden if special case exists
+        if len(results) == 0 and b_filter_hunt and b_filter_pond:
+            # we already know there isn't any harvest data. check to see if a group exists
+            results2 = db.read_custom(
+                f"SELECT groupings.id FROM groupings "
+                f"JOIN hunts ON groupings.hunt_id=hunts.id "
+                f"JOIN ponds ON groupings.pond_id=ponds.id "
+                f"WHERE hunts.id={data_in['hunt_id']} "
+                f"AND ponds.id={data_in['pond_id']}"
+            )
+            if results2 and len(results2) == 1:
+                group_id = results2[0][0]
+
+        return jsonify({
+            "harvests": results_dict,
+            "group_id": group_id
+        }), 200
     else:
         return jsonify({"message": f"unknown error trying to read harvest"}), 400

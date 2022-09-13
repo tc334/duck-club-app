@@ -286,7 +286,7 @@ schema = {
         {
             'name': 'num_hunters',
             'type': 'INT',
-            'extra': 'DEFAULT 0'
+            'extra': 'DEFAULT 1'
         },
         {
             'name': 'num_ducks',

@@ -6,6 +6,7 @@ import u_profile from "./views/Setup/members/u_profile.js";
 import u_harvest from "./views/Setup/members/u_harvest.js";
 import m_hunts from "./views/Setup/managers/m_hunts.js";
 import m_add from "./views/Setup/managers/m_add.js";
+import m_remove from "./views/Setup/managers/m_remove.js";
 import m_groupings from "./views/Setup/managers/m_groupings.js";
 import m_availability from "./views/Setup/managers/m_availability.js";
 import o_properties from "./views/Setup/owners/o_properties.js";
@@ -67,6 +68,10 @@ const router = async () => {
     {
       path: "#m_add",
       view: m_add,
+    },
+    {
+      path: "#m_remove",
+      view: m_remove,
     },
     {
       path: "#m_groupings",

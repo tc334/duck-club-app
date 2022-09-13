@@ -104,3 +104,17 @@ def del_row(user, pond_id):
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {pond_id} from table {table_name}"}), 400
+
+
+@ponds_bp.route('/ponds/reset_selections', methods=['GET'])
+@token_required(manager_and_above)
+def reset_selections(user):
+    if db.update_custom(
+        f"UPDATE {table_name} SET selected=false"
+    ):
+        return jsonify({'message': f'Successful update of {table_name}'}), 200
+    else:
+        return jsonify({"message": "unsuccessful attempt to reset pond selections"}), 400
+
+
+

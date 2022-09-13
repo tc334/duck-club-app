@@ -6,10 +6,14 @@ import {
   displayMessageToUser,
   populate_aside,
   decode_jwt,
+  dateConverter_http,
 } from "../../../common_funcs.js";
 
 var jwt_global;
 var db_data;
+var db_data_ponds;
+var db_data_users;
+var db_data_dates;
 const subroute = "groupings";
 const singular = "grouping";
 const plural = "groupings";
@@ -22,20 +26,28 @@ export default class extends AbstractView {
   async getHtml() {
     return (
       `<div class="reload-message"></div>
+      <h2 class="heading-secondary">Filters</h2>
+      <form id="form-filter">
+        <div class="filter-container">
+          <section class="filter-date-exact">
+            <select id="select-date" name="hunt_id" class="fixed-width-harvests">
+              <option value=-1>--select hunt date--</option>
+            </select>
+          </section>
+        </div>  
+        <button class="btn--form btn--cntr" id="btn-filter-refresh">Apply</button>
+      </form>
     <h1 class="heading-primary">groups</h1>
     <div class="table-overflow-wrapper">
       <table id="data-table">
         <tr>
           <th>id</th>
-          <th>hunt</th>
           <th>pond</th>
           <th>slot 1</th>
           <th>slot 2</th>
           <th>slot 3</th>
           <th>slot 4</th>
-          <th>#</th>
-          <th>duck</th>
-          <th>non</th>
+          <th># hntrs</th>
           <th>actions</th>
         </tr>
       </table>
@@ -57,22 +69,10 @@ export default class extends AbstractView {
         </div>
     
         <div class="form-row">
-          <label for="inp-hunt-id">hunt ID</label>
-          <input
-            id="inp-hunt-id"
-            type="number"
-            name="hunt_id"
-            required
-          />
-        </div>
-
-        <div class="form-row">
-          <label for="inp-pon-id">pond ID</label>
-          <input
-            id="inp-pond-id"
-            type="number"
-            name="pond_id"
-          />
+          <label for="select-pond">pond</label>
+          <select id="select-pond" name="pond_id">
+              <option value=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--select pond--</option>
+          </select>
         </div>
 
         <div class="form-row">
@@ -86,13 +86,10 @@ export default class extends AbstractView {
         </div>
 
         <div class="form-row">
-          <label for="inp-slot1-id">slot 1 ID</label>
-          <input
-            id="inp-slot1-id"
-            type="number"
-            name="slot1_id"
-            required
-          />
+          <label for="select-slot1-id">slot 1 hunter</label>
+          <select id="select-slot1-id" name="slot1_id">
+              <option value=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--select member--</option>
+          </select>
         </div>
 
         <div class="form-row">
@@ -106,12 +103,10 @@ export default class extends AbstractView {
         </div>
 
         <div class="form-row">
-          <label for="inp-slot2-id">slot 2 ID</label>
-          <input
-            id="inp-slot2-id"
-            type="number"
-            name="slot2_id"
-          />
+          <label for="select-slot2-id">slot 2 hunter</label>
+          <select id="select-slot2-id" name="slot2_id">
+              <option value=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--select member--</option>
+          </select>
         </div>
 
         <div class="form-row">
@@ -125,12 +120,10 @@ export default class extends AbstractView {
         </div>
 
         <div class="form-row">
-          <label for="inp-slot3-id">slot 3 ID</label>
-          <input
-            id="inp-slot3-id"
-            type="number"
-            name="slot3_id"
-          />
+          <label for="select-slot3-id">slot 3 hunter</label>
+          <select id="select-slot3-id" name="slot3_id">
+              <option value=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--select member--</option>
+          </select>
         </div>
 
         <div class="form-row">
@@ -144,12 +137,10 @@ export default class extends AbstractView {
         </div>
 
         <div class="form-row">
-          <label for="inp-slot4-id">slot 4 ID</label>
-          <input
-            id="inp-slot4-id"
-            type="number"
-            name="slot4_id"
-          />
+          <label for="select-slot4-id">slot 4 hunter</label>
+          <select id="select-slot4-id" name="slot4_id">
+              <option value=-1>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--select member--</option>
+          </select>
         </div>
 
         <span class="button-holder">
@@ -173,23 +164,66 @@ export default class extends AbstractView {
     const user_level = decode_jwt(jwt);
     populate_aside(user_level);
 
-    // First step is to pull data from DB
-    const route = base_uri + "/" + subroute;
+    // For this page, we also need to have the ponds db
+    const route_2 = base_uri + "/" + "ponds";
     callAPI(
       jwt,
-      route,
+      route_2,
       "GET",
       null,
       (response_full_json) => {
-        if (response_full_json[plural]) {
-          db_data = response_full_json[plural];
-          populateTable(db_data);
+        if (response_full_json["ponds"]) {
+          db_data_ponds = response_full_json["ponds"];
+          const route_2_5 = base_uri + "/hunts/dates";
+          callAPI(
+            jwt,
+            route_2_5,
+            "GET",
+            null,
+            (response_full_json) => {
+              if (response_full_json["dates"]) {
+                db_data_dates = response_full_json["dates"];
+                // For this page, we also need to have the birds db
+                const route_3 = base_uri + "/" + "users";
+                callAPI(
+                  jwt,
+                  route_3,
+                  "GET",
+                  null,
+                  (response_full_json) => {
+                    if (response_full_json["users"]) {
+                      db_data_users = response_full_json["users"];
+                      //console.log(db_data);
+                      // now, only once harvests, ponds, & birds are successfully loaded, can we call the action
+                      populatePondListBox();
+                      populateUserListBox("select-slot1-id");
+                      populateUserListBox("select-slot2-id");
+                      populateUserListBox("select-slot3-id");
+                      populateUserListBox("select-slot4-id");
+                      populateDateList_aux(db_data_dates);
+                    } else {
+                      //console.log(data);
+                    }
+                  },
+                  displayMessageToUser
+                );
+              }
+            },
+            displayMessageToUser
+          );
         } else {
-          // ?
+          //console.log(data);
         }
       },
       displayMessageToUser
     );
+
+    // What do do on a filter apply
+    const myFilterForm = document.getElementById("form-filter");
+    myFilterForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      mySubmit(jwt, this);
+    });
 
     // When the "reset" button is hit, only "add" should be enabled
     // "update" will get enabled if a user hits an "edit" in the main table
@@ -255,6 +289,30 @@ export default class extends AbstractView {
   }
 }
 
+function lookUpPond(pond_id) {
+  var i = 0;
+  while (i < db_data_ponds.length) {
+    if (db_data_ponds[i]["id"] == pond_id) {
+      return db_data_ponds[i]["name"];
+    }
+    i = i + 1;
+  }
+  return "Unknown";
+}
+
+function lookUpMember(user_id) {
+  var i = 0;
+  while (i < db_data_users.length) {
+    if (db_data_users[i]["id"] == user_id) {
+      return (
+        db_data_users[i]["first_name"] + " " + db_data_users[i]["last_name"]
+      );
+    }
+    i = i + 1;
+  }
+  return "";
+}
+
 function populateTable(db_data) {
   var table = document.getElementById("data-table");
 
@@ -262,45 +320,46 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["id"];
+    tabCell.innerHTML = db_data[i]["group_id"];
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["hunt_id"];
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["pond_id"];
+    tabCell.innerHTML = lookUpPond(db_data[i]["pond_id"]);
 
     // slot 1
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["slot1_type"] + " - " + db_data[i]["slot1_id"];
+    if (db_data[i]["slot1_type"] == "member") {
+      tabCell.innerHTML = lookUpMember(db_data[i]["slot1_id"]);
+    } else {
+      tabCell.innerHTML = db_data[i]["slot1_type"];
+    }
 
     // slot 2
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["slot2_type"] + " - " + db_data[i]["slot2_id"];
+    if (db_data[i]["slot2_type"] == "member") {
+      tabCell.innerHTML = lookUpMember(db_data[i]["slot2_id"]);
+    } else {
+      tabCell.innerHTML = db_data[i]["slot2_type"];
+    }
 
     // slot 3
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["slot3_type"] + " - " + db_data[i]["slot3_id"];
+    if (db_data[i]["slot3_type"] == "member") {
+      tabCell.innerHTML = lookUpMember(db_data[i]["slot3_id"]);
+    } else {
+      tabCell.innerHTML = db_data[i]["slot3_type"];
+    }
 
     // slot 4
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML =
-      db_data[i]["slot4_type"] + " - " + db_data[i]["slot4_id"];
+    if (db_data[i]["slot4_type"] == "member") {
+      tabCell.innerHTML = lookUpMember(db_data[i]["slot4_id"]);
+    } else {
+      tabCell.innerHTML = db_data[i]["slot4_type"];
+    }
 
     // # hunters
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = db_data[i]["num_hunters"];
-
-    // duck average
-    var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["num_ducks"];
-
-    // duck average
-    var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["num_non"];
 
     var tabCell = tr.insertCell(-1);
 
@@ -351,20 +410,81 @@ function populateEdit(e) {
   document.getElementById("btn-update").disabled = false;
   document.getElementById("btn-add").disabled = true;
 
-  document.getElementById(singular + "-id").value = db_data[i]["id"];
-  document.getElementById("inp-hunt-id").value = db_data[i]["hunt_id"];
-  document.getElementById("inp-pond-id").value = db_data[i]["pond_id"];
+  document.getElementById(singular + "-id").value = db_data[i]["group_id"];
+  //document.getElementById("inp-hunt-id").value = db_data[i]["hunt_id"];
+  document.getElementById("select-pond").value = db_data[i]["pond_id"];
+
   document.getElementById("select-slot1type").value = db_data[i]["slot1_type"];
-  document.getElementById("inp-slot1-id").value = db_data[i]["slot1_id"];
+  document.getElementById("select-slot1-id").value = db_data[i]["slot1_id"];
 
   document.getElementById("select-slot2type").value = db_data[i]["slot2_type"];
-  document.getElementById("inp-slot2-id").value = db_data[i]["slot2_id"];
+  document.getElementById("select-slot2-id").value = db_data[i]["slot2_id"];
 
   document.getElementById("select-slot3type").value = db_data[i]["slot3_type"];
-  document.getElementById("inp-slot3-id").value = db_data[i]["slot3_id"];
+  document.getElementById("select-slot3-id").value = db_data[i]["slot3_id"];
 
   document.getElementById("select-slot4type").value = db_data[i]["slot4_type"];
-  document.getElementById("inp-slot4-id").value = db_data[i]["slot4_id"];
+  document.getElementById("select-slot4-id").value = db_data[i]["slot4_id"];
 
   document.getElementById("add-edit-form").scrollIntoView();
+}
+
+function populateDateList_aux(db_data) {
+  const select_dates = document.getElementById("select-date");
+  for (var i = 0; i < db_data.length; i++) {
+    var new_opt = document.createElement("option");
+    new_opt.innerHTML = dateConverter_http(db_data[i]["hunt_date"]);
+    new_opt.value = db_data[i]["id"];
+    select_dates.appendChild(new_opt);
+  }
+}
+
+function populatePondListBox() {
+  var select_property = document.getElementById("select-pond");
+  for (var i = 0; i < db_data_ponds.length; i++) {
+    var option_new = document.createElement("option");
+    option_new.value = db_data_ponds[i]["id"];
+    option_new.innerHTML = db_data_ponds[i]["name"];
+    select_property.appendChild(option_new);
+  }
+}
+
+function populateUserListBox(select_id) {
+  var select_property = document.getElementById(select_id);
+  for (var i = 0; i < db_data_users.length; i++) {
+    var option_new = document.createElement("option");
+    option_new.value = db_data_users[i]["id"];
+    option_new.innerHTML =
+      db_data_users[i]["first_name"] + " " + db_data_users[i]["last_name"];
+    select_property.appendChild(option_new);
+  }
+}
+
+function mySubmit(jwt, myForm) {
+  // Pull data from form and put it into the json format the DB wants
+  const formData = new FormData(myForm);
+
+  var object = {};
+  formData.forEach((value, key) => (object[key] = value));
+
+  // API route for this stats page
+  const route =
+    base_uri +
+    "/" +
+    subroute +
+    "/filtered" +
+    "?" +
+    new URLSearchParams(object).toString();
+
+  callAPI(
+    jwt,
+    route,
+    "GET",
+    null,
+    (data) => {
+      db_data = data["groupings"];
+      populateTable(db_data);
+    },
+    displayMessageToUser
+  );
 }

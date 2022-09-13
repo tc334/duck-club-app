@@ -26,6 +26,8 @@ export default class extends AbstractView {
     <button class="btn--form" id="btn-force-recount">Force Recount</button>
     <br>
     <button class="btn--form" id="btn-cache-flush">Flush Cache</button>
+    <br>
+    <button class="btn--form" id="btn-deselect-all-ponds">Set All Ponds to Not Selected</button>
     `;
   }
 
@@ -79,5 +81,26 @@ export default class extends AbstractView {
         displayMessageToUser
       );
     });
+
+    document
+      .getElementById("btn-deselect-all-ponds")
+      .addEventListener("click", () => {
+        const route3 = base_uri + "/ponds/reset_selections";
+
+        callAPI(
+          jwt,
+          route3,
+          "GET",
+          null,
+          (response_full_json) => {
+            if (response_full_json["message"]) {
+              displayMessageToUser(response_full_json["message"]);
+            } else {
+              //console.log(data);
+            }
+          },
+          displayMessageToUser
+        );
+      });
   }
 }
