@@ -263,8 +263,14 @@ export default class extends AbstractView {
         "GET",
         null,
         (data) => {
+          console.log("group_id=" + data["group_id"]);
           db_data = data["harvests"];
           populateTable(data["harvests"]);
+          if (db_data.length < 1 && data["group_id"] !== null) {
+            displayMessageToUser(
+              "The Group ID matching your search is " + data["group_id"]
+            );
+          }
         },
         displayMessageToUser
       );

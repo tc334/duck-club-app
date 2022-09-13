@@ -65,8 +65,10 @@ export function populate_aside(user_level) {
     manager: [
       "img/cog-wheel.png",
       "img/plus.png",
+      "img/subtraction.png",
       "img/wrench.png",
       "img/traffic-signal.png",
+      "img/edit.png",
     ],
     owner: [
       "img/people.png",
@@ -78,7 +80,6 @@ export function populate_aside(user_level) {
       "img/cog-wheel.png",
       "img/cog-wheel.png",
       "img/cog-wheel.png",
-      "img/cog-wheel.png",
     ],
   };
 
@@ -87,18 +88,27 @@ export function populate_aside(user_level) {
     manager: [
       "manage hunt",
       "add hunter",
+      "remove hunter",
       "adjust groups",
       "pond availability",
+      "harvests",
     ],
     owner: ["members", "properties", "ponds", "birds"],
-    administrator: ["hunts", "groupings", "harvests", "misc"],
+    administrator: ["hunts", "groupings", "misc"],
   };
 
   const links = {
     member: ["#u_profile", "#u_harvest"],
-    manager: ["#m_hunts", "#m_add", "#m_groupings", "#m_availability"],
+    manager: [
+      "#m_hunts",
+      "#m_add",
+      "#m_remove",
+      "#m_groupings",
+      "#m_availability",
+      "#a_harvests",
+    ],
     owner: ["#o_members", "#o_properties", "#o_ponds", "#o_birds"],
-    administrator: ["#a_hunts", "#a_groupings", "#a_harvests", "#a_misc"],
+    administrator: ["#a_hunts", "#a_groupings", "#a_misc"],
   };
 
   const idx_in = headings.indexOf(user_level);
