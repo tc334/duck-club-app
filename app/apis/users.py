@@ -86,7 +86,9 @@ def signup():
     # make email all lower case since they aren't case sensitive
     data_in['email'] = data_in['email'].lower()
 
-    db.add_row(table_name, data_in)
+    id = db.add_row(table_name, data_in)
+    print(f"Just added user with id={id}")
+    print(f"data_in:{data_in}")
     cache.delete("charlie")
 
     # send email to user for them to verify their email address
@@ -95,6 +97,7 @@ def signup():
     html = render_template('activate.html', confirm_url=confirm_url)
     subject = "Please confirm your email to the Duck Club App"
     send_email(data_in["email"], subject, html)
+    print(f"Just sent confirmation email to {data_in['email']}")
 
     return jsonify({'message': data_in['first_name'] + ' successfully added. Your email needs to be verified before '
                                                        'you can log in. Check your inbox for a '
@@ -126,6 +129,7 @@ def password_reset_request():
         html = render_template('password_reset_email.html', reset_url=reset_url)
         subject = "Password reset to the Duck Club App"
         send_email(email, subject, html)
+        print(f"Just sent password reset email to {email}")
 
     # don't want to indicate to malicious user if email is in our list or not, so same reply for all
     return jsonify({"message": "Request received"}), 200
@@ -180,7 +184,9 @@ def manual_add(user):
     # email not case sensitive
     data_in['email'] = data_in['email'].lower()
 
-    db.add_row(table_name, data_in)
+    id = db.add_row(table_name, data_in)
+    print(f"Just MANUALLY added user with id={id}")
+    print(f"data_in:{data_in}")
     cache.delete("charlie")
 
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201

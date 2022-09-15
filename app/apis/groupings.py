@@ -11,7 +11,10 @@ table_name = 'groupings'
 @groupings_bp.route('/groupings', methods=['POST'])
 @token_required(all_members)
 def add_row(user):
+    print(f"BEFORE GROUP ACTION 'add_row'")
+
     data_in = request.get_json()
+    print(f"data_in={data_in}")
 
     # Error checking
     base_identifier = "file: " + __name__ + "func: " + add_row.__name__
@@ -55,9 +58,12 @@ def add_row(user):
 
     # Input passes criteria - write to database
     data_in["num_hunters"] = num_hunters
-    db.add_row(table_name, data_in)
+    id = db.add_row(table_name, data_in)
     cache.delete("bravo")
     cache.delete(f"golf:{data_in['hunt_id']}")
+
+    print(f"AFTER GROUP ACTION 'add_row'")
+    print_group(id)
 
     return jsonify({"message": "New group successfully added to hunt " + str(data_in['hunt_id'])}), 201
 
@@ -433,8 +439,11 @@ def get_one_row(users, grouping_id):
 @groupings_bp.route('/groupings/<grouping_id>', methods=['PUT'])
 @token_required(manager_and_above)
 def update_row(user, grouping_id):
-    print(f"Alpha:{user}")
+    print(f"BEFORE GROUP ACTION 'update_row'. grouping_id={grouping_id}")
+    print_group(grouping_id)
+
     data_in = request.get_json()
+    print(f"data_in:{data_in}")
 
     hunt_dict = get_hunt_dict(grouping_id)
     if not hunt_dict:
@@ -491,6 +500,10 @@ def update_row(user, grouping_id):
         cache.delete(f"hotel:{grouping_id}")
         cache.delete(f"kilo:{grouping_id}")
         cache.delete(f"romeo:{grouping_id}")
+
+        print(f"BEFORE GROUP ACTION 'update_row'. grouping_id={grouping_id}")
+        print_group(grouping_id)
+
         return jsonify({'message': f'Successful update of id {grouping_id} in {table_name}'}), 200
     else:
         return jsonify({"message": f"Unable to update id {grouping_id} of table {table_name}"}), 400
@@ -516,6 +529,9 @@ def del_row(user, grouping_id):
 @groupings_bp.route('/groupings/merge/<group1_id>/<group2_id>', methods=['PUT'])
 @token_required(manager_and_above)
 def merge_groups(user, group1_id, group2_id):
+    print(f"BEFORE GROUP ACTION 'merge_groups'. group1_id={group1_id}. group2_id={group2_id}")
+    print_group(group1_id)
+    print_group(group2_id)
 
     # hunters from group 2 will be placed into group 1
 
@@ -575,12 +591,18 @@ def merge_groups(user, group1_id, group2_id):
     cache.delete(f"romeo:{group1_id}")
     cache.delete(f"romeo:{group2_id}")
 
+    print(f"AFTER GROUP ACTION 'merge_groups'. group1_id={group1_id}. group2_id={group2_id}")
+    print_group(group1_id)
+    print_group(group2_id)
+
     return jsonify({"message": f"Successfully merged groups {group1_id} and {group2_id} into group {group1_id}"})
 
 
 @groupings_bp.route('/groupings/breakup/<group_id>', methods=['PUT'])
 @token_required(manager_and_above)
 def breakup_group(user, group_id):
+    print(f"BEFORE GROUP ACTION 'breakup_group'. group_id={group_id}")
+    print_group(group_id)
 
     # Error checking
     # Groups can only be broken up in certain hunt statuses
@@ -603,6 +625,7 @@ def breakup_group(user, group_id):
 
     # create a new group for each member, starting with the second
     update_dict = {'num_hunters': total_hunters}
+    new_ids = []
     for i in active_slots[1:]:
         new_dict = {
             'hunt_id': hunt_dict['id'],
@@ -610,7 +633,7 @@ def breakup_group(user, group_id):
             'slot1_type': slot_dict["types"][i],
             'num_hunters': 1
         }
-        db.add_row("groupings", new_dict)
+        new_ids.append(db.add_row("groupings", new_dict))
         update_dict['slot' + str(i + 1) + '_id'] = None
         update_dict['slot' + str(i + 1) + '_type'] = "open"
         update_dict['num_hunters'] -= 1
@@ -623,12 +646,19 @@ def breakup_group(user, group_id):
     cache.delete(f"kilo:{group_id}")
     cache.delete(f"romeo:{group_id}")
 
+    print(f"AFTER GROUP ACTION 'breakup_group'. group_id={group_id}")
+    print_group(group_id)
+    for id in new_ids:
+        print_group(id)
+
     return jsonify({"message": f"Successfully broke up group {group_id}"})
 
 
 @groupings_bp.route('/groupings/remove/<group_id>/<slot>', methods=['PUT'])
 @token_required(manager_and_above)
 def remove_specific_slot(user, group_id, slot):
+    print(f"BEFORE GROUP ACTION 'remove_specific_slot'. group_id={group_id}. slot={slot}")
+    print_group(group_id)
 
     # slot has range [1, 4]
     # slot_idx has range [0, 3]
@@ -679,12 +709,18 @@ def remove_specific_slot(user, group_id, slot):
     cache.delete(f"kilo:{group_id}")
     cache.delete(f"romeo:{group_id}")
 
+    print(f"AFTER GROUP ACTION 'remove_specific_slot'. group_id={group_id}. slot={slot}")
+    print_group(group_id)
+
     return jsonify({"message": f"Successfully removed slot {slot} from group {group_id}"})
 
 
 @groupings_bp.route('/groupings/leave/<group_id>', methods=['PUT'])
 @token_required(all_members)
 def leave_group(user, group_id):
+    print(f"BEFORE GROUP ACTION 'leave_group'. group_id={group_id}")
+    print_group(group_id)
+
     # Error checking
     # Groups can only be modified in certain hunt statuses
     hunt_dict = get_hunt_dict(group_id)
@@ -728,12 +764,17 @@ def leave_group(user, group_id):
     cache.delete(f"kilo:{group_id}")
     cache.delete(f"romeo:{group_id}")
 
+    print(f"AFTER GROUP ACTION 'leave_group'. group_id={group_id}")
+    print_group(group_id)
+
     return jsonify({"message": f"User {user['id']} successfully left group {group_id}"})
 
 
 @groupings_bp.route('/groupings/withdraw/<group_id>', methods=['PUT'])
 @token_required(all_members)
 def withdraw(user, group_id):
+    print(f"BEFORE GROUP ACTION 'withdraw'. group_id={group_id}")
+    print_group(group_id)
 
     # this is nearly identical to leave_group except the user isn't put into their own new group
 
@@ -782,6 +823,9 @@ def withdraw(user, group_id):
     cache.delete(f"hotel:{group_id}")
     cache.delete(f"kilo:{group_id}")
     cache.delete(f"romeo:{group_id}")
+
+    print(f"AFTER GROUP ACTION 'withdraw'. group_id={group_id}")
+    print_group(group_id)
 
     return jsonify({"message": f"User {user['id']} successfully left group {group_id}"})
 
@@ -879,3 +923,53 @@ def get_groups_filtered(user):
         return jsonify({"message": "internal error"}), 500
 
     return jsonify({"groupings": groupings_dict}), 200
+
+
+def print_group(id):
+    results = db.read_custom(
+        f"SELECT * FROM {table_name} WHERE id='{id}'"
+    )
+    users = db.read_custom(
+        f"SELECT id, first_name, last_name FROM users"
+    )
+    u_id = [row[0] for row in users]
+    u_name = [row[1] + " " + row[2] for row in users]
+
+    print("****************************************")
+    if results:
+        group = results[0]
+
+        if group[3] == 'member':
+            slot1_name = u_name[u_id.index(group[7])]
+        else:
+            slot1_name = "N/A"
+
+        if group[4] == 'member':
+            slot2_name = u_name[u_id.index(group[8])]
+        else:
+            slot2_name = "N/A"
+
+        if group[5] == 'member':
+            slot3_name = u_name[u_id.index(group[9])]
+        else:
+            slot3_name = "N/A"
+
+        if group[6] == 'member':
+            slot4_name = u_name[u_id.index(group[10])]
+        else:
+            slot4_name = "N/A"
+
+        print(f"     Group {group[0]}")
+        print("------------------------------------")
+        print(f"| Slot |  Type  |  Member          |")
+        print("|------|--------|------------------|")
+        print(f"|    1 | {group[3]:6s} | {slot1_name}")
+        print(f"|    2 | {group[4]:6s} | {slot2_name}")
+        print(f"|    3 | {group[5]:6s} | {slot3_name}")
+        print(f"|    4 | {group[6]:6s} | {slot4_name}")
+        print("------------------------------------")
+        print(f"# hunters: {group[12]}")
+
+    else:
+        print(f"Group doesn't exist")
+    print("****************************************")

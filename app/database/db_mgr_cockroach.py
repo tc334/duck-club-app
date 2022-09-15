@@ -254,9 +254,13 @@ class DbManagerCockroach:
 
         # format the strings for the command
         value_types = len(insert_tuple) * "%s, "
-        my_sql_insert_query = f"INSERT INTO {table_name} ({col_names}) VALUES ({value_types[:-2]}) "
+        my_sql_insert_query = f"INSERT INTO {table_name} ({col_names}) VALUES ({value_types[:-2]}) RETURNING id"
 
-        self.execute(my_sql_insert_query, value_tuple=insert_tuple)
+        id = self.execute(my_sql_insert_query, value_tuple=insert_tuple, expecting_return=True)
+        if id and len(id) == 1:
+            return id[0][0]
+        else:
+            return id
 
     def read_custom(self, custom_query):
         return self.execute(custom_query, expecting_return=True)

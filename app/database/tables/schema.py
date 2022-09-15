@@ -133,7 +133,7 @@ schema = {
         },
         {
             'name': 'email',
-            'type': 'VARCHAR(30)',
+            'type': 'VARCHAR(64)',
             'extra': 'NOT NULL'
         },
         {

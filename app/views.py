@@ -28,7 +28,7 @@ def confirm_email(token):
     if results and len(results) == 1:
         user = db.sql_to_dict(results, names=["id", "confirmed"])
     else:
-        # flash('Internal error', 'error')
+        print(f"Unable to locate user with {email} in confirm_email method. results={results}")
         return "Lookup of the user's email failed"
 
     if user["confirmed"]:
