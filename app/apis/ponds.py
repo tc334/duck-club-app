@@ -37,7 +37,7 @@ def add_row(user):
 @ponds_bp.route('/ponds', methods=['GET'])
 @token_required(all_members)
 def get_all_rows(user):
-    results = db.read_all(table_name)
+    results = db.read_all(table_name, post_fix="ORDER BY name")
     return jsonify({"ponds": results}), 200
 
 

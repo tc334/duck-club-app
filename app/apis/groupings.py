@@ -90,7 +90,7 @@ def get_harvest_summary(user):
     if len(hunts_dict) < 1:
         # no stored value in cache, must go to db
         hunts = db.read_custom(f"SELECT id, hunt_date FROM hunts WHERE status = 'hunt_open'")
-        if hunts is None:
+        if hunts is None or not hunts:
             return jsonify({"message": "internal error"}), 500
         if len(hunts) == 0:
             return jsonify({"message": "Couldn't find a hunt in a hunt-open state"}), 400
@@ -895,7 +895,7 @@ def get_editable_hunts(user):
         results_dict = db.format_dict(names, results)
         return jsonify({"message": results_dict}), 200
     else:
-        return jsonify({"message": "Error looking up editable hunts"}), 500
+        return jsonify({"message": "You don't have any hunts that can be edited right now"}), 500
 
 
 @groupings_bp.route('/groupings/filtered', methods=['GET'])

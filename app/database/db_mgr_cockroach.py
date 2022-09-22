@@ -35,6 +35,7 @@ def get_enum_str(d):
 def reconnect(f: Callable):
     def wrapper(storage, *args, **kwargs):
         if not storage.connected():
+            print(f"DB not connected when {f} called. Attempting to connect")
             storage.connect()
 
         try:
@@ -118,7 +119,7 @@ class DbManagerCockroach:
                     if expecting_return:
                         ret_val = cur.fetchall()
                 except psycopg2.OperationalError as e:
-                    print(f"psycopg2 Operational Error is coming")
+                    print(f"psycopg2 Operational Error is coming: {e}")
                     raise
                 except psycopg2.Error as e:
                     print(f"Cockroach execute error: {e}")

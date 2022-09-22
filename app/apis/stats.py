@@ -375,6 +375,10 @@ def get_stats_ponds(users):
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
 
+    # None or False means there was a read error
+    if not results:
+        return jsonify({"message": "internal error"}), 500
+
     # if no results found, stop here
     if len(results) == 0:
         return jsonify({"message": "no results found within filter bounds"}), 404

@@ -33,7 +33,7 @@ def login():
                         token = jwt.encode({
                             "user": user["public_id"],
                             "level": user["level"],
-                            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=3),
+                            "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),
                             "token_id": str(uuid.uuid4())
                         }, current_app.config["SECRET_KEY"])
 

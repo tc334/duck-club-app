@@ -293,6 +293,13 @@ export default class extends AbstractView {
         (data) => {
           db_data = data["harvests"];
           populateTable(data["harvests"]);
+          if (db_data.length < 1 && data["group_id"] !== null) {
+            displayMessageToUser(
+              "The Group ID matching your search is " + data["group_id"]
+            );
+            var inp_groupid = document.getElementById("inp-groupid");
+            inp_groupid.value = data["group_id"];
+          }
         },
         displayMessageToUser
       );

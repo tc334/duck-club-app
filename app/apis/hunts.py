@@ -123,7 +123,7 @@ def get_hunt_dates(user):
                              f"WHERE hunts.status = 'hunt_closed' "
                              f"ORDER BY hunt_date DESC")
 
-    if results is not None:
+    if results is not None and results is not False:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
         names_all = ["id", "hunt_date"]
         results_dict = db.format_dict(names_all, results)
