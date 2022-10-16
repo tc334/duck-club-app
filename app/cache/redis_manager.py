@@ -127,7 +127,7 @@ class RedisManager:
             return self.r.get(prefix)
         # nominal
         list_of_dicts = []
-        print(f"Redis debug. count={count}. prefix={prefix}")
+        # print(f"Redis debug. count={count}. prefix={prefix}")
         for i in range(count):
             temp = self.r.get(f"{prefix}:{i}")
             if temp:
@@ -144,7 +144,7 @@ class RedisManager:
     def delete(self, prefix):
         keys = self.r.keys(f"{prefix}:*")
         if keys:
-            print(f"Redis debug. Deleting keys={keys}")
+            # print(f"Redis debug. Deleting keys={keys}")
             self.r.delete(*keys)
 
     @transaction_wrapper

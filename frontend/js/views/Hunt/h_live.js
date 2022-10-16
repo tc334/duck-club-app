@@ -427,18 +427,27 @@ function selectGroup(e) {
         document.getElementById("modal-pond").innerHTML = db_data["pond"];
 
         // group info
-        for (var i = 0; i < 4; i++) {
-          var table_cell_name = document.getElementById(
-            "modal-hunter" + (i + 1)
-          );
-          if (i < db_data["hunters"].length) {
-            table_cell_name.innerHTML =
-              db_data["hunters"][i]["first_name"] +
-              " " +
-              db_data["hunters"][i]["last_name"];
-          } else {
-            table_cell_name.innerHTML = "";
+        // members first, then guests
+        var slot = 0;
+        for (var i = 0; i < db_data["hunters"]["members"].length; i++) {
+          slot += 1;
+          var table_cell_name = document.getElementById("modal-hunter" + slot);
+          table_cell_name.innerHTML = db_data["hunters"]["members"][i];
+        }
+        if (db_data["hunters"]["guests"].length > 0) {
+          for (var i = 0; i < db_data["hunters"]["guests"].length; i++) {
+            slot += 1;
+            var table_cell_name = document.getElementById(
+              "modal-hunter" + slot
+            );
+            table_cell_name.innerHTML = db_data["hunters"]["guests"][i];
           }
+        }
+        // clear names in the remaining blank slots
+        while (slot < 4) {
+          slot += 1;
+          var table_cell_name = document.getElementById("modal-hunter" + slot);
+          table_cell_name.innerHTML = "";
         }
 
         // group harvest

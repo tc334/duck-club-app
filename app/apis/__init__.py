@@ -6,3 +6,5 @@ from .hunts import hunts_bp
 from .groupings import groupings_bp
 from .harvest import harvests_bp
 from .stats import stats_bp
+from .scouts import scouts_bp
+from .guests import guests_bp

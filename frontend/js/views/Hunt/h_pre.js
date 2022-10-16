@@ -6,7 +6,7 @@ import {
   displayMessageToUser,
   dateConverter_iso,
   decode_jwt,
-  populate_aside,
+  populate_aside_hunt,
 } from "../../common_funcs.js";
 
 var jwt_global;
@@ -28,7 +28,61 @@ export default class extends AbstractView {
     <div id="status-table-container"></div>
     <div id="actions-button-holder" class="actions-button-holder"></div>
     <h1 class="heading-primary">groups</h1>
-    <div id="tables-container"></div>`;
+    <div id="tables-container"></div>
+    
+    <div id="join-modal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2 id="modal-group-heading"></h2>
+      <form id="join-form" class="edit-form" name="edit-user" netlify>
+      <div class="form-data">
+        <div class="form-row">
+          <label for="inp-dog" class="chk-lbl">Dog</label>
+          <input
+            type="checkbox"
+            id="inp-dog"
+            name="b_dog"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="inp-atv-seats" class="chk-lbl"># ATV seats</label>
+          <input
+            type="number"
+            id="inp-atv-seats"
+            name="num_atv_seats"
+            min="0"
+            max="4"
+            value="0"
+          />
+        </div>
+
+        <div class="form-row">
+          <label for="inp-pond-pref" class="chk-lbl">pond order</label>
+          <textarea
+            id="inp-pond-pref"
+            name="pond_preference"
+            placeholder="Wigeon, Forrest West, Remington, ..."
+            rows="4"
+            cols="40"></textarea>
+        </div>
+
+        <div class="form-row">
+          <label for="inp-notes" class="chk-lbl">notes to draw manager</label>
+          <textarea
+            id="inp-notes"
+            name="notes"
+            rows="3"
+            cols="40"></textarea>
+        </div>
+    
+        <span class="button-holder">
+          <button class="btn--form" id="btn-join">Join</button>
+        </span>
+      </div>
+    </form>
+    </div>
+  </div>`;
   }
 
   js(jwt) {
@@ -39,9 +93,12 @@ export default class extends AbstractView {
     // check for reload message; if exists, display
     reloadMessage();
 
+    const user_level = decode_jwt(jwt);
+    populate_aside_hunt(user_level);
+
     // clear the aside
     var aside = document.getElementById("aside-content");
-    aside.innerHTML = "";
+    //aside.innerHTML = "";
 
     // First step is to pull data from DB
     const route = base_uri + "/groupings/current";
@@ -53,13 +110,14 @@ export default class extends AbstractView {
       (response_full_json) => {
         if (response_full_json["data"]) {
           db_data_groupings = response_full_json["data"]["groupings"];
-          db_data_users = response_full_json["data"]["users"];
           db_data_ponds = response_full_json["data"]["ponds"];
-          db_data_hunts = response_full_json["data"]["hunts"];
+          db_data_hunts = response_full_json["data"]["hunt"];
           populateTables();
           const idxGroup_me = group_idx_to_id.indexOf(
             response_full_json["data"]["my_group_id"]
           );
+          //console.log("Alpha");
+          //console.log(db_data_hunts);
           populateStatusTable(
             db_data_hunts["hunt_date"],
             db_data_hunts["status"],
@@ -75,6 +133,60 @@ export default class extends AbstractView {
       },
       displayMessageToUser
     );
+
+    // What to do on a submit
+    const myForm = document.getElementById("join-form");
+    myForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // find the user_id of the current user via public id
+      const public_id = decode_jwt(jwt_global, "user");
+
+      // Create a new group for this user
+      var object = {
+        public_id: public_id,
+      };
+
+      // Pull data from form and put it into the json format the DB wants
+      const formData = new FormData(this);
+
+      formData.forEach((value, key) => (object[key] = value));
+
+      var json = JSON.stringify(object);
+
+      const route = base_uri + "/groupings";
+
+      callAPI(
+        jwt_global,
+        route,
+        "POST",
+        json,
+        (data) => {
+          localStorage.setItem("previous_action_message", data["message"]);
+          window.scrollTo(0, 0);
+          location.reload();
+        },
+        displayMessageToUser
+      );
+    });
+
+    // get the modal
+    var modal = document.getElementById("join-modal");
+
+    // get the span element that closes the modal
+    var span = document.getElementsByClassName("close")[0];
+
+    // When the user clicks on <span> (x), close the modal
+    span.onclick = function () {
+      modal.style.display = "none";
+    };
+
+    // When the user clicks anywhere outside of the modal, close it
+    window.onclick = function (event) {
+      if (event.target == modal) {
+        modal.style.display = "none";
+      }
+    };
   }
 }
 
@@ -144,11 +256,11 @@ function populateStatusTable(hunt_date, hunt_status, my_group_id) {
       btn_withdraw.addEventListener("click", withdraw);
       div.appendChild(btn_withdraw);
       // add guest button
-      var btn_addGuest = document.createElement("button");
+      var btn_addGuest = document.createElement("a");
+      btn_addGuest.href = "#u_guests";
       btn_addGuest.innerHTML = "Add Guest(s)";
       btn_addGuest.className += "btn--form";
-      btn_addGuest.disabled = true;
-      //btn_addGuest.addEventListener("click", withdraw);
+      //btn_addGuest.addEventListener("click", goto_guests);
       div.appendChild(btn_addGuest);
       // add guest button
       var btn_invite = document.createElement("button");
@@ -171,7 +283,7 @@ function populateStatusTable(hunt_date, hunt_status, my_group_id) {
 
 function populateTables() {
   var container = document.getElementById("tables-container");
-  const column_headings = ["#", "hunters", "pond"];
+  const column_headings = ["#", "hunters", "chip", "pond"];
   var select = document.getElementById("groupings-modal-select");
 
   for (var iGroup = 0; iGroup < db_data_groupings.length; iGroup++) {
@@ -192,29 +304,43 @@ function populateTables() {
 
     tr = table.insertRow(-1);
 
+    var b_guests = false;
+    if (db_data_groupings[iGroup]["guests"] != null) {
+      b_guests = true;
+    }
+
     // grouping label 1:N that makes sense to managers
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = iGroup + 1;
 
-    // Hunters
-    var tabCell = tr.insertCell(-1);
-    var hunter_names = "";
-    for (var iHunter = 0; iHunter < 4; iHunter++) {
-      if (
-        db_data_groupings[iGroup]["slot" + (iHunter + 1) + "_type"] == "member"
+    // hunter
+    var mem_str = "";
+    for (
+      var iMem = 0;
+      iMem < db_data_groupings[iGroup]["members"].length;
+      iMem++
+    ) {
+      mem_str += db_data_groupings[iGroup]["members"][iMem] + "<br>";
+    }
+
+    if (b_guests) {
+      for (
+        var iGst = 0;
+        iGst < db_data_groupings[iGroup]["guests"].length;
+        iGst++
       ) {
-        const user_id =
-          db_data_groupings[iGroup]["slot" + (iHunter + 1) + "_id"];
-        const user_full_name = getUserFullName(user_id);
-        if (hunter_names.length > 0) {
-          hunter_names = hunter_names.concat("\n" + user_full_name);
-        } else {
-          hunter_names = hunter_names.concat(user_full_name);
-        }
+        mem_str += db_data_groupings[iGroup]["guests"][iGst] + "<br>";
       }
     }
+
+    var tabCell = tr.insertCell(-1);
     tabCell.className += "hunters-column";
-    tabCell.innerHTML = hunter_names;
+    tabCell.innerHTML = mem_str;
+
+    // Chip
+    var tabCell = tr.insertCell(-1);
+    tabCell.innerHTML = db_data_groupings[iGroup]["chip"];
+    container.appendChild(table);
 
     // Pond
     var tabCell = tr.insertCell(-1);
@@ -222,17 +348,6 @@ function populateTables() {
     tabCell.id = "pond-for-group-" + iGroup;
     container.appendChild(table);
   }
-}
-
-function getUserFullName(id) {
-  for (var i = 0; i < db_data_users.length; i++) {
-    if (db_data_users[i]["id"] == id) {
-      return (
-        db_data_users[i]["first_name"] + " " + db_data_users[i]["last_name"]
-      );
-    }
-  }
-  return "Unknown Hunter";
 }
 
 function enableAllOptions() {
@@ -268,7 +383,7 @@ function emphasizeUserGroupTable(idxGroup) {
 }
 
 function withdraw(e) {
-  const route = base_uri + "/groupings/withdraw/" + e.currentTarget.group_id;
+  const route = base_uri + "/groupings/withdraw";
 
   callAPI(
     jwt_global,
@@ -285,36 +400,6 @@ function withdraw(e) {
 }
 
 function join() {
-  // find the user_id of the current user via public id
-  const public_id = decode_jwt(jwt_global, "user");
-  var userId;
-  for (var idxUser = 0; idxUser < db_data_users.length; idxUser++) {
-    if (db_data_users[idxUser]["public_id"] == public_id) {
-      userId = db_data_users[idxUser]["id"];
-    }
-  }
-
-  // Create a new group for this user
-  var object = {
-    hunt_id: db_data_hunts["id"],
-    slot1_id: userId,
-    slot1_type: "member",
-  };
-
-  var json = JSON.stringify(object);
-
-  const route = base_uri + "/groupings";
-
-  callAPI(
-    jwt_global,
-    route,
-    "POST",
-    json,
-    (data) => {
-      localStorage.setItem("previous_action_message", data["message"]);
-      window.scrollTo(0, 0);
-      location.reload();
-    },
-    displayMessageToUser
-  );
+  // turn the modal on
+  document.getElementById("join-modal").style.display = "block";
 }

@@ -15,6 +15,10 @@ var jwt_global;
 // table sorting functions
 const column_id_list = [
   {
+    id: "col-date",
+    is_numeric: false,
+  },
+  {
     id: "col-pond",
     is_numeric: false,
   },
@@ -28,10 +32,6 @@ const column_id_list = [
   },
   {
     id: "col-total",
-    is_numeric: true,
-  },
-  {
-    id: "col-ave",
     is_numeric: true,
   },
   {
@@ -50,25 +50,25 @@ export default class extends AbstractView {
     <h2 class="heading-secondary">Filters</h2>
     <form id="form-filter">
       <div class="filter-container">
-        <section class="filter-date-exact">
-          <label for="select-date">Choose A Hunt Date</label>
-          <select id="select-date" name="hunt_id">
+        <section class="filter-user">
+          <label for="select-user">Choose A Hunter</label>
+          <select id="select-user" name="public_id">
           </select>
         </section>
       </div>  
       <button class="btn--form btn--cntr" id="btn-filter-refresh">Apply</button>
     </form>
-    <h1 class="heading-primary" id="stats-heading"></h1>
+    <h1 class="heading-primary" id="stats-heading">Hunts</h1>
     <p class="sort-helper">Click on any header to sort table</p>
     <div class="table-overflow-wrapper">
       <table id="data-table">
         <thead>
           <tr>
-            <th id="col-pond">name</th>
+            <th id="col-date">date</th>
+            <th id="col-pond">pond</th>
             <th id="col-ducks">ducks</th>
-            <th id="col-non">non-dks.</th>
+            <th id="col-non">non-dk.</th>
             <th id="col-total">total</th>
-            <th id="col-ave">ave. dks./hntr.</th>
             <th id="col-detail">detail</th>
           </tr>
         </thead>
@@ -111,19 +111,53 @@ export default class extends AbstractView {
 
   js(jwt) {
     jwt_global = jwt;
-
     // check for reload message; if exists, display
     reloadMessage();
 
     populate_aside_stats();
 
-    const myForm = document.getElementById("form-filter");
-    populateDateList(jwt, myForm);
+    // on page load get the list of hunters
+    const route = base_uri + "/users/all_allowable";
+    callAPI(
+      jwt,
+      route,
+      "GET",
+      null,
+      (response_full_json) => {
+        if (response_full_json["users"]) {
+          populateHunterListBox(response_full_json["users"]);
+        } else {
+          //console.log(data);
+        }
+      },
+      displayMessageToUser
+    );
 
     // What do do on a submit
+    const myForm = document.getElementById("form-filter");
     myForm.addEventListener("submit", function (e) {
       e.preventDefault();
-      mySubmit(jwt, this);
+
+      // Pull data from form and put it into the json format the DB wants
+      const formData = new FormData(this);
+
+      var object = {};
+      formData.forEach((value, key) => (object[key] = value));
+
+      // API route for this stats page
+      const route = base_uri + "/stats/history/" + object["public_id"];
+
+      callAPI(
+        jwt,
+        route,
+        "GET",
+        null,
+        (data) => {
+          //console.log(data["stats"]);
+          populateTable(data["hunts"]);
+        },
+        displayMessageToUser
+      );
     });
 
     // table sorting functions
@@ -154,30 +188,6 @@ export default class extends AbstractView {
   }
 }
 
-// separating this function out allows me to call it automatically on page load
-function mySubmit(jwt, myForm) {
-  // Pull data from form and put it into the json format the DB wants
-  const formData = new FormData(myForm); // myForm was this
-
-  var object = {};
-  formData.forEach((value, key) => (object[key] = value));
-
-  // API route for this stats page
-  const route = base_uri + "/groupings/harvest_summary/" + object["hunt_id"];
-
-  callAPI(
-    jwt,
-    route,
-    "GET",
-    null,
-    (data) => {
-      //console.log(data["data"]["groups"]);
-      populateTable(data["data"]["groups"]);
-    },
-    displayMessageToUser
-  );
-}
-
 function populateTable(db_data) {
   var table = document.getElementById("tb-stats");
   removeAllChildNodes(table);
@@ -186,31 +196,21 @@ function populateTable(db_data) {
     var tr = table.insertRow(-1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["pond_name"];
+    tabCell.innerHTML = dateConverter_http(db_data[i]["date"], true);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["num_ducks"], 1).toFixed(0);
+    tabCell.innerHTML = db_data[i]["pond"];
 
     var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = round(db_data[i]["num_nonducks"], 1).toFixed(0);
+    tabCell.innerHTML = round(db_data[i]["ducks"], 1).toFixed(1);
 
     var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
+    tabCell.innerHTML = round(db_data[i]["non_ducks"], 1).toFixed(1);
+
+    var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = round(
-      db_data[i]["num_ducks"] + db_data[i]["num_nonducks"],
-      0
-    ).toFixed(0);
-
-    var tabCell = tr.insertCell(-1);
-    tabCell.classList.add("cell-fixed-width");
-    tabCell.style.textAlign = "right";
-    tabCell.innerHTML = (
-      db_data[i]["num_ducks"] / db_data[i]["num_hunters"]
+      db_data[i]["ducks"] + db_data[i]["non_ducks"],
+      1
     ).toFixed(1);
 
     var tabCell = tr.insertCell(-1);
@@ -225,33 +225,14 @@ function populateTable(db_data) {
   }
 }
 
-function populateDateList(jwt, myForm) {
-  // API route for this stats page
-  const route = base_uri + "/hunts/dates";
-
-  callAPI(
-    jwt,
-    route,
-    "GET",
-    null,
-    (data) => {
-      //console.log(data["dates"]);
-      populateDateList_aux(data["dates"]);
-      if (data["dates"] && data["dates"].length > 0) {
-        mySubmit(jwt, myForm);
-      }
-    },
-    displayMessageToUser
-  );
-}
-
-function populateDateList_aux(db_data) {
-  const select_dates = document.getElementById("select-date");
-  for (var i = 0; i < db_data.length; i++) {
-    var new_opt = document.createElement("option");
-    new_opt.innerHTML = dateConverter_http(db_data[i]["hunt_date"]);
-    new_opt.value = db_data[i]["id"];
-    select_dates.appendChild(new_opt);
+function populateHunterListBox(db_data_users) {
+  var select = document.getElementById("select-user");
+  for (var i = 0; i < db_data_users.length; i++) {
+    var option_new = document.createElement("option");
+    option_new.value = db_data_users[i]["public_id"];
+    option_new.innerHTML =
+      db_data_users[i]["first_name"] + " " + db_data_users[i]["last_name"];
+    select.appendChild(option_new);
   }
 }
 

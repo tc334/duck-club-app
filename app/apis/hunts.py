@@ -38,6 +38,7 @@ def add_row(user):
     cache.delete("alpha")
     cache.delete("echo")
     cache.delete("sierra")
+    cache.delete("tango")
 
     return jsonify({"message": "New hunt started"}), 201
 
@@ -214,6 +215,7 @@ def update_row(user, hunt_id):
         cache.delete("alpha")
         cache.delete("echo")
         cache.delete("sierra")
+        cache.delete("tango")
         return jsonify({'message': f'Successful update of id {hunt_id} in {table_name}'}), 200
     else:
         return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}"}), 400
@@ -227,6 +229,30 @@ def del_row(user, hunt_id):
         cache.delete("echo")
         cache.delete("nov")
         cache.delete("sierra")
+        cache.delete("tango")
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {hunt_id} from table {table_name}"}), 400
+
+
+def get_current_prehunt():
+    hunt_dict = cache.get("tango")
+    if not hunt_dict:
+        # cache miss, go to db
+        result = db.read_custom(
+            f"SELECT id, hunt_date, status "
+            f"FROM hunts "
+            f"WHERE status IN ('signup_open', 'signup_closed', 'draw_complete')")
+        if result is None:
+            return None
+        if len(result) != 1:
+            print(f"Error in get_current_prehunt. len(result)={len(result)}. Couldn't find a hunt in a pre-hunt state")
+            return None
+        names = ["id", "hunt_date", "status"]
+        hunt_dict = db.format_dict(names, result)[0]
+        # datetime requires special handling
+        hunt_dict["hunt_date"] = hunt_dict["hunt_date"].isoformat()
+        # cache update
+        cache.add("tango", hunt_dict, 60 * 60)
+
+    return hunt_dict

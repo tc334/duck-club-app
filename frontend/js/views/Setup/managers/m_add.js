@@ -4,9 +4,9 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  populate_aside,
   dateConverter_http,
   decode_jwt,
+  populate_aside_hunt,
 } from "../../../common_funcs.js";
 
 var jwt_global;
@@ -25,8 +25,8 @@ export default class extends AbstractView {
     return `<div class="reload-message"></div>
     <h1 class="heading-primary">Manually Add Hunters</h1>
     <div class="hunter-list">
-      <span>active hunters:</span>
-      <select id="select-hunter"></select>
+      <span>Active Members:</span>
+      <select id="select-hunter" name="public_id"></select>
     </div>
     <div id="hunt-identifier"></div>
     <button class="btn--form" id="btn-add">Add</button>
@@ -42,7 +42,7 @@ export default class extends AbstractView {
     reloadMessage();
 
     const user_level = decode_jwt(jwt);
-    populate_aside(user_level);
+    populate_aside_hunt(user_level);
 
     // First step is to pull data from DB
     const route = base_uri + "/users/active";
@@ -90,20 +90,13 @@ export default class extends AbstractView {
 
     // What do do on a submit
     document.getElementById("btn-add").addEventListener("click", () => {
-      // Pull currently selected user from select
-      const idxHunter = document.getElementById("select-hunter").value;
-
       var object = {
-        hunt_id: db_data_hunt[0]["id"],
-        slot1_id: db_data[idxHunter]["id"],
-        slot1_type: "member",
+        public_id: document.getElementById("select-hunter").value,
       };
 
       var json = JSON.stringify(object);
 
       const route = base_uri + "/groupings";
-
-      console.log(json);
 
       callAPI(
         jwt,
@@ -125,7 +118,7 @@ function populateHunterListBox() {
   var select = document.getElementById("select-hunter");
   for (var i = 0; i < db_data.length; i++) {
     var option_new = document.createElement("option");
-    option_new.value = i;
+    option_new.value = db_data[i]["public_id"];
     option_new.innerHTML =
       db_data[i]["first_name"] + " " + db_data[i]["last_name"];
     select.appendChild(option_new);

@@ -33,8 +33,12 @@ enums = [
         "values": ('open', 'closed')
     },
     {
-        "name": "group_slot_type",
-        "values": ('open', 'member', 'guest', 'invitation')
+        "name": "participant_type",
+        "values": ('member', 'guest')
+    },
+    {
+        "name": "guest_type",
+        "values": ('family', 'friend')
     }
 ]
 
@@ -173,6 +177,71 @@ schema = {
         }
     ],
 
+    "guests": [
+        {
+            'name': 'id',
+            'type': 'UUID',
+            'extra': "DEFAULT gen_random_uuid() PRIMARY KEY"
+        },
+        {
+            'name': 'full_name',
+            'type': 'STRING',
+            'extra': 'NOT NULL'
+        },
+        {
+            'name': 'type',
+            'type': 'enum_guest_type',
+            'extra': "NOT NULL"
+        },
+        {
+            'name': 'user_id',
+            'type': 'INT',
+            'extra': 'NOT NULL',
+            'foreign': 'users(id)'
+        },
+        {
+            'name': 'timestamp',
+            'type': 'TIMESTAMP',
+            'extra': 'DEFAULT current_timestamp()'
+        },
+    ],
+
+    "invitations": [
+        {
+            'name': 'id',
+            'type': 'UUID',
+            'extra': "DEFAULT gen_random_uuid() PRIMARY KEY"
+        },
+        {
+            'name': 'inviter_id',
+            'type': 'INT',
+            'extra': 'NOT NULL',
+            'foreign': 'users(id)'
+        },
+        {
+            'name': 'invitee_id',
+            'type': 'INT',
+            'extra': 'NOT NULL',
+            'foreign': 'users(id)'
+        },
+        {
+            'name': 'hunt_id',
+            'type': 'INT',
+            'extra': 'NOT NULL',
+            'foreign': 'hunts(id)'
+        },
+        {
+            'name': 'active',
+            'type': 'BOOLEAN',
+            'extra': 'DEFAULT true',
+        },
+        {
+            'name': 'cancellation_notes',
+            'type': 'STRING',
+            'extra': '',
+        },
+    ],
+
     "properties": [
         {
             'name': 'id',
@@ -220,6 +289,48 @@ schema = {
         }
     ],
 
+    "scouting_reports": [
+        {
+            'name': 'id',
+            'type': 'UUID',
+            'extra': "DEFAULT gen_random_uuid() PRIMARY KEY"
+        },
+        {
+            'name': 'pond_id',
+            'type': 'INT',
+            'extra': '',
+            'foreign': 'ponds(id)'
+        },
+        {
+            'name': 'hunt_id',
+            'type': 'INT',
+            'extra': '',
+            'foreign': 'hunts(id)'
+        },
+        {
+            'name': 'count',
+            'type': 'INT',
+            'extra': ''
+        },
+        {
+            'name': 'notes',
+            'type': 'STRING',
+            'extra': ""
+        },
+        {
+            'name': 'created_by',
+            'type': 'INT',
+            'extra': '',
+            'foreign': 'users(id)'
+        },
+        {
+            'name': 'timestamp',
+            'type': 'TIMESTAMP',
+            'extra': 'DEFAULT current_timestamp()'
+        },
+
+    ],
+
     "groupings": [
         {
             'name': 'id',
@@ -237,46 +348,6 @@ schema = {
             'type': 'INT',
             'extra': '',
             'foreign': 'ponds(id)'
-        },
-        {
-            'name': 'slot1_type',
-            'type': 'enum_group_slot_type',
-            'extra': "DEFAULT 'open'"
-        },
-        {
-            'name': 'slot2_type',
-            'type': 'enum_group_slot_type',
-            'extra': "DEFAULT 'open'"
-        },
-        {
-            'name': 'slot3_type',
-            'type': 'enum_group_slot_type',
-            'extra': "DEFAULT 'open'"
-        },
-        {
-            'name': 'slot4_type',
-            'type': 'enum_group_slot_type',
-            'extra': "DEFAULT 'open'"
-        },
-        {
-            'name': 'slot1_id',
-            'type': 'INT',
-            'extra': ''
-        },
-        {
-            'name': 'slot2_id',
-            'type': 'INT',
-            'extra': ''
-        },
-        {
-            'name': 'slot3_id',
-            'type': 'INT',
-            'extra': ''
-        },
-        {
-            'name': 'slot4_id',
-            'type': 'INT',
-            'extra': ''
         },
         {
             'name': 'harvest_update_time',
@@ -297,7 +368,73 @@ schema = {
             'name': 'num_non',
             'type': 'INT',
             'extra': 'DEFAULT 0'
-        }
+        },
+        {
+            'name': 'draw_chip_raw',
+            'type': 'INT',
+            'extra': ''
+        },
+        {
+            'name': 'draw_position',
+            'type': 'INT',
+            'extra': ''
+        },
+        {
+            'name': 'draw_position_ratio',
+            'type': 'FLOAT',
+            'extra': ''
+        },
+    ],
+
+    "participants": [
+        {
+            'name': 'id',
+            'type': 'UUID',
+            'extra': "DEFAULT gen_random_uuid() PRIMARY KEY"
+        },
+        {
+            'name': 'type',
+            'type': 'enum_participant_type',
+            'extra': "NOT NULL"
+        },
+        {
+            'name': 'grouping_id',
+            'type': 'INT',
+            'extra': 'NOT NULL',
+            'foreign': 'groupings(id) ON DELETE CASCADE'
+        },
+        {
+            'name': 'user_id',
+            'type': 'INT',
+            'extra': '',
+            'foreign': 'users(id)'
+        },
+        {
+            'name': 'guest_id',
+            'type': 'UUID',
+            'extra': '',
+            'foreign': 'guests(id)'
+        },
+        {
+            'name': 'b_dog',
+            'type': 'BOOLEAN',
+            'extra': 'DEFAULT false'
+        },
+        {
+            'name': 'num_atv_seats',
+            'type': 'INT',
+            'extra': 'DEFAULT 0'
+        },
+        {
+            'name': 'pond_preference',
+            'type': 'STRING',
+            'extra': ''
+        },
+        {
+            'name': 'notes',
+            'type': 'STRING',
+            'extra': ''
+        },
     ],
 
     "harvest": [
@@ -327,26 +464,6 @@ schema = {
 }
 
 secondary_indices = (
-    {
-        'name': 'sec_idx_slot1',
-        'table': 'groupings',
-        'columns': ('slot1_type', 'slot1_id')
-    },
-    {
-        'name': 'sec_idx_slot2',
-        'table': 'groupings',
-        'columns': ('slot2_type', 'slot2_id')
-    },
-    {
-        'name': 'sec_idx_slot3',
-        'table': 'groupings',
-        'columns': ('slot3_type', 'slot3_id')
-    },
-    {
-        'name': 'sec_idx_slot4',
-        'table': 'groupings',
-        'columns': ('slot4_type', 'slot4_id')
-    },
     {
         'name': 'sec_idx_hunt_status',
         'table': 'hunts',
@@ -391,5 +508,15 @@ secondary_indices = (
         'name': 'sec_idx_harvest_bird',
         'table': 'harvest',
         'columns': ('bird_id',)
+    },
+    {
+        'name': 'sec_idx_scouting_hunt',
+        'table': 'scouting_reports',
+        'columns': ('hunt_id',)
+    },
+    {
+        'name': 'sec_idx_participant_user',
+        'table': 'participants',
+        'columns': ('user_id',)
     },
 )

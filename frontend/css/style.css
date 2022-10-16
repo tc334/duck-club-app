@@ -64,6 +64,10 @@ select {
   border-radius: 3px;
 }
 
+a {
+  text-decoration: none;
+}
+
 .container {
   max-width: 140rem;
   margin: 0 auto;
@@ -246,6 +250,7 @@ main {
   font-size: 2rem;
   text-align: center;
   margin-bottom: 1rem;
+  text-transform: capitalize;
 }
 
 table {
@@ -330,6 +335,22 @@ caption {
   flex-grow: 1;
 }
 
+.form-data-horizontal {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.form-data-horizontal label {
+  display: inline-block;
+  font-size: 1.4rem;
+  text-transform: capitalize;
+}
+
 #select-type {
   display: inline-block;
 }
@@ -404,7 +425,9 @@ footer {
 }
 
 .form-data input[type]:not([type="reset"]),
-.form-data select {
+.form-data select,
+.form-data-horizontal input,
+.form-data-horizontal select {
   padding: 0.1rem 0.2rem;
   font-family: inherit;
   color: #2f2504;
@@ -555,6 +578,10 @@ manual add
 .hunters-column {
   width: 20rem;
   white-space: pre;
+  line-height: 1.5;
+}
+
+.dog-column {
   line-height: 1.5;
 }
 
@@ -942,7 +969,8 @@ Stats
 }
 
 .filter-pond label,
-.filter-date-exact label {
+.filter-date-exact label,
+.filter-user label {
   display: block;
   font-size: 1.4rem;
   text-align: center;
@@ -955,7 +983,8 @@ Stats
   font-size: 1.6rem;
 }
 
-.filter-date-exact {
+.filter-date-exact,
+.filter-user {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1151,4 +1180,41 @@ Stats
 
 #img-arrow {
   transform: rotate(90deg);
+}
+
+.btn-detail {
+  text-decoration: underline;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  margin: 0;
+  padding: 0;
+  background-color: transparent;
+}
+
+#btn-reconfirm {
+  align-self: center;
+}
+
+#join-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 3fr;
+  align-items: center;
+}
+
+#join-form label {
+  margin-top: 0;
+}
+
+#join-form input {
+  justify-self: start;
+  margin-top: 0;
+}
+
+.chip-pond {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  gap: 3rem;
 }

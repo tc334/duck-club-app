@@ -23,38 +23,35 @@ def get_stats_hunters(users):
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
     results = []
-    for slot_num in range(1, 5):
-        if data_in["filter-member"] == "whole-club":
-            this_slot = db.read_custom(f"SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS name, "
-                                       f"SUM(groupings.num_ducks/groupings.num_hunters), COUNT(groupings.num_ducks), "
-                                       f"SUM(groupings.num_non/groupings.num_hunters) "
-                                       f"FROM groupings "
-                                       f"JOIN users ON groupings.slot{slot_num}_id=users.id "
-                                       f"JOIN hunts ON groupings.hunt_id=hunts.id "
-                                       f"WHERE groupings.slot{slot_num}_type='member' "
-                                       f"AND hunts.hunt_date>='{date_start}' "
-                                       f"AND hunts.hunt_date<='{date_end}' "
-                                       f"GROUP BY users.id, name "
-                                       f"ORDER BY users.id")
-        elif data_in["filter-member"] == "just-me":
-            this_slot = db.read_custom(f"SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS name, "
-                                       f"SUM(groupings.num_ducks/groupings.num_hunters), COUNT(groupings.num_ducks), "
-                                       f"SUM(groupings.num_non/groupings.num_hunters) "
-                                       f"FROM groupings "
-                                       f"JOIN users ON groupings.slot{slot_num}_id=users.id "
-                                       f"JOIN hunts ON groupings.hunt_id=hunts.id "
-                                       f"WHERE groupings.slot{slot_num}_type='member' "
-                                       f"AND users.id={users['id']} "
-                                       f"AND hunts.hunt_date>='{date_start}' "
-                                       f"AND hunts.hunt_date<='{date_end}' "
-                                       f"GROUP BY users.id, name "
-                                       f"ORDER BY users.id")
-        else:
-            return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
-        if this_slot is not False:
-            results = merge_slots(results, this_slot, start=2)
-        else:
-            return jsonify({"message": f"Unable to get hunter stats because of internal error"}), 500
+    if data_in["filter-member"] == "whole-club":
+        results = db.read_custom(f"SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS name, "
+                                 f"SUM(groupings.num_ducks/groupings.num_hunters), COUNT(groupings.num_ducks), "
+                                 f"SUM(groupings.num_non/groupings.num_hunters) "
+                                 f"FROM groupings "
+                                 f"JOIN participants ON participants.grouping_id=groupings.id "
+                                 f"JOIN users ON participants.user_id=users.id "
+                                 f"JOIN hunts ON groupings.hunt_id=hunts.id "
+                                 f"WHERE hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.hunt_date<='{date_end}' "
+                                 f"GROUP BY users.id, name "
+                                 f"ORDER BY users.id")
+    elif data_in["filter-member"] == "just-me":
+        results = db.read_custom(f"SELECT users.id, CONCAT(users.first_name, ' ', users.last_name) AS name, "
+                                 f"SUM(groupings.num_ducks/groupings.num_hunters), COUNT(groupings.num_ducks), "
+                                 f"SUM(groupings.num_non/groupings.num_hunters) "
+                                 f"FROM groupings "
+                                 f"JOIN participants ON participants.grouping_id=groupings.id "
+                                 f"JOIN users ON participants.user_id=users.id "
+                                 f"JOIN hunts ON groupings.hunt_id=hunts.id "
+                                 f"WHERE users.id={users['id']} "
+                                 f"AND hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.hunt_date<='{date_end}' "
+                                 f"GROUP BY users.id, name "
+                                 f"ORDER BY users.id")
+    else:
+        return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
+    if results is None:
+        return jsonify({"message": "internal error in get_stats_hunters"}), 500
 
     # if no results found, stop here
     if len(results) == 0:
@@ -70,22 +67,6 @@ def get_stats_hunters(users):
         })
 
     return jsonify({"stats": list_of_dicts}), 200
-
-
-def merge_slots(slot_1, slot_2, start=1):
-    # input is a list of tuples; if first element matches, add the rest together
-    merged = slot_1 + [list(elem) for elem in slot_2]
-    i = 0
-    while i < len(merged)-1:
-        j = i+1
-        while j < len(merged):
-            if merged[i][0] == merged[j][0]:
-                merged[i][start:] = [merged[i][x] + merged[j][x] for x in range(start, len(merged[j]))]
-                merged.pop(j)
-            else:
-                j += 1
-        i += 1
-    return merged
 
 
 def update_group_harvest():
@@ -231,9 +212,6 @@ def get_stats_club(users):
     if not date_start:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-date"}), 400
 
-    # f"SUM(groupings.harvest_ave_ducks*groupings.num_hunters), "
-    # f"SUM(groupings.harvest_ave_non*groupings.num_hunters), "
-
     results = db.read_custom(f"SELECT hunts.hunt_date, "
                              f"COUNT(groupings.id), "
                              f"SUM(groupings.num_hunters), "
@@ -290,22 +268,19 @@ def get_stats_birds(users):
                                  f"GROUP BY birds.name "
                                  f"ORDER BY birds.name")
     elif data_in["filter-member"] == "just-me":
-        results = []
-        for slot_num in range(1, 5):
-            this_slot = db.read_custom(f"SELECT birds.name, "
-                                       f"SUM(harvest.count/groupings.num_hunters) "
-                                       f"FROM birds "
-                                       f"JOIN harvest ON harvest.bird_id=birds.id "
-                                       f"JOIN groupings ON harvest.group_id=groupings.id "
-                                       f"JOIN hunts ON groupings.hunt_id=hunts.id "
-                                       f"JOIN users ON groupings.slot{slot_num}_id=users.id "
-                                       f"WHERE groupings.slot{slot_num}_type='member' "
-                                       f"AND users.id={users['id']} "
-                                       f"AND hunts.hunt_date>='{date_start}' "
-                                       f"AND hunts.hunt_date<='{date_end}' "
-                                       f"GROUP BY birds.name "
-                                       f"ORDER BY birds.name")
-            results = merge_slots(results, this_slot)
+        results = db.read_custom(f"SELECT birds.name, "
+                                 f"SUM(harvest.count/groupings.num_hunters) "
+                                 f"FROM birds "
+                                 f"JOIN harvest ON harvest.bird_id=birds.id "
+                                 f"JOIN groupings ON harvest.group_id=groupings.id "
+                                 f"JOIN hunts ON groupings.hunt_id=hunts.id "
+                                 f"JOIN participants ON participants.grouping_id=groupings.id "
+                                 f"JOIN users ON participants.user_id=users.id "
+                                 f"WHERE users.id={users['id']} "
+                                 f"AND hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.hunt_date<='{date_end}' "
+                                 f"GROUP BY birds.name "
+                                 f"ORDER BY birds.name")
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
 
@@ -355,23 +330,20 @@ def get_stats_ponds(users):
                                  f"GROUP BY ponds.name "
                                  f"ORDER BY ponds.name")
     elif data_in["filter-member"] == "just-me":
-        results = []
-        for slot_num in range(1, 5):
-            this_slot = db.read_custom(f"SELECT ponds.name, "
-                                       f"COUNT(DISTINCT groupings.id), "
-                                       f"SUM(groupings.num_ducks/groupings.num_hunters), "
-                                       f"SUM(groupings.num_non/groupings.num_hunters), COUNT(DISTINCT groupings.id) "
-                                       f"FROM ponds "
-                                       f"JOIN groupings ON groupings.pond_id=ponds.id "
-                                       f"JOIN hunts ON groupings.hunt_id=hunts.id "
-                                       f"JOIN users ON groupings.slot{slot_num}_id=users.id "
-                                       f"WHERE groupings.slot{slot_num}_type='member' "
-                                       f"AND hunts.hunt_date>='{date_start}' "
-                                       f"AND hunts.hunt_date<='{date_end}' "
-                                       f"AND users.id={users['id']} "
-                                       f"GROUP BY ponds.name "
-                                       f"ORDER BY ponds.name")
-            results = merge_slots(results, this_slot)
+        results = db.read_custom(f"SELECT ponds.name, "
+                                 f"COUNT(DISTINCT groupings.id), "
+                                 f"SUM(groupings.num_ducks/groupings.num_hunters), "
+                                 f"SUM(groupings.num_non/groupings.num_hunters), COUNT(DISTINCT groupings.id) "
+                                 f"FROM ponds "
+                                 f"JOIN groupings ON groupings.pond_id=ponds.id "
+                                 f"JOIN hunts ON groupings.hunt_id=hunts.id "
+                                 f"JOIN participants ON participants.grouping_id=groupings.id "
+                                 f"JOIN users ON participants.user_id=users.id "
+                                 f"WHERE hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.hunt_date<='{date_end}' "
+                                 f"AND users.id={users['id']} "
+                                 f"GROUP BY ponds.name "
+                                 f"ORDER BY ponds.name")
     else:
         return jsonify({"message": f"Unable to get hunter stats because of unrecognized filter-member"}), 400
 
@@ -382,8 +354,6 @@ def get_stats_ponds(users):
     # if no results found, stop here
     if len(results) == 0:
         return jsonify({"message": "no results found within filter bounds"}), 404
-
-    print(f"Echo:{results}")
 
     # now stitch the names and the counts together
     list_of_dicts = []
@@ -414,22 +384,19 @@ def get_stats_ponds(users):
                                      f"AND ponds.id={data_in['pond_id']} "
                                      f"ORDER BY hunts.hunt_date")
         elif data_in["filter-member"] == "just-me":
-            results = []
-            for slot_num in range(1, 5):
-                this_slot = db.read_custom(f"SELECT hunts.hunt_date, groupings.num_ducks/groupings.num_hunters, 1 "
-                                           f"FROM hunts "
-                                           f"JOIN groupings ON groupings.hunt_id=hunts.id "
-                                           f"JOIN harvest ON harvest.group_id=groupings.id "
-                                           f"JOIN ponds ON groupings.pond_id=ponds.id "
-                                           f"JOIN users ON groupings.slot{slot_num}_id=users.id "
-                                           f"WHERE groupings.slot{slot_num}_type='member' "
-                                           f"AND users.id={users['id']} "
-                                           f"AND hunts.hunt_date>='{date_start}' "
-                                           f"AND hunts.hunt_date<='{date_end}' "
-                                           f"AND ponds.id={data_in['pond_id']} "
-                                           f"GROUP BY hunts.hunt_date "
-                                           f"ORDER BY hunts.hunt_date")
-                results = merge_slots(results, this_slot)
+            results = db.read_custom(f"SELECT hunts.hunt_date, groupings.num_ducks/groupings.num_hunters, 1 "
+                                     f"FROM hunts "
+                                     f"JOIN groupings ON groupings.hunt_id=hunts.id "
+                                     f"JOIN harvest ON harvest.group_id=groupings.id "
+                                     f"JOIN ponds ON groupings.pond_id=ponds.id "
+                                     f"JOIN participants ON participants.grouping_id=groupings.id "
+                                     f"JOIN users ON participants.user_id=users.id "
+                                     f"WHERE users.id={users['id']} "
+                                     f"AND hunts.hunt_date>='{date_start}' "
+                                     f"AND hunts.hunt_date<='{date_end}' "
+                                     f"AND ponds.id={data_in['pond_id']} "
+                                     f"GROUP BY hunts.hunt_date "
+                                     f"ORDER BY hunts.hunt_date")
         else:
             return jsonify({"message": f"Unable to get pond stats because of unrecognized filter-member"}), 400
 
@@ -473,3 +440,30 @@ def date_helper(data_in):
         return False, False
 
     return date_start, date_end
+
+
+@stats_bp.route('/stats/history/<public_id>', methods=['GET'])
+@token_required(all_members)
+def get_hunt_history(users, public_id):
+
+    # make sure that members can only query their own hunts
+    if users['level'] == 'member' and users['public_id'] != public_id:
+        return jsonify({"message": "You are not allowed to access other hunters history"}), 401
+
+    results = db.read_custom(
+        f"SELECT CONCAT(users.first_name, ' ', users.last_name), hunts.hunt_date, ponds.name, groupings.id, "
+        f"groupings.num_ducks/groupings.num_hunters, groupings.num_non/groupings.num_hunters "
+        f"FROM users "
+        f"JOIN participants ON participants.user_id=users.id "
+        f"JOIN groupings ON participants.grouping_id=groupings.id "
+        f"JOIN hunts ON groupings.hunt_id=hunts.id "
+        f"JOIN ponds ON groupings.pond_id=ponds.id "
+        f"WHERE users.public_id='{public_id}' "
+        f"ORDER BY hunts.hunt_date"
+    )
+    if results is None or results is False:
+        return jsonify({"message": "Internal error in get_hunt_history"}), 500
+    names = ["name", "date", "pond", "group_id", "ducks", "non_ducks"]
+    hunts_dict = db.format_dict(names, results)
+
+    return jsonify({"hunts": hunts_dict}), 200

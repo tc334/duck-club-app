@@ -12,13 +12,10 @@ class Table:
         # this function returns the string representation of the variable names used in SQL table creation
         s = ""
         f = ""  # foreign key constraints get added at the end
-        i = ""  # secondary indices get added at the end
         for item in self.table_cols:
             s = s + item['name'] + ' ' + item['type'] + ' '
             if 'foreign' in item:
                 f = f + 'FOREIGN KEY (' + item['name'] + ') REFERENCES ' + item['foreign'] + ', '
-            if 'secondary_index' in item:
-                i = i + 'INDEX '
             s = s + item['extra'] + ', '
         full_str = s + f
         # print(f"get_schema_string:{full_str[:-2]}")

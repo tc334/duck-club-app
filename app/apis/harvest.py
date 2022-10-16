@@ -49,8 +49,8 @@ def update_harvest(user):
             results = db.read_custom(
                 f"SELECT u.public_id "
                 f"FROM users u "
-                f"JOIN groupings g ON u.id = g.slot1_id OR u.id = g.slot2_id OR u.id = slot3_id OR u.id = slot4_id "
-                f"WHERE g.id = {data_in['group_id']}")
+                f"JOIN participants p ON p.user_id=u.id "
+                f"WHERE p.grouping_id = {data_in['group_id']}")
             names = ["public_id", ]
             pid_dict = db.format_dict(names, results)
             # update cache

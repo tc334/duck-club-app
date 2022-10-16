@@ -6,7 +6,7 @@ import {
   displayMessageToUser,
   dateConverter_iso,
   decode_jwt,
-  populate_aside,
+  populate_aside_hunt,
 } from "../../../common_funcs.js";
 
 var jwt_global;
@@ -48,7 +48,7 @@ export default class extends AbstractView {
     reloadMessage();
 
     const user_level = decode_jwt(jwt);
-    populate_aside(user_level);
+    populate_aside_hunt(user_level);
 
     // First step is to pull data from DB
     const route = base_uri + "/groupings/current";
@@ -59,10 +59,10 @@ export default class extends AbstractView {
       null,
       (response_full_json) => {
         if (response_full_json["data"]) {
+          //console.log(response_full_json["data"]["groupings"]);
           db_data_groupings = response_full_json["data"]["groupings"];
-          db_data_users = response_full_json["data"]["users"];
           db_data_ponds = response_full_json["data"]["ponds"];
-          db_data_hunts = response_full_json["data"]["hunts"];
+          db_data_hunts = response_full_json["data"]["hunt"];
           writeTopMessage(db_data_hunts["hunt_date"], db_data_hunts["status"]);
           populateTables();
           selectCurrentPondAssignments();
@@ -140,7 +140,7 @@ export default class extends AbstractView {
 
 function populateTables() {
   var container = document.getElementById("tables-container");
-  const column_headings = ["#", "hunters", "pond", "actions"];
+  const column_headings = ["#", "hunters", "dog/atv", "chip, pond", "actions"];
   var select = document.getElementById("groupings-modal-select");
 
   for (var iGroup = 0; iGroup < db_data_groupings.length; iGroup++) {
@@ -162,41 +162,77 @@ function populateTables() {
       tr.appendChild(headerCell);
     }
 
+    var b_guests = false;
+    if (db_data_groupings[iGroup]["guests"] != null) {
+      b_guests = true;
+    }
+
+    // Row 1
     tr = table.insertRow(-1);
 
     // grouping label 1:N that makes sense to managers
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = iGroup + 1;
 
-    // Hunters
-    var tabCell = tr.insertCell(-1);
-    var hunter_names = "";
-    for (var iHunter = 0; iHunter < 4; iHunter++) {
-      if (
-        db_data_groupings[iGroup]["slot" + (iHunter + 1) + "_type"] == "member"
+    // hunter
+    var mem_str = "";
+    var dog_str = "";
+    for (
+      var iMem = 0;
+      iMem < db_data_groupings[iGroup]["members"].length;
+      iMem++
+    ) {
+      mem_str += db_data_groupings[iGroup]["members"][iMem] + "<br>";
+
+      if (db_data_groupings[iGroup]["dogs"][iMem]) {
+        dog_str += "Y";
+      } else {
+        dog_str += "N";
+      }
+      dog_str += "/" + db_data_groupings[iGroup]["atv"][iMem] + "<br>";
+    }
+    if (b_guests) {
+      for (
+        var iGst = 0;
+        iGst < db_data_groupings[iGroup]["guests"].length;
+        iGst++
       ) {
-        const user_id =
-          db_data_groupings[iGroup]["slot" + (iHunter + 1) + "_id"];
-        const user_full_name = getUserFullName(user_id);
-        if (hunter_names.length > 0) {
-          hunter_names = hunter_names.concat("\n" + user_full_name);
-        } else {
-          hunter_names = hunter_names.concat(user_full_name);
-        }
+        mem_str += db_data_groupings[iGroup]["guests"][iGst] + "<br>";
       }
     }
+
+    var tabCell = tr.insertCell(-1);
     tabCell.className += "hunters-column";
-    tabCell.innerHTML = hunter_names;
+    tabCell.innerHTML = mem_str;
+    // Dog
+    tabCell = tr.insertCell(-1);
+    tabCell.className += "dog-column";
+    tabCell.innerHTML = dog_str;
+
+    // Chip
+    var tabCell = tr.insertCell(-1);
+
+    var div_chip_pond = document.createElement("div");
+    div_chip_pond.classList.add("chip-pond");
+
+    var chip_select = document.createElement("select");
+    chip_select.idxGroup = iGroup;
+    chip_select.id = "sel-chip-group-" + iGroup;
+    chip_select.className = "sel-pond-group";
+    populateChipList(chip_select);
+    chip_select.addEventListener("change", updateChip);
+    div_chip_pond.appendChild(chip_select);
 
     // Pond
-    var tabCell = tr.insertCell(-1);
     var pond_select = document.createElement("select");
     pond_select.idxGroup = iGroup;
     pond_select.id = "sel-pond-group-" + iGroup;
     pond_select.className = "sel-pond-group";
     populatePondList(pond_select);
     pond_select.addEventListener("change", updatePond);
-    tabCell.appendChild(pond_select);
+    div_chip_pond.appendChild(pond_select);
+
+    tabCell.appendChild(div_chip_pond);
 
     // Actions
     var tabCell = tr.insertCell(-1);
@@ -227,17 +263,6 @@ function populateTables() {
 
     container.appendChild(table);
   }
-}
-
-function getUserFullName(id) {
-  for (var i = 0; i < db_data_users.length; i++) {
-    if (db_data_users[i]["id"] == id) {
-      return (
-        db_data_users[i]["first_name"] + " " + db_data_users[i]["last_name"]
-      );
-    }
-  }
-  return "Unknown Hunter";
 }
 
 function splitGroup(e) {
@@ -341,8 +366,29 @@ function populatePondList(select) {
   }
 }
 
+function populateChipList(select) {
+  // start with a blank element
+  var option_new = document.createElement("option");
+  option_new.className = "opt-chip";
+  option_new.innerHTML = "-";
+  select.appendChild(option_new);
+  for (var idxChip = 1; idxChip <= 30; idxChip++) {
+    var option_new = document.createElement("option");
+    option_new.value = idxChip;
+    option_new.className = "opt-pond";
+    option_new.innerHTML = idxChip;
+    select.appendChild(option_new);
+  }
+}
+
 function selectCurrentPondAssignments() {
   for (var idxGroup = 0; idxGroup < db_data_groupings.length; idxGroup++) {
+    // chip
+    if (db_data_groupings[idxGroup]["chip"] != null) {
+      var select = document.getElementById("sel-chip-group-" + idxGroup);
+      select.value = db_data_groupings[idxGroup]["chip"];
+    }
+    // pond
     if (db_data_groupings[idxGroup]["pond_id"] != null) {
       var select = document.getElementById("sel-pond-group-" + idxGroup);
       select.value = db_data_groupings[idxGroup]["pond_id"];
@@ -370,6 +416,43 @@ function updatePond(e) {
     const json = {
       id: group_id,
       pond_id: pond_id,
+    };
+
+    callAPI(
+      jwt_global,
+      route,
+      "PUT",
+      JSON.stringify(json),
+      (data) => {
+        localStorage.setItem("previous_action_message", data["message"]);
+        window.scrollTo(0, 0);
+        location.reload();
+      },
+      displayMessageToUser
+    );
+  }
+}
+
+function updateChip(e) {
+  if (db_data_hunts["status"] == "signup_open") {
+    // you aren't allowed to modify ponds in this state
+    localStorage.setItem(
+      "previous_action_message",
+      "Action failed: Chip selections cannot be modified until signup is closed"
+    );
+    window.scrollTo(0, 0);
+    location.reload();
+  } else {
+    const idxGroup = e.currentTarget.idxGroup;
+    var select = document.getElementById("sel-chip-group-" + idxGroup);
+    const chip = select.value;
+    const group_id = db_data_groupings[idxGroup]["id"];
+
+    const route = base_uri + "/groupings/" + group_id;
+
+    const json = {
+      id: group_id,
+      draw_chip_raw: chip,
     };
 
     callAPI(

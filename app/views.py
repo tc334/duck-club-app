@@ -18,7 +18,7 @@ def confirm_email(token):
     try:
         email = confirm_token(token)
     except:
-        # flash('The confirmation link is invalid or has expired.', 'danger')
+        print('The confirmation link is invalid or has expired.')
         return 'The confirmation link is invalid or has expired.'
 
     results = db.read_custom(
@@ -32,6 +32,7 @@ def confirm_email(token):
         return "Lookup of the user's email failed"
 
     if user["confirmed"]:
+        print("Account already confirmed")
         return "Account already confirmed. Please login"
     else:
         user_new = {

@@ -92,16 +92,21 @@ def signup():
     cache.delete("charlie")
 
     # send email to user for them to verify their email address
-    token = generate_confirmation_token(data_in["email"])
-    confirm_url = url_for('main.confirm_email', token=token, _external=True)
-    html = render_template('activate.html', confirm_url=confirm_url)
-    subject = "Please confirm your email to the Duck Club App"
-    send_email(data_in["email"], subject, html)
-    print(f"Just sent confirmation email to {data_in['email']}")
+    send_confirmation(data_in["email"])
 
     return jsonify({'message': data_in['first_name'] + ' successfully added. Your email needs to be verified before '
                                                        'you can log in. Check your inbox for a '
                                                        'verification link'}), 201
+
+
+def send_confirmation(email):
+    # send email to user for them to verify their email address
+    token = generate_confirmation_token(email)
+    confirm_url = url_for('main.confirm_email', token=token, _external=True)
+    html = render_template('activate.html', confirm_url=confirm_url)
+    subject = "Please confirm your email to the Duck Club App"
+    send_email(email, subject, html)
+    print(f"Just sent confirmation email to {email}")
 
 
 @users_bp.route('/password_reset_request', methods=['POST'])
@@ -212,18 +217,45 @@ def get_all_rows(user):
 @token_required(manager_and_above)
 def get_all_active(user):
     results = db.read_custom(
-        f"SELECT id, first_name, last_name "
+        f"SELECT public_id, first_name, last_name "
         f"FROM {table_name} "
         f"WHERE status = 'active' "
         f"ORDER BY last_name")
 
     if results:
         # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
-        names_all = ["id", "first_name", "last_name"]
+        names_all = ["public_id", "first_name", "last_name"]
         results_dict = db.format_dict(names_all, results)
         return jsonify({"users": results_dict}), 200
     else:
         return jsonify({"error": f"unknown error trying to read harvest"}), 400
+
+
+@users_bp.route('/users/all_allowable', methods=['GET'])
+@token_required(all_members)
+def get_all_allowable(user):
+    # If manager or above, gets all members
+    # If member, only gets yourself
+
+    if user['level'] == "member":
+        results = db.read_custom(
+            f"SELECT public_id, first_name, last_name "
+            f"FROM {table_name} "
+            f"WHERE id={user['id']}"
+            f"ORDER BY last_name")
+    else:
+        results = db.read_custom(
+            f"SELECT public_id, first_name, last_name "
+            f"FROM {table_name} "
+            f"ORDER BY last_name")
+
+    if results:
+        # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
+        names_all = ["public_id", "first_name", "last_name"]
+        results_dict = db.format_dict(names_all, results)
+        return jsonify({"users": results_dict}), 200
+    else:
+        return jsonify({"message": f"unknown error trying to read users"}), 400
 
 
 @users_bp.route('/users/<public_id>', methods=['GET'])
@@ -283,3 +315,31 @@ def del_row(user, public_id):
         return jsonify({'message': 'Successful removal'}), 200
     else:
         return jsonify({"error": f"Unable to remove id {public_id} from table {table_name}"}), 400
+
+
+def get_id_from_public_id(public_id):
+    results = db.read_custom(
+        f"SELECT id FROM users WHERE public_id='{public_id}'"
+    )
+    if results is None or len(results) != 1:
+        return None
+    else:
+        return results[0][0]
+
+
+@users_bp.route('/users/reconfirm/<public_id>', methods=['PUT'])
+@token_required(owner_and_above)
+def reconfirm_user(user, public_id):
+    # first, get email based on public id
+    results = db.read_custom(
+        f"SELECT email FROM users WHERE public_id='{public_id}'"
+    )
+    if results is None or results is False or len(results) != 1:
+        print(results)
+        print(public_id)
+        return jsonify({"message": "internal error in reconfirm user"})
+    email = results[0][0]
+
+    send_confirmation(email)
+
+    return jsonify({"message": f"New confirmation email sent to {email}"}), 200

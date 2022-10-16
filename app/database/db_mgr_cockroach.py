@@ -1,6 +1,7 @@
 import datetime
 import random
 import time
+import csv
 
 import psycopg2
 import uuid
@@ -81,6 +82,8 @@ class DbManagerCockroach:
     # ***********************************************************************************
     # The following functions are DB connection maintenance
     def connected(self):
+        if self.conn:
+            print(f"Inside DbManagerCockroach.connected(), self.conn.closed={self.conn.closed}")
         return self.conn and self.conn.closed == 0
 
     def connect(self):
@@ -217,8 +220,8 @@ class DbManagerCockroach:
             'confirmed': 'true',
             'confirmed_on': datetime.datetime.now()
         }
-        self.add_row('users', admin)
-        self.populate_basic_tables()
+        # self.add_row('users', admin)
+        # self.populate_basic_tables()
         return True
 
     def create_table(self, table_name):
@@ -249,6 +252,110 @@ class DbManagerCockroach:
             return ret_val
         else:
             return False
+
+    def write_table_to_csv(self, table_name):
+        foo = self.execute(f"SELECT * FROM {table_name}", expecting_return=True)
+        with open(f"db_{table_name}.csv", 'w', newline='') as f:
+            write = csv.writer(f)
+            write.writerows(foo)
+        print("write complete")
+
+    def import_from_csv(self, table_name):
+        with open(f"db_{table_name}.csv") as f:
+            foo = csv.reader(f, delimiter=',')
+            values_list = []
+
+            for row in foo:
+                for idx, col in enumerate(row):
+                    if len(col) < 1:
+                        row[idx] = None
+                values = tuple(row)
+                values_list.append(values)
+
+        # print(f"Charlie:{values_list}")
+        import psycopg2.extras as extras
+        query = f"INSERT INTO {table_name} VALUES %s"
+        cursor = self.conn.cursor()
+        try:
+            extras.execute_values(cursor, query, values_list)
+            self.conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print("Error: %s" % error)
+            self.conn.rollback()
+            cursor.close()
+            return 1
+        print("execute_values() done")
+        cursor.close()
+
+    def import_from_csv_groupings(self):
+        table_name = "groupings"
+        with open(f"db_{table_name}.csv") as f:
+            foo = csv.reader(f, delimiter=',')
+            values_list = []
+            values_list_participants = []
+
+            for row in foo:
+                values = (
+                    row[0],   # id
+                    row[1],   # hunt_id
+                    row[2],   # pond_id
+                    row[11],  # harvest_update_time
+                    row[12],  # num_hunters
+                    row[13],  # num_ducks
+                    row[14]   # num_non
+                )
+                values_list.append(values)
+
+                for slot in range(1, 5):
+                    idx_type = slot + 2
+                    idx_id = idx_type + 4
+                    if row[idx_type] == "member":
+                        values_participant = (
+                            "member",     # type
+                            row[0],       # grouping_id
+                            row[idx_id],  # user_id
+                        )
+                        values_list_participants.append(values_participant)
+
+        # print(f"Charlie:{values_list}")
+        import psycopg2.extras as extras
+        # Move groupings data
+        query = f"INSERT INTO {table_name}(" \
+                f"id, " \
+                f"hunt_id, " \
+                f"pond_id, " \
+                f"harvest_update_time, " \
+                f"num_hunters, " \
+                f"num_ducks, " \
+                f"num_non) "\
+                f"VALUES %s"
+        cursor = self.conn.cursor()
+        try:
+            extras.execute_values(cursor, query, values_list)
+            self.conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print("Error: %s" % error)
+            self.conn.rollback()
+            cursor.close()
+            return 1
+
+        # Move participants data
+        query = f"INSERT INTO participants(" \
+                f"type, " \
+                f"grouping_id, " \
+                f"user_id) "\
+                f"VALUES %s"
+        cursor = self.conn.cursor()
+        try:
+            extras.execute_values(cursor, query, values_list_participants)
+            self.conn.commit()
+        except (Exception, psycopg2.DatabaseError) as error:
+            print("Error: %s" % error)
+            self.conn.rollback()
+            cursor.close()
+            return 1
+        print("execute_values() done")
+        cursor.close()
 
     def add_row(self, table_name, row_data_dict):
         col_names, insert_tuple = self.tables[table_name].get_add_row(row_data_dict)

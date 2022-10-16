@@ -4,14 +4,14 @@ import {
   callAPI,
   reloadMessage,
   displayMessageToUser,
-  populate_aside,
+  populate_aside_hunt,
   dateConverter_http,
   decode_jwt,
 } from "../../../common_funcs.js";
 
 var jwt_global;
 var db_data;
-var db_data_hunt;
+var hunt_id;
 const subroute = "users";
 const singular = "user";
 const plural = "users";
@@ -42,7 +42,7 @@ export default class extends AbstractView {
     reloadMessage();
 
     const user_level = decode_jwt(jwt);
-    populate_aside(user_level);
+    populate_aside_hunt(user_level);
 
     // First step is to pull data from DB
     const route = base_uri + "/groupings/current_users";
@@ -53,8 +53,9 @@ export default class extends AbstractView {
       null,
       (response_full_json) => {
         if (response_full_json["data"]) {
-          db_data = response_full_json["data"];
-          //console.log(db_data);
+          db_data = response_full_json["data"]["users"];
+          hunt_id = response_full_json["data"]["hunt_id"];
+          console.log(db_data);
           populateHunterListBox();
         } else {
           //console.log(data);
@@ -70,10 +71,10 @@ export default class extends AbstractView {
 
       const route =
         base_uri +
-        "/groupings/remove/" +
-        db_data[idxHunter]["group_id"] +
+        "/groupings/drop/" +
+        db_data[idxHunter]["id"] +
         "/" +
-        db_data[idxHunter]["slot_num"];
+        hunt_id;
 
       var json = JSON.stringify({ dummy: 0 });
 
@@ -98,8 +99,7 @@ function populateHunterListBox() {
   for (var i = 0; i < db_data.length; i++) {
     var option_new = document.createElement("option");
     option_new.value = i;
-    option_new.innerHTML =
-      db_data[i]["first_name"] + " " + db_data[i]["last_name"];
+    option_new.innerHTML = db_data[i]["name"];
     select.appendChild(option_new);
   }
 }
