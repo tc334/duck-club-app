@@ -13,6 +13,7 @@ import o_properties from "./views/Setup/owners/o_properties.js";
 import o_members from "./views/Setup/owners/o_members.js";
 import o_birds from "./views/Setup/owners/o_birds.js";
 import o_ponds from "./views/Setup/owners/o_ponds.js";
+import o_guests from "./views/Setup/owners/o_guests.js";
 import a_hunts from "./views/Setup/administrators/a_hunts.js";
 import a_groupings from "./views/Setup/administrators/a_groupings.js";
 import a_harvests from "./views/Setup/administrators/a_harvests.js";
@@ -26,6 +27,11 @@ import s_hunters from "./views/Stats/s_hunters.js";
 import s_ponds from "./views/Stats/s_ponds.js";
 import s_birds from "./views/Stats/s_birds.js";
 import s_club from "./views/Stats/s_club.js";
+import s_hunt from "./views/Stats/s_hunt.js";
+import m_scouting from "./views/Hunt/m_scouting.js";
+import m_guests from "./views/Hunt/m_guests.js";
+import u_scouting from "./views/Hunt/u_scouting.js";
+import u_guests from "./views/Hunt/u_guests.js";
 
 // only do this once
 const jwt = localStorage.getItem("token");
@@ -56,6 +62,22 @@ const router = async () => {
     {
       path: "#nav_stats",
       view: s_dates,
+    },
+    {
+      path: "#m_scouting",
+      view: m_scouting,
+    },
+    {
+      path: "#m_guests",
+      view: m_guests,
+    },
+    {
+      path: "#u_scouting",
+      view: u_scouting,
+    },
+    {
+      path: "#u_guests",
+      view: u_guests,
     },
     {
       path: "#u_profile",
@@ -102,6 +124,10 @@ const router = async () => {
       view: o_birds,
     },
     {
+      path: "#o_guests",
+      view: o_guests,
+    },
+    {
       path: "#a_hunts",
       view: a_hunts,
     },
@@ -136,6 +162,10 @@ const router = async () => {
     {
       path: "#s_club",
       view: s_club,
+    },
+    {
+      path: "#s_hunt",
+      view: s_hunt,
     },
   ];
 
@@ -193,7 +223,6 @@ function hunt_branch(jwt) {
     (response_full_json) => {
       if (response_full_json["hunts"]) {
         const hunts_dict = response_full_json["hunts"];
-        //console.log(hunts_dict);
         // logic
         if (hunts_dict.length == 1) {
           if (

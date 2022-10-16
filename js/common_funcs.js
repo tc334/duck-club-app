@@ -62,19 +62,13 @@ export function populate_aside(user_level) {
 
   const icons = {
     member: ["img/user.png", "img/edit.png"],
-    manager: [
-      "img/cog-wheel.png",
-      "img/plus.png",
-      "img/subtraction.png",
-      "img/wrench.png",
-      "img/traffic-signal.png",
-      "img/edit.png",
-    ],
+    manager: ["img/cog-wheel.png", "img/traffic-signal.png", "img/edit.png"],
     owner: [
       "img/people.png",
       "img/location.png",
       "img/drop.png",
       "img/bird.png",
+      "img/suitcase.png",
     ],
     administrator: [
       "img/cog-wheel.png",
@@ -85,33 +79,84 @@ export function populate_aside(user_level) {
 
   const text = {
     member: ["profile", "edit harvest"],
-    manager: [
-      "manage hunt",
-      "add hunter",
-      "remove hunter",
-      "adjust groups",
-      "pond availability",
-      "harvests",
-    ],
-    owner: ["members", "properties", "ponds", "birds"],
+    manager: ["manage hunt", "pond availability", "harvests"],
+    owner: ["members", "properties", "ponds", "birds", "guests"],
     administrator: ["hunts", "groupings", "misc"],
   };
 
   const links = {
     member: ["#u_profile", "#u_harvest"],
-    manager: [
-      "#m_hunts",
-      "#m_add",
-      "#m_remove",
-      "#m_groupings",
-      "#m_availability",
-      "#a_harvests",
-    ],
-    owner: ["#o_members", "#o_properties", "#o_ponds", "#o_birds"],
+    manager: ["#m_hunts", "#m_availability", "#a_harvests"],
+    owner: ["#o_members", "#o_properties", "#o_ponds", "#o_birds", "#o_guests"],
     administrator: ["#a_hunts", "#a_groupings", "#a_misc"],
   };
 
   const idx_in = headings.indexOf(user_level);
+
+  for (var i = 0; i < headings.length; i++) {
+    if (i <= idx_in) {
+      populateOneLevel(
+        headings[i],
+        text[headings[i]],
+        icons[headings[i]],
+        links[headings[i]]
+      );
+    }
+  }
+
+  document.getElementById("main").classList.remove("menu-open");
+  document.getElementById("aside-content").style.display = "block";
+  document
+    .getElementById("btn-aside-menu")
+    .addEventListener("click", menuSwitcher);
+}
+
+export function populate_aside_hunt(user_level) {
+  // start by clearing the aside
+  removeAllChildNodes(document.getElementById("aside-content"));
+
+  // data
+  const headings = ["member", "manager"];
+
+  const icons = {
+    member: [
+      "img/people.png",
+      "img/suitcase.png",
+      "img/envelope.png",
+      "img/binoculars.png",
+    ],
+    manager: [
+      "img/plus.png",
+      "img/plus.png",
+      "img/subtraction.png",
+      "img/wrench.png",
+      "img/suitcase.png",
+    ],
+  };
+
+  const text = {
+    member: ["groups", "guests", "invitations", "scouting report"],
+    manager: [
+      "scouting report",
+      "add hunter",
+      "remove hunter",
+      "adjust groups",
+      "guests",
+    ],
+  };
+
+  const links = {
+    member: ["#nav_hunt", "#u_guests", "#u_invitations", "#u_scouting"],
+    manager: [
+      "#m_scouting",
+      "#m_add",
+      "#m_remove",
+      "#m_groupings",
+      "#m_guests",
+    ],
+  };
+
+  const idx_in = Math.max(headings.indexOf(user_level), headings.length);
 
   for (var i = 0; i < headings.length; i++) {
     if (i <= idx_in) {
@@ -137,24 +182,27 @@ export function populate_aside_stats() {
   removeAllChildNodes(document.getElementById("aside-content"));
 
   // data
-  const headings = ["stats"];
+  const headings = ["summary", "single"];
 
   const icons = {
-    stats: [
+    summary: [
       "img/calendar.png",
       "img/user.png",
       "img/drop.png",
       "img/bird.png",
       "img/people.png",
     ],
+    single: ["img/calendar.png"],
   };
 
   const text = {
-    stats: ["by date", "by hunter", "by pond", "by bird", "club"],
+    summary: ["by date", "by hunter", "by pond", "by bird", "club"],
+    single: ["hunt history"],
   };
 
   const links = {
-    stats: ["#s_dates", "#s_hunters", "#s_ponds", "#s_birds", "#s_club"],
+    summary: ["#s_dates", "#s_hunters", "#s_ponds", "#s_birds", "#s_club"],
+    single: ["#s_hunt"],
   };
 
   const idx_in = 1;

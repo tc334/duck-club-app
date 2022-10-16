@@ -112,6 +112,8 @@ export default class extends AbstractView {
           <button class="btn--form" id="btn-update" disabled>Update</button>
           <input class="btn--form" type="reset" />
         </span>
+        </br>
+        <button class="btn--form" id="btn-reconfirm">Resend Confirmation</button>
       </div>
     </form>`;
   }
@@ -195,6 +197,23 @@ export default class extends AbstractView {
           },
           displayMessageToUser
         );
+      } else if (e.submitter.id == "btn-reconfirm") {
+        // attach the users public-id to the json & send at PUT instead of POST
+        const route =
+          base_uri + "/" + subroute + "/reconfirm/" + e.submitter.public_id;
+
+        callAPI(
+          jwt,
+          route,
+          "PUT",
+          json,
+          (data) => {
+            localStorage.setItem("previous_action_message", data["message"]);
+            window.scrollTo(0, 0);
+            location.reload();
+          },
+          displayMessageToUser
+        );
       }
     });
   }
@@ -234,6 +253,7 @@ function populateTable(users) {
 
     // Edit button
     var btn_edt = document.createElement("button");
+    btn_edt.public_id = users[i]["public_id"];
     btn_edt.index = i;
     btn_edt.innerHTML = "Edit";
     btn_edt.className += "btn--action";
@@ -277,6 +297,8 @@ function populateEdit(e) {
   // attach the public_id to the "Update" button
   var btn_update = document.getElementById("btn-update");
   btn_update.public_id = db_data[i]["public_id"];
+  var btn_reconfirm = document.getElementById("btn-reconfirm");
+  btn_reconfirm.public_id = db_data[i]["public_id"];
 
   // disable the "Add" and enable the "Update"
   btn_update.disabled = false;
