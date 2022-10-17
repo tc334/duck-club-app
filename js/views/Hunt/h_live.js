@@ -112,6 +112,7 @@ export default class extends AbstractView {
       null,
       (response_full_json) => {
         if (response_full_json["data"]) {
+          //console.log(response_full_json["data"]);
           const pct_complete = populateSummaryTable(response_full_json["data"]);
           populateLeaderboard(
             response_full_json["data"]["groups"],

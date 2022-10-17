@@ -127,7 +127,7 @@ export function populate_aside_hunt(user_level) {
     ],
     manager: [
       "img/plus.png",
-      "img/plus.png",
+      "img/add_circle.png",
       "img/subtraction.png",
       "img/wrench.png",
       "img/suitcase.png",
@@ -156,7 +156,10 @@ export function populate_aside_hunt(user_level) {
     ],
   };
 
-  const idx_in = Math.max(headings.indexOf(user_level), headings.length);
+  var idx_in = headings.indexOf(user_level);
+  if (idx_in == -1) {
+    idx_in = headings.length - 1;
+  }
 
   for (var i = 0; i < headings.length; i++) {
     if (i <= idx_in) {

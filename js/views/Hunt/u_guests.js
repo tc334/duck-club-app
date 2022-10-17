@@ -60,6 +60,7 @@ export default class extends AbstractView {
         id="inp-name"
         type="text"
         name="full_name"
+        placeholder="Full Name"
       />
 
       <select id="select-type" name="type" required>

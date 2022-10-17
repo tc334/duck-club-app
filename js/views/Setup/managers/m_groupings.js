@@ -59,7 +59,7 @@ export default class extends AbstractView {
       null,
       (response_full_json) => {
         if (response_full_json["data"]) {
-          //console.log(response_full_json["data"]["groupings"]);
+          console.log(response_full_json["data"]["groupings"]);
           db_data_groupings = response_full_json["data"]["groupings"];
           db_data_ponds = response_full_json["data"]["ponds"];
           db_data_hunts = response_full_json["data"]["hunt"];
@@ -177,6 +177,8 @@ function populateTables() {
     // hunter
     var mem_str = "";
     var dog_str = "";
+    var notes_str = "";
+    var pp_str = "";
     for (
       var iMem = 0;
       iMem < db_data_groupings[iGroup]["members"].length;
@@ -190,6 +192,29 @@ function populateTables() {
         dog_str += "N";
       }
       dog_str += "/" + db_data_groupings[iGroup]["atv"][iMem] + "<br>";
+
+      if (db_data_groupings[iGroup]["notes"][iMem] != null) {
+        notes_str +=
+          "<strong>Note</strong> from " +
+          db_data_groupings[iGroup]["members"][iMem].substring(
+            0,
+            db_data_groupings[iGroup]["members"][iMem].indexOf(" ")
+          ) +
+          ": " +
+          db_data_groupings[iGroup]["notes"][iMem] +
+          "<br>";
+      }
+
+      if (db_data_groupings[iGroup]["pond_pref"][iMem] != null) {
+        notes_str +=
+          db_data_groupings[iGroup]["members"][iMem].substring(
+            0,
+            db_data_groupings[iGroup]["members"][iMem].indexOf(" ")
+          ) +
+          "'s <strong>pond selections</strong>: " +
+          db_data_groupings[iGroup]["pond_pref"][iMem] +
+          "<br>";
+      }
     }
     if (b_guests) {
       for (
@@ -260,6 +285,15 @@ function populateTables() {
     btn_delete.classList.add("btn--action", "btn--groupings-table");
     btn_delete.addEventListener("click", deleteGroup);
     tabCell.appendChild(btn_delete);
+
+    // Notes
+    if (notes_str.length > 0) {
+      tr = table.insertRow(-1);
+      tabCell = tr.insertCell(-1);
+      tabCell.classList.add("notes-row");
+      tabCell.colSpan = "5";
+      tabCell.innerHTML = notes_str;
+    }
 
     container.appendChild(table);
   }
