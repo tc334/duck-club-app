@@ -121,9 +121,11 @@ class RedisManager:
             if not temp:
                 # this indicates a cache miss
                 return []
+            print(f"Cache hit! Prefix={prefix}")
             return json.loads(temp)
         # special case for just a single value
         if count == -2:
+            print(f"Cache hit! Prefix={prefix}")
             return self.r.get(prefix)
         # nominal
         list_of_dicts = []

@@ -1,0 +1,4 @@
+git subtree push --prefix frontend origin gh-pages
+https://www.reddit.com/r/flask/comments/icnxpa/correct_way_to_psycopg2_connection_pooling_in/
+https://stackoverflow.com/questions/38425620/gunicorn-workers-and-threads
+https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7

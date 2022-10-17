@@ -109,9 +109,9 @@ export default class extends AbstractView {
             <th id="col-name">name</th>
             <th id="col-hunts">hunts</th>
             <th id="col-ducks">ducks</th>
-            <th id="col-non">non-ducks</th>
+            <th id="col-non">non-dks.</th>
             <th id="col-total">total</th>
-            <th id="col-ave">ave. ducks/hunter</th>
+            <th id="col-ave">ave. dks./hntr.</th>
           </tr>
         </thead>
         <tbody id="tb-stats">

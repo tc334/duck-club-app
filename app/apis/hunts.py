@@ -185,8 +185,14 @@ def update_row(user, hunt_id):
         if last_status == 'hunt_closed' and not data_in['status'] == 'hunt_closed' and not user["level"] == 'administrator':
             return jsonify({"message": f"Unable to update hunt {hunt_id} because hunt status went backward"})
 
-        # if changing status from signup_open to signup_closed, reset pond availability
+        # if changing status from signup_open to signup_closed, reset pond availability & cancel invitations
         if last_status == 'signup_open' and data_in['status'] == 'signup_closed':
+            if not db.update_custom(
+                    f"UPDATE invitations "
+                    f"SET active='false', cancellation_notes='all invitations cancel when signup closes' "
+                    f"WHERE active='true'"
+            ):
+                return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}. Invitation cancellation failed."}), 500
             # reset all pond availability
             if not db.update_custom(f"UPDATE ponds SET selected=FALSE"):
                 return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}. Reset ponds selected failed."}), 500
@@ -243,7 +249,7 @@ def get_current_prehunt():
             f"SELECT id, hunt_date, status "
             f"FROM hunts "
             f"WHERE status IN ('signup_open', 'signup_closed', 'draw_complete')")
-        if result is None:
+        if result is None or result is False:
             return None
         if len(result) != 1:
             print(f"Error in get_current_prehunt. len(result)={len(result)}. Couldn't find a hunt in a pre-hunt state")

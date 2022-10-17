@@ -62,7 +62,7 @@ export default class extends AbstractView {
           <textarea
             id="inp-pond-pref"
             name="pond_preference"
-            placeholder="Wigeon, Forrest West, Remington, ..."
+            placeholder="(optional) Wigeon, Forrest West, Remington, ..."
             rows="4"
             cols="40"></textarea>
         </div>
@@ -72,6 +72,7 @@ export default class extends AbstractView {
           <textarea
             id="inp-notes"
             name="notes"
+            placeholder="(optional)"
             rows="3"
             cols="40"></textarea>
         </div>
@@ -260,14 +261,12 @@ function populateStatusTable(hunt_date, hunt_status, my_group_id) {
       btn_addGuest.href = "#u_guests";
       btn_addGuest.innerHTML = "Add Guest(s)";
       btn_addGuest.className += "btn--form";
-      //btn_addGuest.addEventListener("click", goto_guests);
       div.appendChild(btn_addGuest);
       // add guest button
-      var btn_invite = document.createElement("button");
+      var btn_invite = document.createElement("a");
+      btn_invite.href = "#u_invitations";
       btn_invite.innerHTML = "Invite Member to Join Your Group";
       btn_invite.className += "btn--form";
-      btn_invite.disabled = true;
-      //btn_invite.addEventListener("click", withdraw);
       div.appendChild(btn_invite);
     } else {
       // join button

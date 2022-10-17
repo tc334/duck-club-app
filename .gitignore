@@ -232,5 +232,6 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 # Tegan
-scratch.py
+scratch*
 *.csv
+.full_url

@@ -8,3 +8,4 @@ from .harvest import harvests_bp
 from .stats import stats_bp
 from .scouts import scouts_bp
 from .guests import guests_bp
+from .invitations import invitations_bp

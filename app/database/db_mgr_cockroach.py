@@ -41,9 +41,9 @@ def reconnect(f: Callable):
 
         try:
             return f(storage, *args, **kwargs)
-        except psycopg2.Error:
-            storage.close()
-            raise
+        except psycopg2.Error as e:
+            print(f"Error occurred during execute: {e}")
+            return None
 
     return wrapper
 
@@ -59,7 +59,7 @@ class DbManagerCockroach:
 
         self.conn = None
 
-    def init_app(self, db_url, admin_email, cache=None):
+    def init_app(self, db_url, admin_email=None, cache=None):
         # capture inputs in member variables
         self.db_url = db_url
         self.admin_email = admin_email
@@ -82,8 +82,6 @@ class DbManagerCockroach:
     # ***********************************************************************************
     # The following functions are DB connection maintenance
     def connected(self):
-        if self.conn:
-            print(f"Inside DbManagerCockroach.connected(), self.conn.closed={self.conn.closed}")
         return self.conn and self.conn.closed == 0
 
     def connect(self):
@@ -108,25 +106,18 @@ class DbManagerCockroach:
         self.conn = None
     # ***********************************************************************************
 
-    @retry(stop=stop_after_attempt(2), wait=wait_exponential(),
-           retry=retry_if_exception_type(psycopg2.OperationalError))
+    #@retry(stop=stop_after_attempt(2), wait=wait_exponential(),
+    #       retry=retry_if_exception_type(psycopg2.OperationalError))
     @reconnect
     def execute(self, sql_str, value_tuple=None, expecting_return=False):
         with self.conn:
             with self.conn.cursor() as cur:
-                try:
-                    if value_tuple:
-                        cur.execute(sql_str, value_tuple)
-                    else:
-                        cur.execute(sql_str)
-                    if expecting_return:
-                        ret_val = cur.fetchall()
-                except psycopg2.OperationalError as e:
-                    print(f"psycopg2 Operational Error is coming: {e}")
-                    raise
-                except psycopg2.Error as e:
-                    print(f"Cockroach execute error: {e}")
-                    return False
+                if value_tuple:
+                    cur.execute(sql_str, value_tuple)
+                else:
+                    cur.execute(sql_str)
+                if expecting_return:
+                    ret_val = cur.fetchall()
 
         if self.cache:
             self.cache.increment()
@@ -138,6 +129,9 @@ class DbManagerCockroach:
 
     # $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
     # The methods in this section are intended to be called by an external user
+    def dumb(self):
+        self.execute(f"SELECT foo FROM bar")
+
     def print_version(self):
         rows = self.execute("SELECT version()", expecting_return=True)
         if rows:
@@ -191,7 +185,7 @@ class DbManagerCockroach:
                     return self.build()
             else:
                 # self.list_tables(print_on=True)
-                self.compare_db()
+                # self.compare_db()
                 return True
         else:
             print(f"Cockroach method select_db failed")

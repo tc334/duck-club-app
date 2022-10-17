@@ -81,6 +81,9 @@ def update_group_harvest():
         # group is required) is added but before a stats query came along to trigger action on it
         force_recount()
 
+        return
+
+    # now only update the groups in the set needing update
     cache_result = cache.set_pop(SET_NAME)
     while cache_result:
         group_id = cache_result.decode()
@@ -121,6 +124,10 @@ def update_group_harvest():
 
         if num_ducks != 0 or num_non != 0:
             db.update_row("groupings", group_id, update_dict)
+
+        # clear cache result that just got invalidated
+        hunt_id = db.read_custom(f"SELECT hunt_id FROM groupings WHERE id='{group_id}'")[0][0]
+        cache.delete(f"bravo:{hunt_id}")
 
         cache_result = cache.set_pop(SET_NAME)
 
@@ -196,6 +203,8 @@ def force_recount():
         }
 
         db.update_row("groupings", result_non[idx][0], update_dict)
+
+    cache.delete("golf")
 
 
 @stats_bp.route('/stats/club', methods=['GET'])

@@ -5,6 +5,7 @@ from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 from .users import get_id_from_public_id
 from .hunts import get_current_prehunt
+from .stats import update_group_harvest
 
 groupings_bp = Blueprint('groupings', __name__)
 table_name = 'groupings'
@@ -70,9 +71,9 @@ def add_row(user):
         db_row['b_dog'] = True if data_in['b_dog'] == 'on' else False
     if 'num_atv_seats' in data_in:
         db_row['num_atv_seats'] = int(data_in['num_atv_seats'])
-    if 'pond_preference' in data_in:
+    if 'pond_preference' in data_in and len(data_in['pond_preference']) > 0:
         db_row['pond_preference'] = data_in['pond_preference']
-    if 'notes' in data_in:
+    if 'notes' in data_in and len(data_in['notes']) > 0:
         db_row['notes'] = data_in['notes']
     participant_id = db.add_row("participants", db_row)
     cache.delete("bravo")
@@ -147,6 +148,9 @@ def get_harvest_summary_by_hunt_id(user, hunt_id):
 
 
 def harvest_summary_helper(hunt_id, user_id):
+
+    # this call updates any groups that have changed data since last update
+    update_group_harvest()
 
     # pull all groupings that match this hunt_id
     groups_dict = cache.get(f"golf:{hunt_id}")
@@ -313,17 +317,9 @@ def get_users_in_current_hunt(user):
         return jsonify({"message": "No hunt in prehunt state"}), 400
 
     # now pull all users in this hunt
-    results = db.read_custom(
-        f"SELECT u.public_id, CONCAT(u.first_name, ' ', u.last_name) as name FROM users u "
-        f"JOIN participants p ON p.user_id=u.id "
-        f"JOIN groupings g ON p.grouping_id=g.id "
-        f"WHERE g.hunt_id={hunt_dict['id']} "
-        f"ORDER BY name"
-    )
-    if results is None or results is False:
+    users_dict = get_users_in_hunt_aux(hunt_dict['id'])
+    if users_dict is None:
         return jsonify({"message": "internal error in get_users_in_current_hunt"}), 500
-    names = ["id", "name"]
-    users_dict = db.format_dict(names, results)
 
     results_dict = {
         "hunt_id": hunt_dict['id'],
@@ -331,6 +327,21 @@ def get_users_in_current_hunt(user):
     }
 
     return jsonify({"data": results_dict}), 200
+
+
+def get_users_in_hunt_aux(hunt_id):
+    results = db.read_custom(
+        f"SELECT u.public_id, CONCAT(u.first_name, ' ', u.last_name) as name FROM users u "
+        f"JOIN participants p ON p.user_id=u.id "
+        f"JOIN groupings g ON p.grouping_id=g.id "
+        f"WHERE g.hunt_id={hunt_id} "
+        f"ORDER BY name"
+    )
+    if results is None or results is False:
+        print(f"Internal error in get_users_in_hunt_aux")
+        return None
+    names = ["id", "name"]
+    return db.format_dict(names, results)
 
 
 @groupings_bp.route('/groupings/<grouping_id>', methods=['GET'])

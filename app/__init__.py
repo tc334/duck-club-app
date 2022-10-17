@@ -64,5 +64,6 @@ def create_app():
     app.register_blueprint(apis.stats_bp)
     app.register_blueprint(apis.scouts_bp)
     app.register_blueprint(apis.guests_bp)
+    app.register_blueprint(apis.invitations_bp)
 
     return app

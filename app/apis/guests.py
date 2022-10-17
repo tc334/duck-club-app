@@ -106,7 +106,7 @@ def add_row(user):
 def get_my_rows(user):
     # returns two lists: 1) user's guests in this hunt  2) user's historical guests
     hunt_dict = get_current_prehunt()
-    if not hunt_dict:
+    if hunt_dict is None:
         return jsonify({"message": "Could not find an open hunt to pull scouting reports from"}), 400
 
     results = db.read_custom(
