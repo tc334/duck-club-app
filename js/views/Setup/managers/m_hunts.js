@@ -115,7 +115,7 @@ export default class extends AbstractView {
           <input
             type="checkbox"
             id="inp-hunt-close-auto"
-            name="hunt_close_auto"
+            name="hunt_closed_auto"
             checked
           />
         </div>
@@ -195,7 +195,7 @@ export default class extends AbstractView {
 
       // checkboxes require special handling
       const checkbox_names = [
-        "hunt_close_auto",
+        "hunt_closed_auto",
         "hunt_open_auto",
         "signup_closed_auto",
       ];
@@ -288,7 +288,7 @@ function populateEdit(i) {
     document.getElementById("inp-hunt-open-auto").checked =
       db_data[i]["hunt_open_auto"] == 1 ? true : false;
     document.getElementById("inp-hunt-close-auto").checked =
-      db_data[i]["hunt_close_auto"] == 1 ? true : false;
+      db_data[i]["hunt_closed_auto"] == 1 ? true : false;
     document.getElementById("inp-signup-close-time").value =
       db_data[i]["signup_closed_time"];
     document.getElementById("inp-hunt-open-time").value =

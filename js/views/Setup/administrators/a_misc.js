@@ -28,6 +28,8 @@ export default class extends AbstractView {
     <button class="btn--form" id="btn-cache-flush">Flush Cache</button>
     <br>
     <button class="btn--form" id="btn-deselect-all-ponds">Set All Ponds to Not Selected</button>
+    <br>
+    <button class="btn--form" id="btn-clear-queue">Clear RQ Queue</button>
     `;
   }
 
@@ -102,5 +104,24 @@ export default class extends AbstractView {
           displayMessageToUser
         );
       });
+
+    const route3 = base_uri + "/hunts/clear_rq";
+
+    document.getElementById("btn-clear-queue").addEventListener("click", () => {
+      callAPI(
+        jwt,
+        route3,
+        "GET",
+        null,
+        (response_full_json) => {
+          if (response_full_json["message"]) {
+            displayMessageToUser(response_full_json["message"]);
+          } else {
+            //console.log(data);
+          }
+        },
+        displayMessageToUser
+      );
+    });
   }
 }
