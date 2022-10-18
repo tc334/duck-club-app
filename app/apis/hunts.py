@@ -63,8 +63,6 @@ def auto_progress_helper(dict_in, hunt_id):
             if dict_in[key_auto] and key_time in dict_in:
                 print(f"detected new auto-progress time for '{prefix}'")
                 # new auto-progress time is provided
-                print(f"Alpha:{dict_in[key_time]}")
-                print(f"Charlie:{dict_in['hunt_date']}")
                 dt = datetime.datetime(
                     year=int(dict_in['hunt_date'][:4]),
                     month=int(dict_in['hunt_date'][5:7]),
@@ -77,12 +75,9 @@ def auto_progress_helper(dict_in, hunt_id):
                     dt = dt - datetime.timedelta(days=1)
                 timezone = pytz.timezone("America/Chicago")
                 dt_aware = timezone.localize(dt)
-                # not sure why, but all times need to be moved back 2 hours
-                # dt = dt - datetime.timedelta(hours=2)
-                print(f"Delta:{dt_aware}")
                 sql_str = f"UPDATE hunts SET status='{prefix}' WHERE id={hunt_id}"
                 job = queue.enqueue_at(dt_aware, execute_sql, sql_str)
-                print(f"Echo:{job.id}")
+                print(f"Just enqueued job with id {job.id} at time {dt_aware} and sql string {sql_str}")
                 # put this job id into the database
                 db.update_custom(
                     f"UPDATE hunts SET {key_job}='{job.id}' WHERE id={hunt_id}"

@@ -21,16 +21,11 @@ def create_app():
 
     app.config.from_pyfile(os.path.join('..', 'settings.py'))
 
-    if app.config['ENV'] == "development":
-        # redis_ipaddr = app.config["REDIS_IPADDR"]
-        # redis_port = app.config["REDIS_PORT"]
-        # redis_user = None
-        # redis_password = None
-        url = urlparse(app.config["REDIS_URL"])
-        redis_ipaddr = url.hostname
-        redis_port = url.port
-        redis_user = url.username
-        redis_password = url.password
+    if False:  # app.config['ENV'] == "development":
+        redis_ipaddr = app.config["REDIS_IPADDR"]
+        redis_port = app.config["REDIS_PORT"]
+        redis_user = None
+        redis_password = None
     else:
         url = urlparse(app.config["REDIS_URL"])
         redis_ipaddr = url.hostname
