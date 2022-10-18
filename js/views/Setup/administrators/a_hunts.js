@@ -235,7 +235,7 @@ function populateTable(db_data) {
 
     // hunt close time
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["hunt_close_time"];
+    tabCell.innerHTML = db_data[i]["hunt_closed_time"];
 
     var tabCell = tr.insertCell(-1);
 
