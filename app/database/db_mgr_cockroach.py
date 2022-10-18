@@ -263,7 +263,10 @@ class DbManagerCockroach:
                 for idx, col in enumerate(row):
                     if len(col) < 1:
                         row[idx] = None
-                values = tuple(row)
+                if table_name == "hunts":
+                    values = tuple(row + [None, None, None])
+                else:
+                    values = tuple(row)
                 values_list.append(values)
 
         # print(f"Charlie:{values_list}")
