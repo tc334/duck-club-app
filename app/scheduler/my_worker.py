@@ -23,7 +23,6 @@ try:
                              username=redis_user,
                              password=redis_password,
                              health_check_interval=10,
-                             socket_timeout=5,
                              retry_on_timeout=True,
                              socket_keepalive=True)
     print(f"RedisManager ping response: {redis_conn.ping()}")
