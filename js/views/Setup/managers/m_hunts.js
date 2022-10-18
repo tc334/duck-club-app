@@ -284,10 +284,10 @@ function populateEdit(i) {
     document.getElementById("inp-signup-close-auto").checked =
       db_data[i]["signup_closed_auto"] == 1 ? true : false;
     document.getElementById("inp-draw-auto").checked =
-      db_data[i]["draw_mehtod_auto"] == 1 ? true : false;
+      db_data[i]["draw_method_auto"] == 1 ? true : false;
     document.getElementById("inp-hunt-open-auto").checked =
       db_data[i]["hunt_open_auto"] == 1 ? true : false;
-    document.getElementById("inp-hunt-open-auto").checked =
+    document.getElementById("inp-hunt-close-auto").checked =
       db_data[i]["hunt_close_auto"] == 1 ? true : false;
     document.getElementById("inp-signup-close-time").value =
       db_data[i]["signup_closed_time"];
