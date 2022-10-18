@@ -61,7 +61,6 @@ def auto_progress_helper(dict_in, hunt_id):
                 queue.remove(job_id)
 
             if dict_in[key_auto] and key_time in dict_in:
-                print(f"detected new auto-progress time for '{prefix}'")
                 # new auto-progress time is provided
                 dt = datetime.datetime(
                     year=int(dict_in['hunt_date'][:4]),
@@ -77,11 +76,30 @@ def auto_progress_helper(dict_in, hunt_id):
                 dt_aware = timezone.localize(dt)
                 sql_str = f"UPDATE hunts SET status='{prefix}' WHERE id={hunt_id}"
                 job = queue.enqueue_at(dt_aware, execute_sql, sql_str)
-                print(f"Just enqueued job with id {job.id} at time {dt_aware} and sql string {sql_str}")
+                print(f"Just enqueued job with id {job.id} at time {dt_aware} and sql string '{sql_str}'")
                 # put this job id into the database
                 db.update_custom(
                     f"UPDATE hunts SET {key_job}='{job.id}' WHERE id={hunt_id}"
                 )
+
+
+@hunts_bp.route('/hunts/clear_rq')
+@token_required(admin_only)
+def clear_all_jobs(user):
+    print(f"External command to clear all jobs")
+
+    registry = queue.scheduled_job_registry
+    print(f"Current jobs in scheduled registry:")
+    print(registry.get_job_ids())
+    for jid in registry.get_job_ids():
+        registry.remove(jid, delete_job=True)
+
+    print("Jobs in queue")
+    for jid in queue.job_ids:
+        print(jid)
+    queue.empty()
+
+    return jsonify({"message": "Queue cleared"}), 200
 
 
 @hunts_bp.route('/hunts', methods=['GET'])
