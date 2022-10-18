@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-import datetime
+import datetime, pytz
 from .. import db, cache, queue
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 from app.scheduler.my_worker import execute_sql
@@ -75,11 +75,13 @@ def auto_progress_helper(dict_in, hunt_id):
                 if prefix == 'signup_closed':
                     # signup closes the day before the hunt
                     dt = dt - datetime.timedelta(days=1)
+                timezone = pytz.timezone("America/Chicago")
+                dt_aware = timezone.localize(dt)
                 # not sure why, but all times need to be moved back 2 hours
-                dt = dt - datetime.timedelta(hours=2)
-                print(f"Delta:{dt}")
+                # dt = dt - datetime.timedelta(hours=2)
+                print(f"Delta:{dt_aware}")
                 sql_str = f"UPDATE hunts SET status='{prefix}' WHERE id={hunt_id}"
-                job = queue.enqueue_at(dt, execute_sql, sql_str)
+                job = queue.enqueue_at(dt_aware, execute_sql, sql_str)
                 print(f"Echo:{job.id}")
                 # put this job id into the database
                 db.update_custom(
