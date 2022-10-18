@@ -80,7 +80,7 @@ schema = {
         {
             'name': 'signup_closed_auto',
             'type': 'BOOLEAN',
-            'extra': 'NOT NULL'
+            'extra': 'DEFAULT false NOT NULL'
         },
         {
             'name': 'signup_closed_time',
@@ -95,7 +95,7 @@ schema = {
         {
             'name': 'hunt_open_auto',
             'type': 'BOOLEAN',
-            'extra': 'NOT NULL'
+            'extra': 'DEFAULT false NOT NULL'
         },
         {
             'name': 'hunt_open_time',
@@ -103,14 +103,14 @@ schema = {
             'extra': ''
         },
         {
-            'name': 'hunt_close_auto',
+            'name': 'hunt_closed_auto',
             'type': 'BOOLEAN',
-            'extra': 'NOT NULL'
+            'extra': 'DEFAULT false NOT NULL'
         },
         {
-            'name': 'hunt_close_time',
+            'name': 'hunt_closed_time',
             'type': 'TIME(0)',
-            'extra': 'NOT NULL'
+            'extra': ''
         },
         {
             'name': 'signup_closed_job_id',
@@ -123,7 +123,7 @@ schema = {
             'extra': ''
         },
         {
-            'name': 'hunt_close_job_id',
+            'name': 'hunt_closed_job_id',
             'type': 'STRING',
             'extra': ''
         },

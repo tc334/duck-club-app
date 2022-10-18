@@ -126,7 +126,7 @@ export default class extends AbstractView {
             id="inp-hunt-close-time"
             type="time"
             value="19:00"
-            name="hunt_close_time"
+            name="hunt_closed_time"
           />
         </div>
     
@@ -294,7 +294,7 @@ function populateEdit(i) {
     document.getElementById("inp-hunt-open-time").value =
       db_data[i]["hunt_open_time"];
     document.getElementById("inp-hunt-close-time").value =
-      db_data[i]["hunt_close_time"];
+      db_data[i]["hunt_closed_time"];
 
     document.getElementById("add-edit-form").scrollIntoView();
   } else {

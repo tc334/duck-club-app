@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 import datetime
-from .. import db, cache
+from .. import db, cache, queue
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
+from app.scheduler.my_worker import execute_sql
 
 
 hunts_bp = Blueprint('hunts', __name__)
@@ -34,13 +35,56 @@ def add_row(user):
             return jsonify({"message": f"Cannot add this hunt because hunt {existing[0][0]} already has status {existing[0][1]}"}), 400
 
     # database interaction #2 - write
-    db.add_row(table_name, data_in)
+    hunt_id = db.add_row(table_name, data_in)
     cache.delete("alpha")
     cache.delete("echo")
     cache.delete("sierra")
     cache.delete("tango")
 
+    # now manage scheduling auto-progression
+    auto_progress_helper(data_in, hunt_id)
+
     return jsonify({"message": "New hunt started"}), 201
+
+
+def auto_progress_helper(dict_in, hunt_id):
+    key_prefixes = ['signup_closed', 'hunt_open', 'hunt_closed']
+    for prefix in key_prefixes:
+        key_auto = prefix + "_auto"
+        key_time = prefix + "_time"
+        key_job = prefix + "_job_id"
+        if key_auto in dict_in:
+            # key is present. We're either disabling or setting to a new time, both of which start by deleting
+            # the current job (if present)
+            job_id = db.read_custom(f"SELECT {key_job} FROM hunts WHERE id={hunt_id}")[0][0]
+            if job_id is not None:
+                queue.remove(job_id)
+
+            if dict_in[key_auto] and key_time in dict_in:
+                print(f"detected new auto-progress time for '{prefix}'")
+                # new auto-progress time is provided
+                print(f"Alpha:{dict_in[key_time]}")
+                print(f"Charlie:{dict_in['hunt_date']}")
+                dt = datetime.datetime(
+                    year=int(dict_in['hunt_date'][:4]),
+                    month=int(dict_in['hunt_date'][5:7]),
+                    day=int(dict_in['hunt_date'][8:]),
+                    hour=int(dict_in[key_time][:2]),
+                    minute=int(dict_in[key_time][3:])
+                )
+                if prefix == 'signup_closed':
+                    # signup closes the day before the hunt
+                    dt = dt - datetime.timedelta(days=1)
+                # not sure why, but all times need to be moved back 2 hours
+                dt = dt - datetime.timedelta(hours=2)
+                print(f"Delta:{dt}")
+                sql_str = f"UPDATE hunts SET status='{prefix}' WHERE id={hunt_id}"
+                job = queue.enqueue_at(dt, execute_sql, sql_str)
+                print(f"Echo:{job.id}")
+                # put this job id into the database
+                db.update_custom(
+                    f"UPDATE hunts SET {key_job}='{job.id}' WHERE id={hunt_id}"
+                )
 
 
 @hunts_bp.route('/hunts', methods=['GET'])
@@ -49,7 +93,7 @@ def get_all_rows(user):
     results_dict = db.read_all(table_name)
 
     # time has to be cleaned up before it cane be jsonified
-    time_keys = ["signup_closed_time", "hunt_open_time", "hunt_close_time"]
+    time_keys = ["signup_closed_time", "hunt_open_time", "hunt_closed_time"]
     for item in results_dict:
         for key in time_keys:
             item[key] = item[key].isoformat(timespec='minutes')
@@ -72,7 +116,7 @@ def get_all_active(user):
         if results is not None:
             # convert list(len=#rows) of tuples(len=#cols) to dictionary using keys from schema
             hunts_dict = db.format_dict(None, results, table_name)
-            time_keys = ["signup_closed_time", "hunt_open_time", "hunt_close_time"]
+            time_keys = ["signup_closed_time", "hunt_open_time", "hunt_closed_time"]
             for item in hunts_dict:
                 for key in time_keys:
                     item[key] = item[key].isoformat(timespec='minutes')

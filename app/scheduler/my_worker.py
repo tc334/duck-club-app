@@ -21,7 +21,11 @@ try:
     redis_conn = redis.Redis(host=redis_ipaddr,
                              port=redis_port,
                              username=redis_user,
-                             password=redis_password)
+                             password=redis_password,
+                             health_check_interval=10,
+                             socket_timeout=5,
+                             retry_on_timeout=True,
+                             socket_keepalive=True)
     print(f"RedisManager ping response: {redis_conn.ping()}")
     print(f"RedisManager connected to {redis_ipaddr}:{redis_port}")
 

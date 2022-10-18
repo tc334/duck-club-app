@@ -801,14 +801,10 @@ def order_groups(groupings_LOD):
     # no chip, no pond
     def condition1(x): return x["chip"] is None and x["pond_id"] is None
     idx_1 = [idx for idx, element in enumerate(groupings_LOD) if condition1(element)]
-    print(f"Alpha:{idx_1}")
     if len(idx_1) > 0:
         sort_seq = [groupings_LOD[i]["count"] for i in idx_1]
-        print(f"Bravo:{sort_seq}")
         sort_idx = h(sort_seq)
-        print(f"Charlie:{sort_idx}")
         idx_out += [idx_1[i] for i in sort_idx]
-        print(f"Delta:{idx_out}")
 
     # yes chip, no pond
     def condition2(x): return x["chip"] is not None and x["pond_id"] is None

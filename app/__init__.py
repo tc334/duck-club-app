@@ -3,6 +3,7 @@ from flask_cors import CORS
 from flask_mail import Mail
 from .database.db_mgr_cockroach import DbManagerCockroach
 from .cache.redis_manager import RedisManager
+from rq import Queue
 from urllib.parse import urlparse
 import os
 
@@ -10,6 +11,7 @@ import os
 # instance of databases
 db = DbManagerCockroach()
 cache = RedisManager()
+queue = None
 mail = None
 
 
@@ -20,10 +22,15 @@ def create_app():
     app.config.from_pyfile(os.path.join('..', 'settings.py'))
 
     if app.config['ENV'] == "development":
-        redis_ipaddr = app.config["REDIS_IPADDR"]
-        redis_port = app.config["REDIS_PORT"]
-        redis_user = None
-        redis_password = None
+        # redis_ipaddr = app.config["REDIS_IPADDR"]
+        # redis_port = app.config["REDIS_PORT"]
+        # redis_user = None
+        # redis_password = None
+        url = urlparse(app.config["REDIS_URL"])
+        redis_ipaddr = url.hostname
+        redis_port = url.port
+        redis_user = url.username
+        redis_password = url.password
     else:
         url = urlparse(app.config["REDIS_URL"])
         redis_ipaddr = url.hostname
@@ -37,6 +44,9 @@ def create_app():
         redis_user,
         redis_password
     )
+
+    global queue
+    queue = Queue(connection=cache.r)
 
     db.init_app(
         app.config["COCKROACH_URL"],
