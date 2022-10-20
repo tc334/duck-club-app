@@ -380,6 +380,7 @@ def update_row(user, grouping_id):
             f"SELECT status, selected "
             f"FROM ponds "
             f"WHERE id={data_in['pond_id']}")
+        print(f"Alpha:{result}")
         names = ["status", "selected"]
         ponds_dict = db.format_dict(names, result)[0]
         if ponds_dict["status"] == 'open' and ponds_dict["selected"] == 0:

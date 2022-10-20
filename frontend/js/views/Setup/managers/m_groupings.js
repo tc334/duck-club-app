@@ -59,7 +59,7 @@ export default class extends AbstractView {
       null,
       (response_full_json) => {
         if (response_full_json["data"]) {
-          console.log(response_full_json["data"]["groupings"]);
+          //console.log(response_full_json["data"]["groupings"]);
           db_data_groupings = response_full_json["data"]["groupings"];
           db_data_ponds = response_full_json["data"]["ponds"];
           db_data_hunts = response_full_json["data"]["hunt"];

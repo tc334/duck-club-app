@@ -76,6 +76,13 @@ def auto_progress_helper(dict_in, hunt_id):
                 timezone = pytz.timezone("America/Chicago")
                 dt_aware = timezone.localize(dt)
                 sql_str = f"UPDATE hunts SET status='{prefix}' WHERE id={hunt_id}"
+                if prefix == 'signup_closed':
+                    sql_str = (
+                        sql_str,
+                        "UPDATE invitations SET active='false', cancellation_notes='all invitations cancel when signup closes' WHERE active='true'",
+                        "UPDATE ponds SET selected=FALSE",
+                        f"UPDATE groupings SET pond_id=NULL WHERE hunt_id={hunt_id}"
+                    )
                 job = queue.enqueue_at(dt_aware, execute_sql, sql_str)
                 print(f"Just enqueued job with id {job.id} at time {dt_aware} and sql string '{sql_str}'")
                 # put this job id into the database

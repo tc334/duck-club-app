@@ -53,7 +53,11 @@ def execute_sql(sql_str):
     my_conn = pool.getconn()
     with my_conn:
         with my_conn.cursor() as cur:
-            cur.execute(sql_str)
+            if type(sql_str) == tuple:
+                for s in sql_str:
+                    cur.execute(s)
+            else:
+                cur.execute(sql_str)
     pool.putconn(my_conn)
 
     prefixes = ["echo", "nov", "sierra", "tango"]
