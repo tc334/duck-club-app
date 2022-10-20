@@ -1,6 +1,4 @@
 from app.database.db_mgr_cockroach import DbManagerCockroach
-from app.cache.redis_manager import RedisManager
-import json
 
 with open('.full_url') as f:
     full_url = f.readline()
