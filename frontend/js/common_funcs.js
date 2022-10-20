@@ -74,6 +74,7 @@ export function populate_aside(user_level) {
       "img/cog-wheel.png",
       "img/cog-wheel.png",
       "img/cog-wheel.png",
+      "img/cog-wheel.png",
     ],
   };
 
@@ -81,14 +82,14 @@ export function populate_aside(user_level) {
     member: ["profile", "edit harvest"],
     manager: ["manage hunt", "pond availability", "harvests"],
     owner: ["members", "properties", "ponds", "birds", "guests"],
-    administrator: ["hunts", "groupings", "misc"],
+    administrator: ["hunts", "groupings", "scheduler", "misc"],
   };
 
   const links = {
     member: ["#u_profile", "#u_harvest"],
     manager: ["#m_hunts", "#m_availability", "#a_harvests"],
     owner: ["#o_members", "#o_properties", "#o_ponds", "#o_birds", "#o_guests"],
-    administrator: ["#a_hunts", "#a_groupings", "#a_misc"],
+    administrator: ["#a_hunts", "#a_groupings", "#a_scheduler", "#a_misc"],
   };
 
   const idx_in = headings.indexOf(user_level);

@@ -17,6 +17,7 @@ import o_guests from "./views/Setup/owners/o_guests.js";
 import a_hunts from "./views/Setup/administrators/a_hunts.js";
 import a_groupings from "./views/Setup/administrators/a_groupings.js";
 import a_harvests from "./views/Setup/administrators/a_harvests.js";
+import a_scheduler from "./views/Setup/administrators/a_scheduler.js";
 import a_misc from "./views/Setup/administrators/a_misc.js";
 import h_pre from "./views/Hunt/h_pre.js";
 import h_no from "./views/Hunt/h_no.js";
@@ -143,6 +144,10 @@ const router = async () => {
     {
       path: "#a_harvests",
       view: a_harvests,
+    },
+    {
+      path: "#a_scheduler",
+      view: a_scheduler,
     },
     {
       path: "#a_misc",

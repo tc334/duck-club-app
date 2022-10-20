@@ -3,6 +3,7 @@ import datetime, pytz
 from .. import db, cache, queue
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 from app.scheduler.my_worker import execute_sql
+from rq.job import Job
 
 
 hunts_bp = Blueprint('hunts', __name__)
@@ -321,3 +322,22 @@ def get_current_prehunt():
         cache.add("tango", hunt_dict, 60 * 60)
 
     return hunt_dict
+
+
+@hunts_bp.route('/hunts/scheduler', methods=['GET'])
+@token_required(admin_only)
+def get_rq_scheduled_jobs(user):
+    registry = queue.scheduled_job_registry
+    print(f"Job ID's in registry:{registry.get_job_ids()}")
+    results = []
+    for jid in registry.get_job_ids():
+        job = Job.fetch(jid, connection=cache.r)
+        print(f"Job id: {jid}")
+        print(f"Job status: {job.get_status()}")
+        print(f"Job args: {job.args}")
+        results.append(jid + " " + job.get_status() + " " + job.args[0])
+
+    print(f"queue name: {queue.name}")
+    print(f"queue job ids: {queue.job_ids}")
+
+    return jsonify({"data": results}), 200

@@ -4,6 +4,7 @@ import json
 import functools
 
 DISABLE_REDIS = False
+PRE_PREFIX = "foo"
 
 
 class RedisManager:
@@ -83,41 +84,45 @@ class RedisManager:
     @transaction_wrapper
     def increment(self):
         if not DISABLE_REDIS:
-            self.r.incr("db_count")
+            self.r.incr(f"{PRE_PREFIX}:db_count")
 
     @transaction_wrapper
     def wipe_cache(self):
-        self.r.flushall()
+        # self.r.flushall()  # old way
+        keys = self.r.keys(f"{PRE_PREFIX}:*")
+        if keys:
+            # print(f"Redis debug. Deleting keys={keys}")
+            self.r.delete(*keys)
         print("RedisManager just flushed all keys from all databases")
 
     @transaction_wrapper
     def add(self, prefix, data_in, expiration_sec):
         if type(data_in) is dict:
             # special case where there isn't a list; there is just one dictionary
-            self.r.setex(f"{prefix}:count", expiration_sec, -1)
-            self.r.setex(f"{prefix}", expiration_sec, json.dumps(data_in, default=str))
+            self.r.setex(f"{PRE_PREFIX}:{prefix}:count", expiration_sec, -1)
+            self.r.setex(f"{PRE_PREFIX}:{prefix}", expiration_sec, json.dumps(data_in, default=str))
             return
         if type(data_in) in (int, str, float):
             # special case where there isn't a list; there is just one value
-            self.r.setex(f"{prefix}:count", expiration_sec, -2)
-            self.r.setex(f"{prefix}", expiration_sec, data_in)
+            self.r.setex(f"{PRE_PREFIX}:{prefix}:count", expiration_sec, -2)
+            self.r.setex(f"{PRE_PREFIX}:{prefix}", expiration_sec, data_in)
             return
         # nominal case: input is a list of dictionaries
-        self.r.setex(f"{prefix}:count", expiration_sec, len(data_in))
+        self.r.setex(f"{PRE_PREFIX}:{prefix}:count", expiration_sec, len(data_in))
         for i, e in enumerate(data_in):
-            self.r.setex(f"{prefix}:{i}", expiration_sec, json.dumps(e, default=str))
+            self.r.setex(f"{PRE_PREFIX}:{prefix}:{i}", expiration_sec, json.dumps(e, default=str))
 
     @transaction_wrapper
     def get(self, prefix):
         # no data in redis for this prefix yet
-        count = self.r.get(f"{prefix}:count")
+        count = self.r.get(f"{PRE_PREFIX}:{prefix}:count")
         if count is None:
             print(f"Cache miss on prefix: {prefix}")
             return []
         count = int(count)
         # special case for just a single dictionary, not a list of dictionaries
         if count == -1:
-            temp = self.r.get(prefix)
+            temp = self.r.get(f"{PRE_PREFIX}:{prefix}")
             if not temp:
                 # this indicates a cache miss
                 return []
@@ -126,45 +131,45 @@ class RedisManager:
         # special case for just a single value
         if count == -2:
             print(f"Cache hit! Prefix={prefix}")
-            return self.r.get(prefix)
+            return self.r.get(f"{PRE_PREFIX}:{prefix}")
         # nominal
         list_of_dicts = []
         # print(f"Redis debug. count={count}. prefix={prefix}")
         for i in range(count):
-            temp = self.r.get(f"{prefix}:{i}")
+            temp = self.r.get(f"{PRE_PREFIX}:{prefix}:{i}")
             if temp:
                 list_of_dicts.append(json.loads(temp))
             else:
                 # getting here means that one of the expected entries is missing. Perhaps evicted.
                 # Distrust this whole prefix now. Purge it.
-                self.delete(prefix)
+                self.delete(f"{PRE_PREFIX}:{prefix}")
                 return []
         print(f"Cache hit! Prefix={prefix}")
         return list_of_dicts
 
     @transaction_wrapper
     def delete(self, prefix):
-        keys = self.r.keys(f"{prefix}:*")
+        keys = self.r.keys(f"{PRE_PREFIX}:{prefix}:*")
         if keys:
             # print(f"Redis debug. Deleting keys={keys}")
             self.r.delete(*keys)
 
     @transaction_wrapper
     def set_add(self, set_name, value):
-        self.r.sadd(set_name, value)
+        self.r.sadd(f"{PRE_PREFIX}:{set_name}", value)
 
     @transaction_wrapper
     def set_pop(self, set_name):
-        return self.r.spop(set_name)
+        return self.r.spop(f"{PRE_PREFIX}:{set_name}")
 
     @transaction_wrapper
     def get_plain(self, key):
-        return self.r.get(key)
+        return self.r.get(f"{PRE_PREFIX}:{key}")
 
     @transaction_wrapper
     def add_plain(self, key, value, expiration_sec=None):
         if expiration_sec is None:
-            self.r.set(key, value)
+            self.r.set(f"{PRE_PREFIX}:{key}", value)
         else:
-            self.r.setex(key, expiration_sec, value)
+            self.r.setex(f"{PRE_PREFIX}:{key}", expiration_sec, value)
         return True

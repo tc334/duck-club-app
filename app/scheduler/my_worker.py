@@ -6,6 +6,7 @@ import redis
 from psycopg2.pool import ThreadedConnectionPool
 from rq import Worker, Queue, Connection
 from urllib.parse import urlparse
+from app.cache.redis_manager import PRE_PREFIX
 
 load_dotenv()
 
@@ -54,6 +55,11 @@ def execute_sql(sql_str):
         with my_conn.cursor() as cur:
             cur.execute(sql_str)
     pool.putconn(my_conn)
+
+    prefixes = ["echo", "nov", "sierra", "tango"]
+    for prefix in prefixes:
+        for k in redis_conn.scan_iter(f"{PRE_PREFIX}:{prefix}*"):
+            redis_conn.delete(k)
 
 
 if __name__ == "__main__":
