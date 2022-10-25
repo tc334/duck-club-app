@@ -125,7 +125,7 @@ export default class extends AbstractView {
           <input
             id="inp-hunt-close-time"
             type="time"
-            value="19:00"
+            value="12:00"
             name="hunt_closed_time"
           />
         </div>

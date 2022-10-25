@@ -32,7 +32,6 @@ export default class extends AbstractView {
           <th>status</th>
           <th>auto CS</th>
           <th>SC time</th>
-          <th>auto draw</th>
           <th>auto OH</th>
           <th>HO time</th>
           <th>auto CH</th>
@@ -216,10 +215,6 @@ function populateTable(db_data) {
     // signup close time
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = db_data[i]["signup_closed_time"];
-
-    // auto draw
-    var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["draw_method_auto"];
 
     // auto open hunt
     var tabCell = tr.insertCell(-1);

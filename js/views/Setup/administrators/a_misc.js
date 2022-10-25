@@ -23,7 +23,11 @@ export default class extends AbstractView {
   async getHtml() {
     return `<div class="reload-message"></div>
     <h1 class="heading-primary">Miscellaneous</h1>
-    <button class="btn--form" id="btn-force-recount">Force Recount</button>
+    <button class="btn--form" id="btn-force-recount">Force Harvest Recount</button>
+    <br>
+    <button class="btn--form" id="btn-hunter-recount">Force Hunter Recount (all, which is SLOW!)</button>
+    <br>
+    <button class="btn--form" id="btn-hunter-recount-onehunt">Force Hunter Recount (one hunt)</button>
     <br>
     <button class="btn--form" id="btn-cache-flush">Flush Cache</button>
     <br>
@@ -63,6 +67,51 @@ export default class extends AbstractView {
           },
           displayMessageToUser
         );
+      });
+
+    const route5 = base_uri + "/stats/force_hunter_recount";
+
+    document
+      .getElementById("btn-hunter-recount")
+      .addEventListener("click", () => {
+        callAPI(
+          jwt,
+          route5,
+          "GET",
+          null,
+          (response_full_json) => {
+            if (response_full_json["message"]) {
+              displayMessageToUser(response_full_json["message"]);
+            } else {
+              //console.log(data);
+            }
+          },
+          displayMessageToUser
+        );
+      });
+
+    const route55 = base_uri + "/stats/force_hunter_recount";
+
+    document
+      .getElementById("btn-hunter-recount-onehunt")
+      .addEventListener("click", () => {
+        let hunt_id = prompt("What hunt id do you want to recount?");
+        if (hunt_id != null) {
+          callAPI(
+            jwt,
+            route55 + "/" + hunt_id,
+            "GET",
+            null,
+            (response_full_json) => {
+              if (response_full_json["message"]) {
+                displayMessageToUser(response_full_json["message"]);
+              } else {
+                //console.log(data);
+              }
+            },
+            displayMessageToUser
+          );
+        }
       });
 
     const route2 = base_uri + "/stats/flush_cache";

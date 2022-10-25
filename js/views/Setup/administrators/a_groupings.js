@@ -223,58 +223,35 @@ function populateTable(db_data) {
     var tabCell = tr.insertCell(-1);
     tabCell.innerHTML = lookUpPond(db_data[i]["pond_id"]);
 
+    // First, enter all members
+    const nMembers = db_data[i]["members"].length;
+    for (var m = 0; m < nMembers; m++) {
+      var tabCell = tr.insertCell(-1);
+      tabCell.innerHTML = db_data[i]["members"][m];
+    }
+
+    // Second, enter all guests
     var nGuests = 0;
     if (db_data[i]["guests"] != null) {
-      const guests = db_data[i]["guests"].split(",");
-      nGuests = guests.length;
-    }
-    const members = db_data[i]["members"].split(",");
-    var i_member = 0;
-    var i_guest = 0;
-
-    // slot 1
-    var tabCell = tr.insertCell(-1);
-    if (members.length > 0) {
-      tabCell.innerHTML = members[i_member];
-      i_member += 1;
-    } else if (i_guest < nGuests) {
-      tabCell.innerHTML = guests[i_guest];
-      i_guest += 1;
+      nGuests = db_data[i]["guests"].length;
+      for (var g = 0; g < nGuests; g++) {
+        var tabCell = tr.insertCell(-1);
+        tabCell.innerHTML = db_data[i]["guests"][g];
+      }
     }
 
-    // slot 2
-    var tabCell = tr.insertCell(-1);
-    if (members.length > 1) {
-      tabCell.innerHTML = members[i_member];
-      i_member += 1;
-    } else if (i_guest < nGuests) {
-      tabCell.innerHTML = guests[i_guest];
-      i_guest += 1;
-    }
-
-    // slot 3
-    var tabCell = tr.insertCell(-1);
-    if (members.length > 2) {
-      tabCell.innerHTML = members[i_member];
-      i_member += 1;
-    } else if (i_guest < nGuests) {
-      tabCell.innerHTML = guests[i_guest];
-      i_guest += 1;
-    }
-
-    // slot 4
-    var tabCell = tr.insertCell(-1);
-    if (members.length > 3) {
-      tabCell.innerHTML = members[i_member];
-      i_member += 1;
-    } else if (i_guest < nGuests) {
-      tabCell.innerHTML = guests[i_guest];
-      i_guest += 1;
+    // Third, fill empty spots with blanks
+    const nHunters = nMembers + nGuests;
+    if (nHunters < 4) {
+      for (var b = 0; b < 4 - nHunters; b++) {
+        var tabCell = tr.insertCell(-1);
+        tabCell.innerHTML = "-";
+      }
     }
 
     // # hunters
     var tabCell = tr.insertCell(-1);
-    tabCell.innerHTML = db_data[i]["num_hunters"];
+    tabCell.innerHTML = nHunters;
 
     var tabCell = tr.insertCell(-1);
 
