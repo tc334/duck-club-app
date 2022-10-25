@@ -3,7 +3,7 @@ import datetime
 import pytz
 from .. import db, cache
 from .groupings import get_hunt_dict
-from .stats import SET_NAME
+from .stats import SET_GROUPS_NEEDING_UPDATE
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
 
 harvests_bp = Blueprint('harvests', __name__)
@@ -100,7 +100,7 @@ def update_harvest(user):
     cache.delete(f"india:{data_in['group_id']}")
     cache.delete(f"juliett:{data_in['group_id']}")
     cache.delete(f"mike:{data_in['group_id']}")
-    cache.set_add(SET_NAME, data_in['group_id'])
+    cache.set_add(SET_GROUPS_NEEDING_UPDATE, data_in['group_id'])
 
     # set the group's last update time to now
     if db.update_row("groupings", data_in["group_id"], {"harvest_update_time": central_time_now()}):

@@ -295,13 +295,18 @@ def get_groups_in_current_hunt(user):
     callers_group_id = get_group_id_from_user_id(user['id'], hunt_dict['id'])
     if callers_group_id is None:
         callers_group_id = -99
+        b_invite = False
+    else:
+        # calling user is signed up. check to see if they have an open invitation
+        b_invite = does_user_have_invite(hunt_dict['id'], user['id'])
 
     # now put it all together
     results_dict = {
         "my_group_id": callers_group_id,
         "hunt": hunt_dict,
         "groupings": groupings_dict,
-        "ponds": ponds_dict
+        "ponds": ponds_dict,
+        "invite": b_invite
     }
 
     return jsonify({"data": results_dict}), 200
@@ -833,3 +838,24 @@ def h(seq):
     #http://stackoverflow.com/questions/3382352/equivalent-of-numpy-argsort-in-basic-python/3382369#3382369
     #by unutbu
     return sorted(range(len(seq)), key=seq.__getitem__)
+
+
+def does_user_have_invite(hunt_id, user_id):
+    # invitations to me
+    results = db.read_custom(
+        f"SELECT i.id FROM invitations i "
+        f"JOIN users u ON i.inviter_id=u.id "
+        f"WHERE i.invitee_id={user_id} "
+        f"AND i.hunt_id={hunt_id} "
+        f"AND i.active=true"
+    )
+    if results is None or results is False:
+        print(f"Internal error in get_invitations_to_user")
+        return False
+
+    if len(results) > 0:
+        # this user has an open invitation in this hunt
+        return True
+    else:
+        # this user does not have an open invitation in this hunt
+        return False

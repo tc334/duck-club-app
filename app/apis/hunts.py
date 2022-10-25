@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 import datetime, pytz
 from .. import db, cache, queue
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
-from app.scheduler.my_worker import execute_sql
+from app.scheduler.my_worker import execute_auto_progress
 from rq.job import Job
 
 
@@ -83,7 +83,7 @@ def auto_progress_helper(dict_in, hunt_id):
                         "UPDATE ponds SET selected=FALSE",
                         f"UPDATE groupings SET pond_id=NULL WHERE hunt_id={hunt_id}"
                     )
-                job = queue.enqueue_at(dt_aware, execute_sql, sql_str)
+                job = queue.enqueue_at(dt_aware, execute_auto_progress, sql_str, hunt_id)
                 print(f"Just enqueued job with id {job.id} at time {dt_aware} and sql string '{sql_str}'")
                 # put this job id into the database
                 db.update_custom(
@@ -94,6 +94,10 @@ def auto_progress_helper(dict_in, hunt_id):
 @hunts_bp.route('/hunts/clear_rq')
 @token_required(admin_only)
 def clear_all_jobs(user):
+    return clear_all_jobs_aux()
+
+
+def clear_all_jobs_aux():
     print(f"External command to clear all jobs")
 
     registry = queue.scheduled_job_registry
@@ -278,6 +282,14 @@ def update_row(user, hunt_id):
             else:
                 return jsonify({"message": f"Unable to update id {hunt_id} of table {table_name}. Could not verify all groups had a pond."}), 500
 
+        # if changing status to hunt_open, recount all group members
+        if data_in['status'] == "hunt_open":
+            count_hunters_in_one_hunt(hunt_id)
+
+        # if changing status to hunt_closed, recount all group members
+        if data_in['status'] == "hunt_closed":
+            count_hunters_in_one_hunt(hunt_id)
+
         # cache data now invalid for all groups in this hunt
         results = db.read_custom(f"SELECT id FROM groupings WHERE hunt_id={hunt_id}")
         if results is not None and results:
@@ -297,6 +309,14 @@ def update_row(user, hunt_id):
 @hunts_bp.route('/hunts/<hunt_id>', methods=['DELETE'])
 @token_required(admin_only)
 def del_row(user, hunt_id):
+    # clear any Scheduler jobs associated with this hunt
+    key_prefixes = ['signup_closed', 'hunt_open', 'hunt_closed']
+    for prefix in key_prefixes:
+        key_job = prefix + "_job_id"
+        results = db.read_custom(f"SELECT {key_job} FROM hunts WHERE id={hunt_id}")
+        if results is not None and results is not False:
+            job_id = results[0][0]
+            queue.remove(job_id)
     if db.del_row(table_name, hunt_id):
         cache.delete("alpha")
         cache.delete("echo")
@@ -342,9 +362,49 @@ def get_rq_scheduled_jobs(user):
         print(f"Job id: {jid}")
         print(f"Job status: {job.get_status()}")
         print(f"Job args: {job.args}")
-        results.append(jid + " " + job.get_status() + " " + job.args[0])
+        results.append({
+            "job_id": jid,
+            "status": job.get_status(),
+            "hunt_id": job.args[1],
+            "commands": job.args[0]
+        })
 
     print(f"queue name: {queue.name}")
     print(f"queue job ids: {queue.job_ids}")
 
     return jsonify({"data": results}), 200
+
+
+def count_hunters_in_one_hunt(hunt_id):
+    results = db.read_custom(
+        f"SELECT groupings.id, COUNT(participants.id) "
+        f"FROM groupings "
+        f"JOIN participants ON participants.grouping_id=groupings.id "
+        f"WHERE groupings.hunt_id={hunt_id} "
+        f"GROUP BY groupings.id"
+    )
+    if results is None or results is False:
+        print(f"Error in count_hunters_in_one_hunt()")
+        return
+    for item in results:
+        db.update_custom(
+            f"UPDATE groupings SET num_hunters={item[1]} WHERE id={item[0]}"
+        )
+    return True
+
+
+def count_hunters_in_one_group(group_id):
+    results = db.read_custom(
+        f"SELECT groupings.id, COUNT(participants.id) "
+        f"FROM groupings "
+        f"JOIN participants ON participants.grouping_id=groupings.id "
+        f"WHERE groupings.id={group_id} "
+        f"GROUP BY groupings.id"
+    )
+    if results is None or results is False:
+        print(f"Error in count_hunters_in_one_group()")
+        return
+    for item in results:
+        db.update_custom(
+            f"UPDATE groupings SET num_hunters={item[1]} WHERE id={item[0]}"
+        )

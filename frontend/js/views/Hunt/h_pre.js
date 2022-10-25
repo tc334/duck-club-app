@@ -122,7 +122,8 @@ export default class extends AbstractView {
           populateStatusTable(
             db_data_hunts["hunt_date"],
             db_data_hunts["status"],
-            response_full_json["data"]["my_group_id"]
+            response_full_json["data"]["my_group_id"],
+            response_full_json["data"]["invite"]
           );
           selectCurrentPondAssignments();
           if (response_full_json["data"]["my_group_id"] > 0) {
@@ -191,7 +192,7 @@ export default class extends AbstractView {
   }
 }
 
-function populateStatusTable(hunt_date, hunt_status, my_group_id) {
+function populateStatusTable(hunt_date, hunt_status, my_group_id, b_invite) {
   var container = document.getElementById("status-table-container");
   var table = document.createElement("table");
   table.classList.add("status-table");
@@ -253,21 +254,17 @@ function populateStatusTable(hunt_date, hunt_status, my_group_id) {
       var btn_withdraw = document.createElement("button");
       btn_withdraw.group_id = my_group_id;
       btn_withdraw.innerHTML = "Withdraw From Hunt";
-      btn_withdraw.className += "btn--form";
+      btn_withdraw.classList.add("btn--form");
       btn_withdraw.addEventListener("click", withdraw);
       div.appendChild(btn_withdraw);
-      // add guest button
-      var btn_addGuest = document.createElement("a");
-      btn_addGuest.href = "#u_guests";
-      btn_addGuest.innerHTML = "Add Guest(s)";
-      btn_addGuest.className += "btn--form";
-      div.appendChild(btn_addGuest);
-      // add guest button
-      var btn_invite = document.createElement("a");
-      btn_invite.href = "#u_invitations";
-      btn_invite.innerHTML = "Invite Member to Join Your Group";
-      btn_invite.className += "btn--form";
-      div.appendChild(btn_invite);
+      // notification of invite
+      if (b_invite) {
+        var btn_invite = document.createElement("a");
+        btn_invite.href = "#u_invitations";
+        btn_invite.innerHTML = "You have an invitation!";
+        btn_invite.classList.add("btn--form");
+        div.appendChild(btn_invite);
+      }
     } else {
       // join button
       var btn_join = document.createElement("button");

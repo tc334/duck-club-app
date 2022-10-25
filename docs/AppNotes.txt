@@ -3,3 +3,4 @@ https://www.reddit.com/r/flask/comments/icnxpa/correct_way_to_psycopg2_connectio
 https://stackoverflow.com/questions/38425620/gunicorn-workers-and-threads
 https://medium.com/building-the-system/gunicorn-3-means-of-concurrency-efbb547674b7
 https://www.stackhero.io/en/services/Redis/documentations/Use-with-Python/How-to-avoid-error-Connection-closed-by-server-with-Redis-and-Python
+flask run --host="0.0.0.0" --without-threads

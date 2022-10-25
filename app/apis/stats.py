@@ -2,9 +2,11 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime, date
 from .. import db, cache
 from .auth_wraps import token_required, admin_only, owner_and_above, all_members, manager_and_above
+from .hunts import count_hunters_in_one_hunt
 
 stats_bp = Blueprint('stats', __name__)
-SET_NAME = "groups_needing_update"
+SET_GROUPS_NEEDING_UPDATE = "groups_needing_update"
+SET_HUNTS_NEEDING_HUNTER_COUNT_UPDATE = "hunts_needing_update"
 RESET_KEY = "reset_forced"
 
 
@@ -33,6 +35,7 @@ def get_stats_hunters(users):
                                  f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                  f"WHERE hunts.hunt_date>='{date_start}' "
                                  f"AND hunts.hunt_date<='{date_end}' "
+                                 f"AND hunts.status='hunt_closed' "
                                  f"GROUP BY users.id, name "
                                  f"ORDER BY users.id")
     elif data_in["filter-member"] == "just-me":
@@ -45,6 +48,7 @@ def get_stats_hunters(users):
                                  f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                  f"WHERE users.id={users['id']} "
                                  f"AND hunts.hunt_date>='{date_start}' "
+                                 f"AND hunts.status='hunt_closed' "
                                  f"AND hunts.hunt_date<='{date_end}' "
                                  f"GROUP BY users.id, name "
                                  f"ORDER BY users.id")
@@ -84,10 +88,11 @@ def update_group_harvest():
         return
 
     # now only update the groups in the set needing update
-    cache_result = cache.set_pop(SET_NAME)
+    cache_result = cache.set_pop(SET_GROUPS_NEEDING_UPDATE)
     while cache_result:
         group_id = cache_result.decode()
 
+        # 1) Count ducks
         result_ducks = db.read_custom(f"SELECT SUM(harvest.count) "
                                       f"FROM harvest "
                                       f"JOIN groupings ON harvest.group_id=groupings.id "
@@ -100,12 +105,13 @@ def update_group_harvest():
         else:
             num_ducks = 0
 
+        # 2) Count non-ducks
         result_non =   db.read_custom(f"SELECT SUM(harvest.count) "
                                       f"FROM harvest "
                                       f"JOIN groupings ON harvest.group_id=groupings.id "
                                       f"JOIN birds ON harvest.bird_id=birds.id "
                                       f"WHERE birds.type<>'duck' "
-                                      f"AND groupings.id={group_id}")
+                                      f"AND groupings.id={group_id} ")
 
         if result_non and len(result_non) == 1:
             num_non = result_non[0][0]
@@ -114,8 +120,6 @@ def update_group_harvest():
 
         if num_non is None:
             num_non = 0
-            print(f"Echo:Just caught num_non as None. result_non:{result_non}")
-            print(f"group_id:{group_id}")
 
         update_dict = {
             'num_ducks': num_ducks,
@@ -129,7 +133,14 @@ def update_group_harvest():
         hunt_id = db.read_custom(f"SELECT hunt_id FROM groupings WHERE id='{group_id}'")[0][0]
         cache.delete(f"bravo:{hunt_id}")
 
-        cache_result = cache.set_pop(SET_NAME)
+        cache_result = cache.set_pop(SET_GROUPS_NEEDING_UPDATE)
+
+    # if hunts were auto-opened or auto-closed, they still need to have hunter counts updated
+    cache_result = cache.set_pop(SET_HUNTS_NEEDING_HUNTER_COUNT_UPDATE)
+    while cache_result:
+        print("Updating hunter counts after an auto-progress")
+        hunt_id = cache_result.decode()
+        count_hunters_in_one_hunt(hunt_id)
 
 
 @stats_bp.route('/stats/flush_cache')
@@ -231,6 +242,7 @@ def get_stats_club(users):
                              f"JOIN groupings ON groupings.hunt_id=hunts.id "
                              f"WHERE hunts.hunt_date>='{date_start}' "
                              f"AND hunts.hunt_date<='{date_end}' "
+                             f"AND hunts.status='hunt_closed' "
                              f"GROUP BY hunts.id "
                              f"ORDER BY hunts.id")
 
@@ -274,6 +286,7 @@ def get_stats_birds(users):
                                  f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                  f"WHERE hunts.hunt_date>='{date_start}' "
                                  f"AND hunts.hunt_date<='{date_end}' "
+                                 f"AND hunts.status='hunt_closed' "
                                  f"GROUP BY birds.name "
                                  f"ORDER BY birds.name")
     elif data_in["filter-member"] == "just-me":
@@ -288,6 +301,7 @@ def get_stats_birds(users):
                                  f"WHERE users.id={users['id']} "
                                  f"AND hunts.hunt_date>='{date_start}' "
                                  f"AND hunts.hunt_date<='{date_end}' "
+                                 f"AND hunts.status='hunt_closed' "
                                  f"GROUP BY birds.name "
                                  f"ORDER BY birds.name")
     else:
@@ -336,6 +350,7 @@ def get_stats_ponds(users):
                                  f"JOIN hunts ON groupings.hunt_id=hunts.id "
                                  f"WHERE hunts.hunt_date>='{date_start}' "
                                  f"AND hunts.hunt_date<='{date_end}' "
+                                 f"AND hunts.status='hunt_closed' "
                                  f"GROUP BY ponds.name "
                                  f"ORDER BY ponds.name")
     elif data_in["filter-member"] == "just-me":
@@ -350,6 +365,7 @@ def get_stats_ponds(users):
                                  f"JOIN users ON participants.user_id=users.id "
                                  f"WHERE hunts.hunt_date>='{date_start}' "
                                  f"AND hunts.hunt_date<='{date_end}' "
+                                 f"AND hunts.status='hunt_closed' "
                                  f"AND users.id={users['id']} "
                                  f"GROUP BY ponds.name "
                                  f"ORDER BY ponds.name")
@@ -390,6 +406,7 @@ def get_stats_ponds(users):
                                      f"JOIN ponds ON groupings.pond_id=ponds.id "
                                      f"WHERE hunts.hunt_date>='{date_start}' "
                                      f"AND hunts.hunt_date<='{date_end}' "
+                                     f"AND hunts.status='hunt_closed' "
                                      f"AND ponds.id={data_in['pond_id']} "
                                      f"ORDER BY hunts.hunt_date")
         elif data_in["filter-member"] == "just-me":
@@ -403,6 +420,7 @@ def get_stats_ponds(users):
                                      f"WHERE users.id={users['id']} "
                                      f"AND hunts.hunt_date>='{date_start}' "
                                      f"AND hunts.hunt_date<='{date_end}' "
+                                     f"AND hunts.status='hunt_closed' "
                                      f"AND ponds.id={data_in['pond_id']} "
                                      f"GROUP BY hunts.hunt_date "
                                      f"ORDER BY hunts.hunt_date")
@@ -468,6 +486,7 @@ def get_hunt_history(users, public_id):
         f"JOIN hunts ON groupings.hunt_id=hunts.id "
         f"JOIN ponds ON groupings.pond_id=ponds.id "
         f"WHERE users.public_id='{public_id}' "
+        f"AND hunts.status='hunt_closed' "
         f"ORDER BY hunts.hunt_date"
     )
     if results is None or results is False:
@@ -476,3 +495,33 @@ def get_hunt_history(users, public_id):
     hunts_dict = db.format_dict(names, results)
 
     return jsonify({"hunts": hunts_dict}), 200
+
+
+@stats_bp.route('/stats/force_hunter_recount/<hunt_id>')
+@token_required(admin_only)
+def count_hunters_external(user, hunt_id):
+    if count_hunters_in_one_hunt(hunt_id):
+        return jsonify({"message": f"Successful recount of hunt {hunt_id}"}), 200
+    else:
+        return jsonify({"message": "Internal error"}), 500
+
+
+@stats_bp.route('/stats/force_hunter_recount')
+@token_required(admin_only)
+def count_hunters_all_groups():
+    results = db.read_custom(
+        f"SELECT groupings.id, COUNT(participants.id) "
+        f"FROM groupings "
+        f"JOIN participants ON participants.grouping_id=groupings.id "
+        f"GROUP BY groupings.id"
+    )
+    if results is None or results is False:
+        print(f"Error in count_hunters_all_groups()")
+        return jsonify({"message": "Internal error"}), 500
+    for item in results:
+        db.update_custom(
+            f"UPDATE groupings SET num_hunters={item[1]} WHERE id={item[0]}"
+        )
+
+    return jsonify({"message": "Successful update of all hunter counts"}), 200
+

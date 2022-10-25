@@ -48,7 +48,7 @@ pool = ThreadedConnectionPool(min_conn, max_conn, db_url)
 # @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 
-def execute_sql(sql_str):
+def execute_auto_progress(sql_str, hunt_id):
     print(f"RQ Worker Executing SQL command: {sql_str}")
     my_conn = pool.getconn()
     with my_conn:
@@ -60,10 +60,14 @@ def execute_sql(sql_str):
                 cur.execute(sql_str)
     pool.putconn(my_conn)
 
+    # clear caches that are invalidated by a hunt status change
     prefixes = ["echo", "nov", "sierra", "tango"]
     for prefix in prefixes:
         for k in redis_conn.scan_iter(f"{PRE_PREFIX}:{prefix}*"):
             redis_conn.delete(k)
+
+    # counting of hunters is supposed to happen when transitioning to hunt_open or hunt_closed
+    redis_conn.sadd("hunts_needing_update", hunt_id)
 
 
 if __name__ == "__main__":
