@@ -87,8 +87,6 @@ def signup():
     data_in['email'] = data_in['email'].lower()
 
     id = db.add_row(table_name, data_in)
-    print(f"Just added user with id={id}")
-    print(f"data_in:{data_in}")
     cache.delete("charlie")
 
     # send email to user for them to verify their email address
@@ -190,8 +188,6 @@ def manual_add(user):
     data_in['email'] = data_in['email'].lower()
 
     id = db.add_row(table_name, data_in)
-    print(f"Just MANUALLY added user with id={id}")
-    print(f"data_in:{data_in}")
     cache.delete("charlie")
 
     return jsonify({'message': data_in['first_name'] + ' successfully added as a user'}), 201
