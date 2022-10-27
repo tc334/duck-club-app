@@ -61,7 +61,7 @@ export function populate_aside(user_level) {
   const headings = ["member", "manager", "owner", "administrator"];
 
   const icons = {
-    member: ["img/user.png", "img/edit.png"],
+    member: ["img/user.png", "img/edit.png", "img/log-out.png"],
     manager: ["img/cog-wheel.png", "img/traffic-signal.png", "img/edit.png"],
     owner: [
       "img/people.png",
@@ -79,14 +79,14 @@ export function populate_aside(user_level) {
   };
 
   const text = {
-    member: ["profile", "edit harvest"],
+    member: ["profile", "edit harvest", "log out"],
     manager: ["manage hunt", "pond availability", "harvests"],
     owner: ["members", "properties", "ponds", "birds", "guests"],
     administrator: ["hunts", "groupings", "scheduler", "misc"],
   };
 
   const links = {
-    member: ["#u_profile", "#u_harvest"],
+    member: ["#u_profile", "#u_harvest", "#u_logout"],
     manager: ["#m_hunts", "#m_availability", "#a_harvests"],
     owner: ["#o_members", "#o_properties", "#o_ponds", "#o_birds", "#o_guests"],
     administrator: ["#a_hunts", "#a_groupings", "#a_scheduler", "#a_misc"],

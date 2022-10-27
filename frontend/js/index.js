@@ -34,6 +34,7 @@ import m_guests from "./views/Hunt/m_guests.js";
 import u_scouting from "./views/Hunt/u_scouting.js";
 import u_guests from "./views/Hunt/u_guests.js";
 import u_invitations from "./views/Hunt/u_invitations.js";
+import u_logout from "./views/Setup/members/u_logout.js";
 
 // only do this once
 const jwt = localStorage.getItem("token");
@@ -88,6 +89,10 @@ const router = async () => {
     {
       path: "#u_profile",
       view: u_profile,
+    },
+    {
+      path: "#u_logout",
+      view: u_logout,
     },
     {
       path: "#m_hunts",
