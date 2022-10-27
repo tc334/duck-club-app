@@ -67,7 +67,7 @@ def execute_auto_progress(sql_str, hunt_id):
             redis_conn.delete(k)
 
     # counting of hunters is supposed to happen when transitioning to hunt_open or hunt_closed
-    redis_conn.sadd("hunts_needing_update", hunt_id)
+    redis_conn.sadd(f"{PRE_PREFIX}:hunts_needing_update", hunt_id)
 
 
 if __name__ == "__main__":

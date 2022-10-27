@@ -138,9 +138,10 @@ def update_group_harvest():
     # if hunts were auto-opened or auto-closed, they still need to have hunter counts updated
     cache_result = cache.set_pop(SET_HUNTS_NEEDING_HUNTER_COUNT_UPDATE)
     while cache_result:
-        print("Updating hunter counts after an auto-progress")
         hunt_id = cache_result.decode()
+        print(f"Updating hunter counts after an auto-progress; hunt id: {hunt_id}")
         count_hunters_in_one_hunt(hunt_id)
+        cache_result = cache.set_pop(SET_HUNTS_NEEDING_HUNTER_COUNT_UPDATE)
 
 
 @stats_bp.route('/stats/flush_cache')
