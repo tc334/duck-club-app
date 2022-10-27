@@ -8,7 +8,7 @@ db = DbManagerCockroach()
 db.init_app(full_url, "tegan.counts@gmail.com")
 
 # Create fresh DB from schema
-db_name = "duck_club_app_debug_2"
+db_name = "duck_club_app_production_2"
 db.delete_db(db_name)
 db.select_db(db_name)
 
