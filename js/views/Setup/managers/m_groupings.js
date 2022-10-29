@@ -286,6 +286,14 @@ function populateTables() {
     btn_delete.addEventListener("click", deleteGroup);
     tabCell.appendChild(btn_delete);
 
+    // Corporate button
+    var btn_corp = document.createElement("button");
+    btn_corp.index = iGroup;
+    btn_corp.innerHTML = "Corp";
+    btn_corp.classList.add("btn--action", "btn--groupings-table");
+    btn_corp.addEventListener("click", fillGroupWithCorporate);
+    tabCell.appendChild(btn_corp);
+
     // Notes
     if (notes_str.length > 0) {
       tr = table.insertRow(-1);
@@ -322,6 +330,25 @@ function splitGroup(e) {
       displayMessageToUser
     );
   }
+}
+
+function fillGroupWithCorporate(e) {
+  const group_index = e.currentTarget.index;
+  const group_id = db_data_groupings[group_index]["id"];
+  const route = base_uri + "/" + subroute + "/fill_corporate/" + group_id;
+
+  callAPI(
+    jwt_global,
+    route,
+    "PUT",
+    null,
+    (data) => {
+      localStorage.setItem("previous_action_message", data["message"]);
+      window.scrollTo(0, 0);
+      location.reload();
+    },
+    displayMessageToUser
+  );
 }
 
 function deleteGroup(e) {
