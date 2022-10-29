@@ -43,6 +43,9 @@ def reconnect(f: Callable):
             return f(storage, *args, **kwargs)
         except psycopg2.Error as e:
             print(f"Error occurred during execute: {e}")
+            print(f"pgerror={e.pgerror}, pgcode={e.pgcode}")
+            print(f"Closing db connection in response to error")
+            storage.close()
             return None
 
     return wrapper
@@ -119,8 +122,8 @@ class DbManagerCockroach:
                 if expecting_return:
                     ret_val = cur.fetchall()
 
-        if self.cache:
-            self.cache.increment()
+        # if self.cache:
+        #     self.cache.increment()
 
         if expecting_return:
             return ret_val
