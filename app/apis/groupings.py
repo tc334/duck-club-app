@@ -487,6 +487,63 @@ def merge_groups(user, group1_id, group2_id):
     return jsonify({"message": f"Successfully merged groups {group1_id} and {group2_id} into group {group1_id}"})
 
 
+@groupings_bp.route('/groupings/fill_corporate/<group_id>', methods=['PUT'])
+@token_required(manager_and_above)
+def fill_corporate(user, group_id):
+    print(f"BEFORE GROUP ACTION 'fill_corporate'. group_id={group_id}")
+    print_group(group_id)
+
+    # group will be filled out to 4 with corporate ghost hunters
+
+    # Error checking
+    # hunt status must be pre-hunt
+    hunt_dict = get_hunt_dict(group_id)
+    if not hunt_dict:
+        return jsonify({"message": "Internal error, invalid read of hunt dictionary"}), 500
+    if hunt_dict["status"] not in ('signup_open', 'signup_closed', 'draw_complete'):
+        return jsonify({"message": f"Cannot fill group with corporate ghost hunters in hunt {hunt_dict['id']} because hunt status is {hunt_dict['status']}"})
+
+    # How many slots have to be filled
+    num_hunters = db.read_custom(f"SELECT COUNT(*) FROM participants p WHERE p.grouping_id={group_id}")[0][0]
+    if num_hunters > 3:
+        return jsonify({"message": f"Current group ({group_id}) is already full, so no corporate ghost hunters "
+                                   f"can be added to it"}), 400
+
+    # get the list of corporate hunters not currently in this hunt
+    results = db.read_custom(
+        f"SELECT users.id FROM users "
+        f"WHERE users.first_name='Corporate' "
+        f"AND users.id NOT IN ("
+        f"SELECT user_id "
+        f"FROM participants "
+        f"JOIN groupings ON participants.grouping_id=groupings.id "
+        f"WHERE groupings.hunt_id={hunt_dict['id']})"
+    )
+    if results is None or results is False:
+        return jsonify({"message": "No additional corporate ghost hunters available"}), 500
+    available_corp_ghost_users = [r[0] for r in results]
+    print(f"available_corp_ghost_users:{available_corp_ghost_users}")
+
+    while num_hunters < 4 and len(available_corp_ghost_users) > 0:
+        db.add_row("participants", {
+            "type": "member",
+            "grouping_id": group_id,
+            "user_id": available_corp_ghost_users.pop(0)
+        })
+        num_hunters += 1
+
+    cache.delete("bravo")
+    cache.delete(f"golf:{hunt_dict['id']}")
+    cache.delete(f"hotel:{group_id}")
+    cache.delete(f"kilo:{group_id}")
+    cache.delete(f"romeo:{group_id}")
+
+    print(f"AFTER GROUP ACTION 'fill_corporate'. group_id={group_id}")
+    print_group(group_id)
+
+    return jsonify({"message": f"Successfully filled group {group_id} with corporate ghost hunters"}), 200
+
+
 @groupings_bp.route('/groupings/breakup/<group_id>', methods=['PUT'])
 @token_required(manager_and_above)
 def breakup_group(user, group_id):

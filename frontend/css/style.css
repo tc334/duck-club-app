@@ -597,9 +597,10 @@ manual add
   margin: 0 auto;
 }
 
-.btn--groupings-table:nth-child(2) {
-  margin-top: 1rem;
-  margin-bottom: 1rem;
+.btn--groupings-table:nth-child(2),
+.btn--groupings-table:nth-child(3) {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
 }
 
 #div-main > button {
