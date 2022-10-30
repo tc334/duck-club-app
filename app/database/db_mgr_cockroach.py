@@ -37,7 +37,11 @@ def reconnect(f: Callable):
     def wrapper(storage, *args, **kwargs):
         if not storage.connected():
             print(f"DB not connected when {f} called. Attempting to connect")
-            storage.connect()
+            if storage.connect():
+                storage.select_db_without_execute()
+                print(f"Successful reconnection inside reconnect wrapper")
+            else:
+                print(f"DB connection failed inside reconnect wrapper")
 
         try:
             return f(storage, *args, **kwargs)
@@ -57,6 +61,7 @@ class DbManagerCockroach:
         self.tables = None
 
         self.db_url = None
+        self.db_name = None
         self.admin_email = None
         self.cache = None
 
@@ -166,7 +171,17 @@ class DbManagerCockroach:
     def delete_db(self, db_name):
         return self.execute(f"DROP DATABASE IF EXISTS {db_name}")
 
+    def select_db_without_execute(self):
+        # this command selects the desired DB without having to go through the execute method in this class, which would
+        # get wrapped by the reconnect method and lead to an infinite loop. Instead, we just use the raw SQL without all
+        # of the wrapping. This is only intended to be called by reconnect.
+        print(f"select_db_without_execute to db name: {self.db_name}")
+        with self.conn:
+            with self.conn.cursor() as cur:
+                cur.execute(f"USE {self.db_name}")
+
     def select_db(self, db_name, b_build=False):
+        self.db_name = db_name  # saving this for later, when select_db_without_execute will need it
         if db_name not in self.list_databases():
             # the requested DB doesn't exist, so create it
             self.create_db(db_name)
