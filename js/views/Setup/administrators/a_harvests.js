@@ -85,6 +85,7 @@ export default class extends AbstractView {
             id="inp-groupid"
             type="number"
             name="group_id"
+            required
           />
         </div>
     
@@ -185,61 +186,9 @@ export default class extends AbstractView {
     });
 
     // What do do on a submit
-    myForm.addEventListener("submit", function (e) {
-      e.preventDefault();
-
-      // Pull data from form and put it into the json format the DB wants
-      const formData = new FormData(this);
-
-      var object = {};
-      formData.forEach((value, key) => (object[key] = value));
-
-      // for birds, we need to extract the bird["id"] from what we currently have, which is the bird["name"]
-      const searchResult = db_data_birds.filter(function (bird) {
-        return bird["name"] === object["bird_id"];
-      })[0]["id"];
-      object["bird_id"] = searchResult;
-
-      // now we can stringify the json just like we do on the other views
-      var json = JSON.stringify(object);
-
-      if (e.submitter.id == "btn-add") {
-        const route = base_uri + "/" + subroute;
-
-        callAPI(
-          jwt,
-          route,
-          "POST",
-          json,
-          (data) => {
-            localStorage.setItem("previous_action_message", data["message"]);
-            window.scrollTo(0, 0);
-            location.reload();
-          },
-          displayMessageToUser
-        );
-      } else if (e.submitter.id == "btn-update") {
-        // attach the primary key (id) to the json & send at PUT instead of POST
-        const route = base_uri + "/" + subroute;
-
-        callAPI(
-          jwt,
-          route,
-          "PUT",
-          json,
-          (data) => {
-            localStorage.setItem("previous_action_message", data["message"]);
-            window.scrollTo(0, 0);
-            location.reload();
-          },
-          displayMessageToUser
-        );
-      }
-    });
-
-    // What do do on a submit
     const myForm2 = document.getElementById("form-filter");
     myForm2.addEventListener("submit", function (e) {
+      console.log("Alpha");
       e.preventDefault();
 
       // Pull data from form and put it into the json format the DB wants
@@ -276,13 +225,76 @@ export default class extends AbstractView {
         displayMessageToUser
       );
     });
+
+    // What do do on a submit
+    myForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      // Pull data from form and put it into the json format the DB wants
+      const formData = new FormData(this);
+
+      var object = {};
+      formData.forEach((value, key) => (object[key] = value));
+
+      // for birds, we need to extract the bird["id"] from what we currently have, which is the bird["name"]
+      const searchResult = db_data_birds.filter(function (bird) {
+        return bird["name"] === object["bird_id"];
+      })[0]["id"];
+      object["bird_id"] = searchResult;
+
+      // now we can stringify the json just like we do on the other views
+      var json = JSON.stringify(object);
+
+      if (e.submitter.id == "btn-add") {
+        const route = base_uri + "/" + subroute;
+
+        callAPI(
+          jwt,
+          route,
+          "POST",
+          json,
+          (data) => {
+            document.querySelector(".reload-message").innerHTML =
+              data["message"];
+            myForm2.requestSubmit();
+          },
+          displayMessageToUser
+        );
+      } else if (e.submitter.id == "btn-update") {
+        // attach the primary key (id) to the json & send at PUT instead of POST
+        const route = base_uri + "/" + subroute;
+
+        callAPI(
+          jwt,
+          route,
+          "PUT",
+          json,
+          (data) => {
+            document.querySelector(".reload-message").innerHTML =
+              data["message"];
+            myForm2.requestSubmit();
+          },
+          displayMessageToUser
+        );
+      }
+    });
   }
 }
 
 function populateTable(db_data) {
+  // First
+  var inp_groupid = document.getElementById("inp-groupid");
+  if (db_data.length > 0) {
+    inp_groupid.value = db_data[0]["group_id"];
+  }
+
+  // Select table
   var table = document.getElementById(singular + "-table");
+
+  // Clear table
   removeAllChildNodes(table);
 
+  // Start populating table
   for (var i = 0; i < db_data.length; i++) {
     var tr = table.insertRow(-1);
 
