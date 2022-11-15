@@ -1,6 +1,8 @@
 import os
 import sys
 
+import datetime as dt
+
 from dotenv import load_dotenv
 import redis
 from psycopg2.pool import ThreadedConnectionPool
@@ -50,6 +52,8 @@ pool = ThreadedConnectionPool(min_conn, max_conn, db_url)
 
 def execute_auto_progress(sql_str, hunt_id):
     print(f"RQ Worker Executing SQL command: {sql_str}")
+    now = dt.datetime.now()
+    print(f"The current time is {now.strftime('%Y-%m-%d %H:%M:%S')}")
     my_conn = pool.getconn()
     with my_conn:
         with my_conn.cursor() as cur:

@@ -56,26 +56,25 @@ def add_row(user):
         return jsonify({"message": f"User {user_id} is already signed up for hunt {hunt_id} in group {results[0][0]}"}), 400
 
     # Input passes criteria - write to database
-    # 1) create new grouping
-    db_row = {
-        "hunt_id": hunt_id,
-    }
-    group_id = db.add_row(table_name, db_row)
-    # 2) create new participant associated with above group
+    # 1) Build DB entry for new participant
     db_row = {
         "type": "member",
-        "grouping_id": group_id,
         "user_id": user_id
     }
     if 'b_dog' in data_in:
         db_row['b_dog'] = True if data_in['b_dog'] == 'on' else False
-    if 'num_atv_seats' in data_in:
+    if 'num_atv_seats' in data_in and len(data_in['num_atv_seats']) > 0:
         db_row['num_atv_seats'] = int(data_in['num_atv_seats'])
     if 'pond_preference' in data_in and len(data_in['pond_preference']) > 0:
         db_row['pond_preference'] = data_in['pond_preference']
     if 'notes' in data_in and len(data_in['notes']) > 0:
         db_row['notes'] = data_in['notes']
+    # 2) build DB entry for new grouping
+    # 3) make DB calls to put data in
+    group_id = db.add_row(table_name, {"hunt_id": hunt_id})
+    db_row["grouping_id"] = group_id
     participant_id = db.add_row("participants", db_row)
+    # 4) clear invalidated cache
     cache.delete("bravo")
     cache.delete(f"golf:{'hunt_id'}")
 
@@ -877,13 +876,19 @@ def order_groups(groupings_LOD):
         sort_idx = h(sort_seq)
         idx_out += [idx_2[i] for i in sort_idx]
 
-    # yes pond
-    def condition3(x): return x["pond_id"] is not None
+    # yes pond, yes chip
+    def condition3(x): return x["pond_id"] is not None and x["chip"] is not None
     idx_3 = [idx for idx, element in enumerate(groupings_LOD) if condition3(element)]
     if len(idx_3) > 0:
         sort_seq = [groupings_LOD[i]["chip"] for i in idx_3]
         sort_idx = h(sort_seq)
         idx_out += [idx_3[i] for i in sort_idx]
+
+    # yes pond, no chip
+    def condition4(x): return x["pond_id"] is not None and x["chip"] is None
+    idx_4 = [idx for idx, element in enumerate(groupings_LOD) if condition4(element)]
+    if len(idx_4) > 0:
+        idx_out += [i for i in idx_4]
 
     if len(idx_out) != len(groupings_LOD):
         raise Exception("these should have matched")
