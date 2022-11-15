@@ -266,7 +266,7 @@ function populateTable(db_data) {
     tabCell.insertAdjacentText("beforeend", "\x2F");
     // Delete button
     var btn_del = document.createElement("button");
-    btn_del.my_id = db_data[i]["group_id"];
+    btn_del.my_id = db_data[i]["id"];
     btn_del.innerHTML = "Del";
     btn_del.className += "btn--action";
     btn_del.addEventListener("click", delMember);
@@ -276,8 +276,6 @@ function populateTable(db_data) {
 
 function delMember(e) {
   const route = base_uri + "/" + subroute + "/" + e.currentTarget.my_id;
-  console.log("Alpha:" + route);
-  console.log("Bravo" + e.currentTarget);
 
   if (
     window.confirm("You are about to delte a " + singular + ". Are you sure?")

@@ -188,7 +188,7 @@ export default class extends AbstractView {
     // What do do on a submit
     const myForm2 = document.getElementById("form-filter");
     myForm2.addEventListener("submit", function (e) {
-      console.log("Alpha");
+      //console.log("Alpha");
       e.preventDefault();
 
       // Pull data from form and put it into the json format the DB wants
@@ -336,7 +336,7 @@ function populateTable(db_data) {
     tabCell.insertAdjacentText("beforeend", "\x2F");
     // Delete button
     var btn_del = document.createElement("button");
-    btn_del.my_id = db_data[i]["id"];
+    btn_del.my_id = db_data[i]["harvest_id"];
     btn_del.innerHTML = "Del";
     btn_del.className += "btn--action";
     btn_del.addEventListener("click", delMember);
